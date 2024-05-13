@@ -1,0 +1,6 @@
+family:
+  - name: hercules
+    series:
+    - name: tms570
+      socs:
+      - name: tms570ls1224

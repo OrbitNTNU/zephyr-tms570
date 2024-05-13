@@ -1,0 +1,29 @@
+
+description: "PLL support for TMS570" 
+compatible: "tms570,pll"
+
+include: base.yaml
+
+properties:
+  reg:
+    required: true
+
+  nr:
+    description: "Prescale divider NR"
+    type: int
+    required: true
+
+  nf:
+    description: "Multiplier NF"
+    type: int
+    required: true
+
+  od:
+    description: "Postscale divider OD"
+    type: int
+    required: true
+
+  r:
+    description: "Postscale divider R"
+    type: int
+    required: true

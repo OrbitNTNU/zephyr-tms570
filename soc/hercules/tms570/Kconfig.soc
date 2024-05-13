@@ -1,0 +1,14 @@
+
+config SOC_SERIES_TMS570
+    bool
+    select SOC_FAMILY_HERCULES
+
+config SOC_TMS570LS1224
+    bool
+    select SOC_SERIES_TMS570
+
+config SOC_SERIES
+    default "tms570" if SOC_SERIES_TMS570
+
+config SOC
+    default "tms570ls1224" if SOC_TMS570LS1224

@@ -1,0 +1,16 @@
+
+config SOC_SERIES_TMS570
+    bool
+    select ARM
+    select CPU_CORTEX_R4
+    select CPU_HAS_DCLS
+    select ARM_CUSTOM_INTERRUPT_CONTROLLER
+    #select SYS_CLOCK_EXISTS
+    select TMS570_TIMER
+    select BIG_ENDIAN
+    select GEN_ISR_TABLES
+    select GEN_IRQ_VECTOR_TABLE
+
+config SOC_PART_NUMBER
+    string
+    default "tms570ls1224" if SOC_TMS570LS1224

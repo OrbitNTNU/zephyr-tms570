@@ -1,0 +1,3 @@
+
+config BOARD_FS1
+    select SOC_TMS570LS1224

@@ -1,0 +1,8 @@
+
+config SOC_FAMILY_HERCULES
+    bool
+
+config SOC_FAMILY
+    default "hercules" if SOC_FAMILY_HERCULES
+
+rsource "*/Kconfig.soc"

@@ -1,0 +1,6 @@
+
+if SOC_FAMILY_HERCULES
+
+rsource "*/Kconfig"
+
+endif # SOC_FAMILY_HERCULES

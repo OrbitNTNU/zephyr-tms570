@@ -1,0 +1,71 @@
+/dts-v1/;
+
+#include <arm/armv7-r.dtsi>
+#include <mem.h>
+#include <dt-bindings/interrupt-controller/ti-vim.h>
+
+/ {
+    model = "Orbit FramSat-1 Board";
+    compatible = "orbit,fs1";
+    interrupt-parent = <&intc>;
+
+    chosen {
+        zephyr,sram = &sram0;
+        zephyr,flash = &flash0;
+    };
+
+    cpus {
+        #address-cells = <1>;
+        #size-cells = <0>;
+
+        cpu0: cpu@0 {
+            compatible = "arm,cortex-r4f";
+            reg = <0>;
+            clock-frequency = <16000000>;
+        };
+    };
+
+    intc: interrupt-controller@ffffffe00 {
+        interrupt-controller;
+        #interrupt-cells = <4>;
+        reg = <0xfffffe00 256>;
+        compatible = "tms570,intc";
+        status = "okay";
+    };
+
+    timer: timer@fffffc00 {
+        compatible = "tms570,timer";
+        /* (OSCIN / VLCLK) / RTI
+         * As VLCK2 must be 2*VCLK, VCLK seems to be divided by 4 as VCLK2 is
+         * divided by 2. RTI is divided by 2 by default */
+        clock-frequency = <2000000>;
+        interrupts = <IRQ_TYPE_LEVEL 2 0 IRQ_DEFAULT_PRIORITY>;
+        reg = <0xfffffc00 256>;
+    };
+
+    pll: pll@ffffff00 {
+        compatible = "tms570,pll";
+        reg = <0xffffff00 256>; 
+
+        nr = <1>;
+        nf = <1>;
+        od = <1>;
+        r = <1>;
+    };
+
+    sram0: memory@8000000 {
+        compatible = "mmio-sram";
+        reg = <0x8000000 DT_SIZE_K(192)>;
+    };
+
+    flash0: serial-flash@0 {
+        compatible = "serial-flash";
+        reg = <0x0 0x13ffff>;
+    };
+
+    pinctrl: pin-controller@ffffea00 {
+        compatible = "tms570,pinctrl";
+        reg = <0xffffea00 0x200>;
+        status = "okay";
+    };
+};

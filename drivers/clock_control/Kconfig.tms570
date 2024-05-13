@@ -1,0 +1,5 @@
+
+config CLOCK_CONTROL_PLL_TMS570
+    bool
+    default y
+    depends on DT_HAS_TMS570_PLL_ENABLED

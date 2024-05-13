@@ -1,0 +1,7 @@
+
+config PINCTRL_TMS570
+	bool "TMS570 pinctrl driver"
+	default y
+	depends on DT_HAS_TMS570_PINCTRL_ENABLED
+	help
+	  Enable the TMS570 pinctrl driver

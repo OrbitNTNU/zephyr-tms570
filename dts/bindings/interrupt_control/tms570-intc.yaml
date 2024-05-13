@@ -1,0 +1,15 @@
+
+description: "Interrupt controller for TMS570"
+compatible: "tms570,intc"
+
+include: base.yaml
+
+properties:
+  reg:
+    required: true
+
+interrupt-cells:
+  - type
+  - irq
+  - flags
+  - priority

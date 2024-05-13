@@ -1,0 +1,26 @@
+
+if SOC_TMS570LS1224
+
+config SYS_CLOCK_HW_CYCLES_PER_SEC
+    default 48000000
+
+config NUM_IRQS
+    int
+    default 127
+
+config PINCTRL
+    default y
+    select PINCTRL_TMS570
+
+config FLASH_SIZE
+    default 1310719
+
+config FLASH_BASE_ADDRESS
+    default 0x0
+
+config VIM
+	bool "TI Vectored Interrupt Manager"
+	default y
+	depends on DT_HAS_TI_VIM_ENABLED
+
+endif # SOC_SERIES_TMS570

@@ -1,0 +1,19 @@
+
+description: "Timer for TMS570"
+compatible: "tms570,timer"
+
+include: base.yaml
+
+properties:
+  reg:
+    required: true
+
+  clock-frequency:
+    type: int
+    required: true
+
+  clocks:
+    required: false
+
+  interrupts:
+    required: true

@@ -1,0 +1,4 @@
+
+config TMS570_TIMER
+	bool 
+	select TIMER_HAS_64BIT_CYCLE_COUNTER
