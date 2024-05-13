@@ -1,0 +1,13 @@
+# GNU ARM Embedded Toolchain
+
+# Copyright (c) 2020 Linaro Limited.
+# SPDX-License-Identifier: Apache-2.0
+
+config TOOLCHAIN_BE_ARM_NONE_EABI
+	def_bool y
+	select HAS_NEWLIB_LIBC_NANO
+	select NEWLIB_LIBC_SUPPORTED
+
+config TOOLCHAIN_BE_ARM_NONE_EABI_SUPPORTS_GNU_EXTENSIONS
+	def_bool y
+	select TOOLCHAIN_SUPPORTS_GNU_EXTENSIONS
