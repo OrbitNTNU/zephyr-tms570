@@ -10,6 +10,7 @@ config SOC_SERIES_TMS570
     select BIG_ENDIAN
     select GEN_ISR_TABLES
     select GEN_IRQ_VECTOR_TABLE
+    imply XIP
 
 config SOC_PART_NUMBER
     string
