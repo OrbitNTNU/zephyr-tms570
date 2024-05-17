@@ -9,13 +9,10 @@ properties:
     required: true
 
 child-binding:
-  child-binding:
-    properties:
-      pinmux:
-        required: true
-        type: array
-        description: |
-          An array of pins sharing the same group properties. The pins should
-          be defined using pre-defined macros or, alternatively, using the
-          TMS_PINMUX helper macro.
+  properties:
+    pinmux:
+      required: true
+      type: int
+      description: |
+        MMIO register and pin bit number
 
