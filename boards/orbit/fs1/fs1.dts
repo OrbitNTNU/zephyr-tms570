@@ -63,9 +63,8 @@
         clocks = <&clock TMS570_CLK_RTI>;
     };
 
-    pll: pll@ffffff00 {
+    pll: pll {
         compatible = "tms570,pll";
-        reg = <0xffffff00 256>; 
 
         nr = <4>;
         nf = <25>;

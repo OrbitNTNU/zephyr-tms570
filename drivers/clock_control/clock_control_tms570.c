@@ -8,32 +8,19 @@
 
 #include <orbit/dt-bindings/clock_control/clock_control_tms570.h>
 
-struct tms570_pll_cfg {
-        DEVICE_MMIO_ROM;
-        uint8_t nr;
-        uint8_t nf;
-        uint8_t od;
-        uint8_t r;
-};
-
-struct tms570_pll_data {
-        DEVICE_MMIO_RAM;
-};
-
 struct tms570_clock_cfg {
-        DEVICE_MMIO_ROM;
         uint32_t clock_frequency;
 };
 
-struct tms570_clock_data {
-        DEVICE_MMIO_RAM;
-};
+#define DRV_PLL   DT_INST(0, tms570_pll)
+#define DRV_CLOCK DT_INST(0, tms570_clock)
+#define DRV_REG   DT_REG_ADDR(DRV_CLOCK)
 
 /* PLL scaling coefficients */
-#define VAL_NF(nf) ((nf - 1) << 8)
-#define VAL_NR(nr) ((nr - 1) << 16)
-#define VAL_R(r)   (((r - 1)) << 24)
-#define VAL_OD(od) ((od - 1) << 9)
+#define VAL_NF ((DT_PROP(DRV_PLL, nf) - 1) << 8)
+#define VAL_NR ((DT_PROP(DRV_PLL, nr) - 1) << 16)
+#define VAL_R  (((DT_PROP(DRV_PLL, r) - 1)) << 24)
+#define VAL_OD ((DT_PROP(DRV_PLL, od) - 1) << 9)
 
 #define CSDIS_OFFSET    (0x30) /* Clock source disable register */
 #define CDDIS_OFFSET    (0x3c) /* Clock domain disable register */
@@ -58,21 +45,18 @@ struct tms570_clock_data {
 #define VCLKR_BITPOS  (16)
 #define VCLKR_BITS    (0xf)
 
-static int pll_init(const struct device *dev)
+static int pll_init(void)
 {
         uint32_t tmp;
-        const struct tms570_pll_cfg *cfg = dev->config;
-
-        DEVICE_MMIO_MAP(dev, K_MEM_CACHE_NONE);
-        uintptr_t reg_base = DEVICE_MMIO_GET(dev);
+        uintptr_t reg_base = DRV_REG;
 
         /* Configure NF, NR and R, contained in the PLLCTL1 register */
-        tmp = VAL_NF(cfg->nf) | VAL_NR(cfg->nr) | VAL_R(cfg->r);
+        tmp = VAL_NF | VAL_NR | VAL_R;
         sys_write32(tmp, reg_base + PLLCTL1_OFFSET);
 
         /* Configure OD, contained in the PLLCTL2 register. We aren't using
          * modulation, so the rest of the bits can be cleared to 0 */
-        sys_write32(VAL_OD(cfg->od), reg_base + PLLCTL2_OFFSET);
+        sys_write32(VAL_OD, reg_base + PLLCTL2_OFFSET);
 
         /* Unset the PLL disable bit in the clock source disable register */
         sys_clear_bits(reg_base + CSDIS_OFFSET, PLL_DISABLE);
@@ -100,7 +84,7 @@ static bool is_valid(unsigned int domain)
 
 static int clock_on(const struct device *dev, clock_control_subsys_t subsys)
 {
-        uintptr_t reg = DEVICE_MMIO_GET(dev) + CDDISCLR_OFFSET;
+        uintptr_t reg = DRV_REG + CDDISCLR_OFFSET;
         unsigned int domain = *(unsigned int *)subsys;
 
         if (!is_valid(domain)) {
@@ -114,7 +98,7 @@ static int clock_on(const struct device *dev, clock_control_subsys_t subsys)
 
 static int clock_off(const struct device *dev, clock_control_subsys_t subsys)
 {
-        uintptr_t reg = DEVICE_MMIO_GET(dev) + CDDISSET_OFFSET;
+        uintptr_t reg = DRV_REG + CDDISSET_OFFSET;
         unsigned int domain = *(unsigned int *)subsys;
 
         if (!is_valid(domain)) {
@@ -170,7 +154,7 @@ static unsigned int clock_ratio(unsigned int domain, uintptr_t reg_base)
 
 static int clock_get_rate(const struct device *dev, clock_control_subsys_t subsys, uint32_t *rate)
 {
-        uintptr_t reg_base = DEVICE_MMIO_GET(dev);
+        uintptr_t reg_base = DRV_REG;
         unsigned int domain = *(unsigned int *)subsys;
         const struct tms570_clock_cfg *cfg = dev->config;
 
@@ -185,8 +169,7 @@ static int clock_get_rate(const struct device *dev, clock_control_subsys_t subsy
 
 static int clock_init(const struct device *dev)
 {
-        DEVICE_MMIO_MAP(dev, K_MEM_CACHE_NONE);
-        uintptr_t reg_base = DEVICE_MMIO_GET(dev);
+        uintptr_t reg_base = DRV_REG;
 
         /* Enable peripherals */
         sys_set_bits(reg_base + CLKCNTL_OFFSET, PERIENA_BIT);
@@ -205,24 +188,10 @@ static const struct clock_control_driver_api clock_api = {
         .get_rate = clock_get_rate,
 };
 
-#define DT_DRV_COMPAT tms570_clock
 static const struct tms570_clock_cfg clock_cfg = {
-        DEVICE_MMIO_ROM_INIT(DT_DRV_INST(0)),
-        .clock_frequency = DT_INST_PROP(0, clock_frequency),
+        .clock_frequency = DT_PROP(DRV_CLOCK, clock_frequency),
 };
-static struct tms570_clock_data clock_data;
-DEVICE_DT_INST_DEFINE(0, &clock_init, NULL, &clock_data, &clock_cfg, PRE_KERNEL_1,
-                      CONFIG_CLOCK_CONTROL_INIT_PRIORITY, &clock_api);
+DEVICE_DT_DEFINE(DRV_CLOCK, &clock_init, NULL, NULL, &clock_cfg, PRE_KERNEL_1,
+                 CONFIG_CLOCK_CONTROL_INIT_PRIORITY, &clock_api);
 
-#undef DT_DRV_COMPAT
-#define DT_DRV_COMPAT tms570_pll
-static const struct tms570_pll_cfg pll_cfg = {
-        DEVICE_MMIO_ROM_INIT(DT_DRV_INST(0)),
-        .r = DT_INST_PROP(0, r),
-        .nf = DT_INST_PROP(0, nf),
-        .nr = DT_INST_PROP(0, nr),
-        .od = DT_INST_PROP(0, od),
-};
-static struct tms570_pll_data pll_data;
-DEVICE_DT_INST_DEFINE(0, &pll_init, NULL, &pll_data, &pll_cfg, PRE_KERNEL_1,
-                      CONFIG_CLOCK_CONTROL_INIT_PRIORITY, NULL);
+SYS_INIT(pll_init, PRE_KERNEL_1, CONFIG_CLOCK_CONTROL_INIT_PRIORITY);
