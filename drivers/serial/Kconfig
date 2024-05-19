@@ -1,0 +1,6 @@
+
+config UART_TMS570
+    bool
+    default y
+    select SERIAL_HAS_DRIVER
+    depends on DT_HAS_TMS570_UART_ENABLED

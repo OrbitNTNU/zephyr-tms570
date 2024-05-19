@@ -1,0 +1,9 @@
+description: TMS570 UART Driver
+
+compatible: "tms570,uart"
+
+include: [uart-controller.yaml, pinctrl-device.yaml]
+
+properties:
+  reg:
+    required: true
