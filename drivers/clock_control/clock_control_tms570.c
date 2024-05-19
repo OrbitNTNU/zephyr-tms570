@@ -61,6 +61,7 @@ static int pll_init(void)
         /* Unset the PLL disable bit in the clock source disable register */
         sys_clear_bits(reg_base + CSDIS_OFFSET, PLL_DISABLE);
 
+        /* Set current source to PLL */
         sys_set_bits(reg_base + GHVSRC_OFFSET, CLKSRC_PLL);
 
         return 0;
