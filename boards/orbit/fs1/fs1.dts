@@ -2,7 +2,7 @@
 
 #include <arm/armv7-r.dtsi>
 #include <mem.h>
-#include <dt-bindings/interrupt-controller/ti-vim.h>
+#include <orbit/dt-bindings/interrupt_controller/tms570-intc.h>
 #include <orbit/dt-bindings/pinctrl/tms570-pinctrl.h>
 #include <orbit/dt-bindings/clock_control/clock_control_tms570.h>
 
@@ -47,7 +47,7 @@
 
     intc: interrupt-controller@ffffffe00 {
         interrupt-controller;
-        #interrupt-cells = <4>;
+        #interrupt-cells = <2>;
         reg = <0xfffffe00 256>;
         compatible = "tms570,intc";
         status = "okay";
@@ -58,7 +58,7 @@
         /* (OSCIN / VLCLK) / RTI
          * As VLCK2 must be 2*VCLK, VCLK seems to be divided by 4 as VCLK2 is
          * divided by 2. RTI is divided by 2 by default */
-        interrupts = <IRQ_TYPE_LEVEL 2 0 IRQ_DEFAULT_PRIORITY>;
+        interrupts = <2 IRQ_DEFAULT_PRIORITY>;
         reg = <0xfffffc00 256>;
         clocks = <&clock TMS570_CLK_RTI>;
     };
