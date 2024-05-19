@@ -1,4 +1,5 @@
 
 rsource "interrupt_controller/Kconfig"
 rsource "pinctrl/Kconfig"
+rsource "clock_control/Kconfig"
 rsource "timer/Kconfig"

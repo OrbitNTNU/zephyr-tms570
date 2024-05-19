@@ -1,2 +1,3 @@
 
-#zephyr_sources(clock_control_tms570.c)
+zephyr_library()
+zephyr_library_sources_ifdef(CONFIG_CLOCK_CONTROL_TMS570 clock_control_tms570.c)

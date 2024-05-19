@@ -3,6 +3,7 @@
 #include <arm/armv7-r.dtsi>
 #include <mem.h>
 #include <dt-bindings/interrupt-controller/ti-vim.h>
+#include <orbit/dt-bindings/clock_control/clock_control_tms570.h>
 
 / {
     model = "Orbit FramSat-1 Board";
@@ -23,6 +24,13 @@
             reg = <0>;
             clock-frequency = <16000000>;
         };
+    };
+
+    clock: clock-controller@ffffff00 {
+        compatible = "tms570,clock";
+        reg = <0xffffff00 256>;
+        clock-frequency = <16000000>;
+        #clock-cells = <1>;
     };
 
     intc: interrupt-controller@ffffffe00 {
@@ -47,8 +55,8 @@
         compatible = "tms570,pll";
         reg = <0xffffff00 256>; 
 
-        nr = <1>;
-        nf = <1>;
+        nr = <4>;
+        nf = <25>;
         od = <1>;
         r = <1>;
     };

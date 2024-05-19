@@ -1,0 +1,20 @@
+
+description: TMS570 clock controller
+
+compatible: "tms570,clock"
+
+include: [clock-controller.yaml, base.yaml]
+
+properties:
+  reg:
+    required: true
+
+  "#clock-cells":
+    const: 1
+
+  clock-frequency:
+    type: int
+    required: true
+
+clock-cells:
+  - clk_id

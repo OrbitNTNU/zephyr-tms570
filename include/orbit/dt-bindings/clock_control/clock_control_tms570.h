@@ -1,0 +1,11 @@
+
+#ifndef CLOCK_CONTROL_TMS570_H__
+#define CLOCK_CONTROL_TMS570_H__
+
+#define TMS570_CLK_GCLK  (0)
+#define TMS570_CLK_HCLK  (1)
+#define TMS570_CLK_VCLK  (2)
+#define TMS570_CLK_VCLK2 (3)
+#define TMS570_CLK_RTI   (6)
+
+#endif /* CLOCK_CONTROL_TMS570_H__ */

@@ -5,7 +5,8 @@ config SOC_SERIES_TMS570
     select CPU_CORTEX_R4
     select CPU_HAS_DCLS
     select ARM_CUSTOM_INTERRUPT_CONTROLLER
-    #select SYS_CLOCK_EXISTS
+    select SYS_CLOCK_EXISTS
+    select CLOCK_CONTROL
     select TMS570_TIMER
     select BIG_ENDIAN
     select GEN_ISR_TABLES
