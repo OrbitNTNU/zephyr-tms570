@@ -8,10 +8,6 @@ properties:
   reg:
     required: true
 
-  clock-frequency:
-    type: int
-    required: true
-
   clocks:
     required: false
 

@@ -46,9 +46,9 @@
         /* (OSCIN / VLCLK) / RTI
          * As VLCK2 must be 2*VCLK, VCLK seems to be divided by 4 as VCLK2 is
          * divided by 2. RTI is divided by 2 by default */
-        clock-frequency = <2000000>;
         interrupts = <IRQ_TYPE_LEVEL 2 0 IRQ_DEFAULT_PRIORITY>;
         reg = <0xfffffc00 256>;
+        clocks = <&clock TMS570_CLK_RTI>;
     };
 
     pll: pll@ffffff00 {
