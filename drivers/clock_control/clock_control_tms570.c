@@ -135,15 +135,7 @@ static unsigned int vclk2_ratio(uintptr_t reg_base)
 static unsigned int vclk_ratio(uintptr_t reg_base)
 {
         uintptr_t reg = reg_base + CLKCNTL_OFFSET;
-        uint32_t vclk = ((sys_read32(reg) >> VCLKR_BITPOS) & VCLKR_BITS) + 1;
-        uint32_t vclk2 = vclk2_ratio(reg_base);
-
-        /* VCLK2 must always be >= 2 * VCLK */
-        if (vclk < vclk2 * 2) {
-                return vclk2 * 2;
-        }
-
-        return vclk;
+        return ((sys_read32(reg) >> VCLKR_BITPOS) & VCLKR_BITS) + 1;
 }
 
 static unsigned int clock_ratio(unsigned int domain, uintptr_t reg_base)
@@ -157,10 +149,19 @@ static unsigned int clock_ratio(unsigned int domain, uintptr_t reg_base)
         case TMS570_CLK_VCLK2:
                 return vclk2_ratio(reg_base);
         case TMS570_CLK_RTI: {
-                uint32_t rti = sys_read32(reg_base + RCLKSRC_OFFSET);
-                rti = ((rti >> RTIDIV_BITPOS) & RTIDIV_BITS) + 1;
-
-                return vclk_ratio(reg_base) * rti;
+                /* RTI is derived from VCLK by default. The TRM states that
+                 * clock source *other* than VCLK require the RTI prescaler
+                 * to ensure that the frequency of RTI to be at least
+                 * 3 times less than VCLK. The TRM does not state that this
+                 * same rule is applied when using VCLK as the source,
+                 * however from testing that seems like the case.
+                 *
+                 * As it seems like RCLKSRC can only hold dividers that are
+                 * multiple of twos, 3 is rounded up to 4.
+                 *
+                 * This is not based on documentation, only testing and may
+                 * therefore be wrong. */
+                return vclk_ratio(reg_base) * 4;
         }
         }
 
