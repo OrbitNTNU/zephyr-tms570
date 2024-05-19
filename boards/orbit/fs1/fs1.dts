@@ -41,7 +41,7 @@
     clock: clock-controller@ffffff00 {
         compatible = "tms570,clock";
         reg = <0xffffff00 256>;
-        clock-frequency = <16000000>;
+        clock-frequency = <100000000>;
         #clock-cells = <1>;
     };
 
