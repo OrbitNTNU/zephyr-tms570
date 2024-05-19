@@ -166,12 +166,19 @@ static unsigned int clock_ratio(unsigned int domain, uintptr_t reg_base)
         CODE_UNREACHABLE;
 }
 
-static int clock_get_rate(const struct device *dev, clock_control_subsys_t subsys, uint32_t *api)
+static int clock_get_rate(const struct device *dev, clock_control_subsys_t subsys, uint32_t *rate)
 {
         uintptr_t reg_base = DEVICE_MMIO_GET(dev);
+        unsigned int domain = *(unsigned int *)subsys;
         const struct tms570_clock_cfg *cfg = dev->config;
 
-        return cfg->clock_frequency / clock_ratio(*(unsigned int *)subsys, reg_base);
+        if (!is_valid(domain)) {
+                return -EINVAL;
+        }
+
+        *rate = cfg->clock_frequency / clock_ratio(domain, reg_base);
+
+        return 0;
 }
 
 static int clock_init(const struct device *dev)
