@@ -30,7 +30,7 @@ struct tms570_clock_data {
 };
 
 /* PLL scaling coefficients */
-#define VAL_NF(nf) (((nf - 1) << 8) << 0)
+#define VAL_NF(nf) ((nf - 1) << 8)
 #define VAL_NR(nr) ((nr - 1) << 16)
 #define VAL_R(r)   (((r - 1)) << 24)
 #define VAL_OD(od) ((od - 1) << 9)
@@ -68,10 +68,11 @@ static int pll_init(const struct device *dev)
 
         /* Configure NF, NR and R, contained in the PLLCTL1 register */
         tmp = VAL_NF(cfg->nf) | VAL_NR(cfg->nr) | VAL_R(cfg->r);
-        sys_set_bits(reg_base + PLLCTL1_OFFSET, tmp);
+        sys_write32(tmp, reg_base + PLLCTL1_OFFSET);
 
-        /* Configure OD, contained in the PLLCTL2 register */
-        sys_set_bits(reg_base + PLLCTL2_OFFSET, VAL_OD(cfg->od));
+        /* Configure OD, contained in the PLLCTL2 register. We aren't using
+         * modulation, so the rest of the bits can be cleared to 0 */
+        sys_write32(VAL_OD(cfg->od), reg_base + PLLCTL2_OFFSET);
 
         /* Unset the PLL disable bit in the clock source disable register */
         sys_clear_bits(reg_base + CSDIS_OFFSET, PLL_DISABLE);
