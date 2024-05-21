@@ -116,10 +116,10 @@ static int uart_tms570_init(const struct device *dev)
 
         /* Enable clock. Enable CONT bit for emulation environment.
          * Additionally, enable LOOPBACK bit for use in a self test. */
-        tmp = CLOCK_BIT | CONT_BIT | /*LOOPBACK_BIT |*/ ASYNC_BIT;
+        tmp = CLOCK_BIT | CONT_BIT | ASYNC_BIT;
         tmp |= TXENA_BIT | RXENA_BIT;
 
-        sys_set_bits(reg_base + CGR1_OFFSET, tmp);
+        sys_write32(tmp, reg_base + CGR1_OFFSET);
 
         /* Set the SWnRST bit back to 1. This prevents further configuration
          * of the peripheral. */
