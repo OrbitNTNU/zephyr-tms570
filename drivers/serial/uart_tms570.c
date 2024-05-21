@@ -160,7 +160,7 @@ static void uart_tms570_poll_out(const struct device *dev, unsigned char c)
         while (!is_ready(reg_base, TXRDY_BIT)) {
         }
 
-        sys_write32(reg_base + TDBUF_OFFSET, c);
+        sys_write32(c, reg_base + TDBUF_OFFSET);
 }
 
 static __unused int uart_tms570_fifo_fill(const struct device *dev, const uint8_t *data, int size)
