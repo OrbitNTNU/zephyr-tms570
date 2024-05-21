@@ -88,7 +88,6 @@ static int uart_tms570_init(const struct device *dev)
 {
         int status;
         uint32_t tmp;
-        uintptr_t reg;
         uintptr_t reg_base;
         const struct uart_tms570_cfg *cfg = dev->config;
 
@@ -105,12 +104,9 @@ static int uart_tms570_init(const struct device *dev)
 
         /* Set SWnRST bit to 0. Only when this bit is 0 can the SCI registers
          * be configured. This is set back to 1 at the end of the function */
-        reg = reg_base + CGR1_OFFSET;
-        tmp = sys_read32(reg);
-        tmp &= ~SWnRST_BIT;
-        sys_write32(tmp, reg);
+        sys_clear_bits(reg_base + CGR1_OFFSET, SWnRST_BIT);
 
-        sys_set_bits(reg_base + FORMAT_OFFSET, FRAME7_BITS);
+        sys_write32(FRAME7_BITS, reg_base + FORMAT_OFFSET);
 
         /* Configure TX and RX pins */
         sys_set_bits(reg_base + PIO0_OFFSET, TXFUNC_BIT | RXFUNC_BIT);
@@ -193,12 +189,12 @@ static __unused int uart_tms570_fifo_read(const struct device *dev, uint8_t *buf
 
 static __unused void uart_tms570_irq_tx_enable(const struct device *dev)
 {
-        sys_set_bits(TXINT_BIT, DEVICE_MMIO_GET(dev) + SETINT_OFFSET);
+        sys_set_bits(DEVICE_MMIO_GET(dev) + SETINT_OFFSET, TXINT_BIT);
 }
 
 static __unused void uart_tms570_irq_tx_disable(const struct device *dev)
 {
-        sys_set_bits(TXINT_BIT, DEVICE_MMIO_GET(dev) + CLEARINT_OFFSET);
+        sys_set_bits(DEVICE_MMIO_GET(dev) + CLEARINT_OFFSET, TXINT_BIT);
 }
 
 static __unused int uart_tms570_irq_tx_ready(const struct device *dev)
@@ -208,12 +204,12 @@ static __unused int uart_tms570_irq_tx_ready(const struct device *dev)
 
 static __unused void uart_tms570_irq_rx_enable(const struct device *dev)
 {
-        sys_set_bits(RXINT_BIT, DEVICE_MMIO_GET(dev) + SETINT_OFFSET);
+        sys_set_bits(DEVICE_MMIO_GET(dev) + SETINT_OFFSET, RXINT_BIT);
 }
 
 static __unused void uart_tms570_irq_rx_disable(const struct device *dev)
 {
-        sys_set_bits(RXINT_BIT, DEVICE_MMIO_GET(dev) + CLEARINT_OFFSET);
+        sys_set_bits(DEVICE_MMIO_GET(dev) + CLEARINT_OFFSET, RXINT_BIT);
 }
 
 static __unused int uart_tms570_irq_rx_ready(const struct device *dev)
