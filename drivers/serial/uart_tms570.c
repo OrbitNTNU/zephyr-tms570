@@ -119,7 +119,9 @@ static int uart_tms570_init(const struct device *dev)
         reg_base = DEVICE_MMIO_GET(dev);
 
         status = pinctrl_apply_state(cfg->pincfg, PINCTRL_STATE_DEFAULT);
-        if (status < 0) {
+        /* -ENOENT means that pinctrl was not specified, which is fine in this case
+         * as it is optional. */
+        if (status < 0 && status != -ENOENT) {
                 return status;
         }
 
