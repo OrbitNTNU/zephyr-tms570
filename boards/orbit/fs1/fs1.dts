@@ -32,6 +32,7 @@
     usart0: serial@fff7e500 {
         pinctrl-0 = <&scirx_7_17 &scitx_8_1>;
         pinctrl-names = "default";
+        clocks = <&clock TMS570_CLK_VCLK>;
         compatible = "tms570,uart";
         current-speed = <9600>;
         reg = <0xfff7e500 256>;

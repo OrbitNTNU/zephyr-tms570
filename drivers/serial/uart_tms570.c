@@ -5,6 +5,7 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/uart.h>
 #include <zephyr/drivers/pinctrl.h>
+#include <zephyr/drivers/clock_control.h>
 
 #define DT_DRV_COMPAT tms570_uart
 
@@ -52,6 +53,8 @@ struct uart_tms570_cfg {
         uint32_t baud;
 
         const struct pinctrl_dev_config *pincfg;
+        const struct device *clk_ctrl;
+        unsigned int clk_domain;
 };
 
 struct uart_tms570_data {
@@ -60,14 +63,24 @@ struct uart_tms570_data {
 
 /**
  * @brief Calculate the value for the BAUD register, based on the nominal baud
- * rate @p nominal
+ * rate @p cfg->baud
  *
- * @param nominal
+ * @param cfg
  * @return uint32_t Converted value, which can be set in the BAUD register
  */
-static uint32_t calc_baud_reg(uint32_t nominal)
+static uint32_t calc_baud_reg(const struct uart_tms570_cfg *cfg)
 {
-        return /* clock_control_get_rate */ 4000000 / (nominal << 4) - 1;
+        uint32_t rate;
+        int ret;
+
+        ret = clock_control_get_rate(cfg->clk_ctrl, (clock_control_subsys_t)&cfg->clk_domain,
+                                     &rate);
+        if (ret < 0) {
+                __ASSERT(0, "clock control get rate failed");
+                return 0;
+        }
+
+        return rate / (cfg->baud << 4) - 1;
 }
 
 static inline int is_ready(uintptr_t reg_base, uint32_t mask)
@@ -112,7 +125,7 @@ static int uart_tms570_init(const struct device *dev)
         sys_set_bits(reg_base + PIO0_OFFSET, TXFUNC_BIT | RXFUNC_BIT);
 
         /* Set the BAUD register */
-        sys_write32(calc_baud_reg(cfg->baud), reg_base + BRS_OFFSET);
+        sys_write32(calc_baud_reg(cfg), reg_base + BRS_OFFSET);
 
         /* Enable clock. Enable CONT bit for emulation environment.
          * Additionally, enable LOOPBACK bit for use in a self test. */
@@ -275,6 +288,8 @@ static const struct uart_driver_api uart_tms570_driver_api = {
                 DEVICE_MMIO_ROM_INIT(DT_DRV_INST(node)),                                           \
                 .baud = DT_INST_PROP(node, current_speed),                                         \
                 .pincfg = PINCTRL_DT_INST_DEV_CONFIG_GET(node),                                    \
+                .clk_ctrl = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(node)),                              \
+                .clk_domain = DT_CLOCKS_CELL(DT_DRV_INST(node), clk_id),                           \
         };                                                                                         \
         static struct uart_tms570_data uart_tms570_##node##_data;                                  \
                                                                                                    \

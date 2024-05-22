@@ -7,3 +7,6 @@ include: [uart-controller.yaml, pinctrl-device.yaml]
 properties:
   reg:
     required: true
+
+  clocks:
+    required: true
