@@ -4,4 +4,4 @@ config UART_TMS570
     default y
     select SERIAL_HAS_DRIVER
     select SERIAL_SUPPORT_INTERRUPT
-    depends on DT_HAS_TMS570_UART_ENABLED
+    depends on DT_HAS_TMS570_UART_ENABLED && SERIAL
