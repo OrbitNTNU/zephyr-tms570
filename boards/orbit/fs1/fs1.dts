@@ -25,7 +25,7 @@
         cpu0: cpu@0 {
             compatible = "arm,cortex-r4f";
             reg = <0>;
-            clock-frequency = <16000000>;
+            clock-frequency = <100000000>;
         };
     };
 
