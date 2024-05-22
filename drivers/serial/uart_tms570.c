@@ -6,6 +6,7 @@
 #include <zephyr/drivers/uart.h>
 #include <zephyr/drivers/pinctrl.h>
 #include <zephyr/drivers/clock_control.h>
+#include <zephyr/irq.h>
 
 #define DT_DRV_COMPAT tms570_uart
 
@@ -37,8 +38,9 @@
 #define TXFUNC_BIT (1 << 2)
 
 /* Flags/FLR bits */
-#define TXRDY_BIT (1 << 8)
-#define RXRDY_BIT (1 << 9)
+#define TXRDY_BIT   (1 << 8)
+#define RXRDY_BIT   (1 << 9)
+#define TXEMPTY_BIT (1 << 11)
 
 /* SETINT/CLEARINT bits */
 #define TXINT_BIT   (1 << 8)
@@ -55,10 +57,19 @@ struct uart_tms570_cfg {
         const struct pinctrl_dev_config *pincfg;
         const struct device *clk_ctrl;
         unsigned int clk_domain;
+
+#ifdef CONFIG_UART_INTERRUPT_DRIVEN
+        void (*irq_connect)(const struct device *);
+#endif
 };
 
 struct uart_tms570_data {
         DEVICE_MMIO_RAM;
+
+#ifdef CONFIG_UART_INTERRUPT_DRIVEN
+        uart_irq_callback_user_data_t cb;
+        void *cb_data;
+#endif
 };
 
 /**
@@ -176,7 +187,8 @@ static void uart_tms570_poll_out(const struct device *dev, unsigned char c)
         sys_write32(c, reg_base + TDBUF_OFFSET);
 }
 
-static __unused int uart_tms570_fifo_fill(const struct device *dev, const uint8_t *data, int size)
+#ifdef CONFIG_UART_INTERRUPT_DRIVEN
+static int uart_tms570_fifo_fill(const struct device *dev, const uint8_t *data, int size)
 {
         uintptr_t reg_base = DEVICE_MMIO_GET(dev);
         int i = 0;
@@ -188,7 +200,7 @@ static __unused int uart_tms570_fifo_fill(const struct device *dev, const uint8_
         return i;
 }
 
-static __unused int uart_tms570_fifo_read(const struct device *dev, uint8_t *buf, const int size)
+static int uart_tms570_fifo_read(const struct device *dev, uint8_t *buf, const int size)
 {
         uintptr_t reg_base = DEVICE_MMIO_GET(dev);
         int i = 0;
@@ -200,67 +212,82 @@ static __unused int uart_tms570_fifo_read(const struct device *dev, uint8_t *buf
         return i;
 }
 
-static __unused void uart_tms570_irq_tx_enable(const struct device *dev)
+static void uart_tms570_irq_tx_enable(const struct device *dev)
 {
         sys_set_bits(DEVICE_MMIO_GET(dev) + SETINT_OFFSET, TXINT_BIT);
 }
 
-static __unused void uart_tms570_irq_tx_disable(const struct device *dev)
+static void uart_tms570_irq_tx_disable(const struct device *dev)
 {
         sys_set_bits(DEVICE_MMIO_GET(dev) + CLEARINT_OFFSET, TXINT_BIT);
 }
 
-static __unused int uart_tms570_irq_tx_ready(const struct device *dev)
+static int uart_tms570_irq_tx_ready(const struct device *dev)
 {
         return is_ready(DEVICE_MMIO_GET(dev), TXRDY_BIT);
 }
 
-static __unused void uart_tms570_irq_rx_enable(const struct device *dev)
+static int uart_tms570_irq_tx_complete(const struct device *dev)
+{
+        return sys_read32(DEVICE_MMIO_GET(dev) + FLAGS_OFFSET) & TXEMPTY_BIT;
+}
+
+static void uart_tms570_irq_rx_enable(const struct device *dev)
 {
         sys_set_bits(DEVICE_MMIO_GET(dev) + SETINT_OFFSET, RXINT_BIT);
 }
 
-static __unused void uart_tms570_irq_rx_disable(const struct device *dev)
+static void uart_tms570_irq_rx_disable(const struct device *dev)
 {
         sys_set_bits(DEVICE_MMIO_GET(dev) + CLEARINT_OFFSET, RXINT_BIT);
 }
 
-static __unused int uart_tms570_irq_rx_ready(const struct device *dev)
+static int uart_tms570_irq_rx_ready(const struct device *dev)
 {
         return is_ready(DEVICE_MMIO_GET(dev), RXRDY_BIT);
 }
 
-static __unused void uart_tms570_irq_err_enable(const struct device *dev)
+static void uart_tms570_irq_err_enable(const struct device *dev)
 {
         sys_set_bits(DEVICE_MMIO_GET(dev) + SETINT_OFFSET, ERRINT_BITS);
 }
 
-static __unused void uart_tms570_irq_err_disable(const struct device *dev)
+static void uart_tms570_irq_err_disable(const struct device *dev)
 {
         sys_set_bits(DEVICE_MMIO_GET(dev) + CLEARINT_OFFSET, ERRINT_BITS);
 }
 
-static __unused int uart_tms570_irq_is_pending(const struct device *dev)
+static int uart_tms570_irq_is_pending(const struct device *dev)
 {
         uintptr_t reg_base = DEVICE_MMIO_GET(dev);
 
         return is_ready(reg_base, TXRDY_BIT) || is_ready(reg_base, RXRDY_BIT);
 }
 
-static __unused int uart_tms570_irq_update(const struct device *dev)
+static int uart_tms570_irq_update(const struct device *dev)
 {
         ARG_UNUSED(dev);
         return 1;
 }
 
-static __unused void uart_tms570_irq_callback_set(const struct device *dev,
-                                                  uart_irq_callback_user_data_t cb, void *data)
+static void uart_tms570_irq_callback_set(const struct device *dev, uart_irq_callback_user_data_t cb,
+                                         void *user_data)
 {
+        struct uart_tms570_data *data = dev->data;
+
+        data->cb = cb;
+        data->cb_data = user_data;
 }
 
-static __unused void uart_tms570_isr(const struct device *dev)
+static void uart_tms570_isr(const struct device *dev)
 {
+        struct uart_tms570_data *data = dev->data;
+
+        if (data->cb != NULL) {
+                data->cb(dev, data->cb_data);
+        }
 }
+#endif
 
 static const struct uart_driver_api uart_tms570_driver_api = {
         .poll_in = uart_tms570_poll_in,
@@ -270,10 +297,21 @@ static const struct uart_driver_api uart_tms570_driver_api = {
         .fifo_fill = uart_tms570_fifo_fill,
         .fifo_read = uart_tms570_fifo_read,
         .irq_tx_enable = uart_tms570_irq_tx_enable,
-        .irq_rx_disable = uart_tms570_irq_rx_enable,
+        .irq_tx_disable = uart_tms570_irq_tx_disable,
+        .irq_tx_ready = uart_tms570_irq_tx_ready,
+        .irq_tx_complete = uart_tms570_irq_tx_complete,
+        .irq_rx_enable = uart_tms570_irq_rx_enable,
+        .irq_rx_disable = uart_tms570_irq_rx_disable,
+        .irq_rx_ready = uart_tms570_irq_rx_ready,
+        .irq_err_enable = uart_tms570_irq_err_enable,
+        .irq_err_disable = uart_tms570_irq_err_disable,
+        .irq_is_pending = uart_tms570_irq_is_pending,
+        .irq_update = uart_tms570_irq_update,
+        .irq_callback_set = uart_tms570_irq_callback_set,
 #endif
 };
 
+#ifdef CONFIG_UART_INTERRUPT_DRIVEN
 #define UART_TMS570_IRQ_ENABLE_FN(n)                                                               \
         static void irq_config_func_##n(const struct device *dev)                                  \
         {                                                                                          \
@@ -281,16 +319,22 @@ static const struct uart_driver_api uart_tms570_driver_api = {
                             DEVICE_DT_INST_GET(n), 0);                                             \
                 irq_enable(DT_INST_IRQN(n));                                                       \
         }
+#define UART_TMS570_IRQ_CFG(n) .irq_connect = irq_config_func_##n,
+#else
+#define UART_TMS570_IRQ_ENABLE_FN(n)
+#define UART_TMS570_IRQ_CFG(n)
+#endif /* CONFIG_UART_INTERRUPT_DRIVEN */
 
 #define UART_TMS570_INIT(node)                                                                     \
         PINCTRL_DT_INST_DEFINE(node);                                                              \
+        UART_TMS570_IRQ_ENABLE_FN(node);                                                           \
         static const struct uart_tms570_cfg uart_tms570_##node##_config = {                        \
                 DEVICE_MMIO_ROM_INIT(DT_DRV_INST(node)),                                           \
                 .baud = DT_INST_PROP(node, current_speed),                                         \
                 .pincfg = PINCTRL_DT_INST_DEV_CONFIG_GET(node),                                    \
                 .clk_ctrl = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(node)),                              \
                 .clk_domain = DT_CLOCKS_CELL(DT_DRV_INST(node), clk_id),                           \
-        };                                                                                         \
+                UART_TMS570_IRQ_CFG(node)};                                                        \
         static struct uart_tms570_data uart_tms570_##node##_data;                                  \
                                                                                                    \
         DEVICE_DT_INST_DEFINE(node, &uart_tms570_init, NULL, &uart_tms570_##node##_data,           \
