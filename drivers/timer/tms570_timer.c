@@ -11,7 +11,7 @@
 #define DRV_CLOCK_FREQ DT_INST_PROP(0, clock_frequency)
 
 static const unsigned int drv_clock_id = DT_INST_CLOCKS_CELL(0, clk_id);
-static const struct device *const clk_ctrl = DEVICE_DT_GET(DT_NODELABEL(clock));
+static const struct device *const clk_ctrl = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(0));
 
 #define GCTRL_OFFSET      (0x00) /* Global control register */
 #define CPU0_OFFSET       (0x18) /* Compare up counter 0 */
@@ -67,7 +67,13 @@ static void timer_isr(void *arg)
 
 static int timer_init(void)
 {
-        int ret = clock_control_on(clk_ctrl, (clock_control_subsys_t)&drv_clock_id);
+        int ret;
+
+        if (!device_is_ready(clk_ctrl)) {
+                return -ENODEV;
+        }
+
+        ret = clock_control_on(clk_ctrl, (clock_control_subsys_t)&drv_clock_id);
         if (ret < 0) {
                 return ret;
         }
