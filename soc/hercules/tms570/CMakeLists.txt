@@ -7,3 +7,4 @@ set(SOC_LINKER_SCRIPT
     ""
 )
 
+zephyr_sources(pcr.c)
