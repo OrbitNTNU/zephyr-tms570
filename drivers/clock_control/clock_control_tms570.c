@@ -14,7 +14,11 @@ struct tms570_clock_cfg {
 
 #define DRV_PLL   DT_INST(0, tms570_pll)
 #define DRV_CLOCK DT_INST(0, tms570_clock)
+#define DRV_FREQ  DT_PROP(DRV_CLOCK, clock_frequency)
 #define DRV_REG   DT_REG_ADDR(DRV_CLOCK)
+
+BUILD_ASSERT(DRV_FREQ == CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC,
+             "clock frequency of clock control does not match CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC");
 
 /* PLL scaling coefficients */
 #define VAL_NF ((DT_PROP(DRV_PLL, nf) - 1) << 8)
