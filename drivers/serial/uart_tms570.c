@@ -340,7 +340,7 @@ static const struct uart_driver_api uart_tms570_driver_api = {
         static struct uart_tms570_data uart_tms570_##node##_data;                                  \
                                                                                                    \
         DEVICE_DT_INST_DEFINE(node, &uart_tms570_init, NULL, &uart_tms570_##node##_data,           \
-                              &uart_tms570_##node##_config, PRE_KERNEL_2,                          \
+                              &uart_tms570_##node##_config, PRE_KERNEL_1,                          \
                               CONFIG_SERIAL_INIT_PRIORITY, &uart_tms570_driver_api)
 
 DT_INST_FOREACH_STATUS_OKAY(UART_TMS570_INIT);
