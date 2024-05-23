@@ -25,6 +25,10 @@ static const struct device *const clk_ctrl = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(0
 #define INT0EN  (1 << 0) /* Interrupt 0 enable */
 #define INT0CLR (1 << 0) /* Clear interrupt 0 */
 
+#define TICKS_PER_CYC (CONFIG_SYS_CLOCK_TICKS_PER_SEC / sys_clock_hw_cycles_per_sec())
+
+static volatile uint64_t ticks;
+
 /* Tickless mode is not supported, and so this function can return 0 as
  * announce is called periodically on every interrupt anyways*/
 uint32_t sys_clock_elapsed(void)
@@ -38,6 +42,18 @@ void sys_clock_set_timeout(int32_t ticks, bool idle)
         ARG_UNUSED(ticks);
         ARG_UNUSED(idle);
 }
+
+uint32_t sys_clock_cycle_get_32(void)
+{
+        return (uint32_t)ticks * TICKS_PER_CYC;
+}
+
+#ifdef CONFIG_TIMER_HAS_64BIT_CYCLE_COUNTER
+uint64_t sys_clock_cycle_get_64(void)
+{
+        return ticks * TICKS_PER_CYC;
+}
+#endif
 
 static int set_udc0(void)
 {
@@ -58,6 +74,8 @@ static int set_udc0(void)
 static void timer_isr(void *arg)
 {
         ARG_UNUSED(arg);
+
+        ticks++;
 
         /* Clear interrupt flag */
         sys_write32(INT0CLR, DRV_REG + INTFLAG_OFFSET);
