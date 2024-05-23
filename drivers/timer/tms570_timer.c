@@ -25,7 +25,7 @@ static const struct device *const clk_ctrl = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(0
 #define INT0EN  (1 << 0) /* Interrupt 0 enable */
 #define INT0CLR (1 << 0) /* Clear interrupt 0 */
 
-#define TICKS_PER_CYC (CONFIG_SYS_CLOCK_TICKS_PER_SEC / sys_clock_hw_cycles_per_sec())
+#define CYC_PER_TICK (sys_clock_hw_cycles_per_sec() / CONFIG_SYS_CLOCK_TICKS_PER_SEC)
 
 static volatile uint64_t ticks;
 
@@ -45,13 +45,13 @@ void sys_clock_set_timeout(int32_t ticks, bool idle)
 
 uint32_t sys_clock_cycle_get_32(void)
 {
-        return (uint32_t)ticks * TICKS_PER_CYC;
+        return (uint32_t)ticks * CYC_PER_TICK;
 }
 
 #ifdef CONFIG_TIMER_HAS_64BIT_CYCLE_COUNTER
 uint64_t sys_clock_cycle_get_64(void)
 {
-        return ticks * TICKS_PER_CYC;
+        return ticks * CYC_PER_TICK;
 }
 #endif
 
