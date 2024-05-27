@@ -7,4 +7,4 @@ set(SOC_LINKER_SCRIPT
     ""
 )
 
-zephyr_sources(pcr.c)
+zephyr_sources(pcr.c soc.c errata.S)
