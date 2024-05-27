@@ -5,7 +5,9 @@
 #define PCR_REG            (0xffffe000)
 #define PSPWRDWNCLR_OFFSET (0xa0)
 #define PSPWRDWNCLR_COUNT  (4)
-#define INIT_PRIO          10
+
+extern void _errata_CORTEXR4_66_(void);
+extern void _errata_CORTEXR4_57_(void);
 
 static int pcr_init(void)
 {
@@ -15,4 +17,10 @@ static int pcr_init(void)
         return 0;
 }
 
-SYS_INIT(pcr_init, PRE_KERNEL_1, INIT_PRIO);
+void z_arm_platform_init(void)
+{
+        _errata_CORTEXR4_66_();
+        _errata_CORTEXR4_57_();
+
+        pcr_init();
+}
