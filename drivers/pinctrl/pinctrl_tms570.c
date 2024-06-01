@@ -67,7 +67,7 @@ static int configure_pin(pinctrl_soc_pin_t pin)
 
         addr = DRV_REG_ADDR + PINMMR_OFFSET + (offset * sizeof(uint32_t));
 
-        sys_write32(sys_read32(addr) | PIN_BIT(pin), addr);
+        sys_write32(PIN_BIT(pin), addr);
 
         return 0;
 }
