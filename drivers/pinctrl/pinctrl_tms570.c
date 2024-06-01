@@ -11,8 +11,10 @@
 #define KICK0_VALUE (0x83e70b13) /* Magic value from datasheet */
 #define KICK1_VALUE (0x95a4f1e0) /* Magic value from datasheet */
 
-#define PINMMR_OFFSET (0xb10) /* Offset of PINMMR registers */
-#define PINMMR_SIZE   (48)    /* Number of PINMMR registers */
+/* Offset of PINMMR registers. The TRM states that this should be 0xB10, but that
+ * is incorrect */
+#define PINMMR_OFFSET (0x110)
+#define PINMMR_SIZE   (48) /* Number of PINMMR registers */
 
 #define PIN_REG_OFFSET (10)
 #define PIN_BIT(pin)   (1 << (pin & ((1 << PIN_REG_OFFSET) - 1)))
