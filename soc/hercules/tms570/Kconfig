@@ -4,13 +4,15 @@ config SOC_SERIES_TMS570
     select ARM
     select CPU_CORTEX_R4
     select CPU_HAS_DCLS
+    select CPU_HAS_FPU
+    select FPU
     select ARM_CUSTOM_INTERRUPT_CONTROLLER
     select SYS_CLOCK_EXISTS
     select CLOCK_CONTROL
     select TMS570_TIMER
     select BIG_ENDIAN
-    select GEN_ISR_TABLES
-    select GEN_IRQ_VECTOR_TABLE
+    select PLATFORM_SPECIFIC_INIT
+    select VFP_DP_D16
     imply XIP
 
 config SOC_PART_NUMBER
