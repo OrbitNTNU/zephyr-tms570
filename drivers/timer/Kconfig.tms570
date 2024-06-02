@@ -1,4 +1,5 @@
 
 config TMS570_TIMER
-	bool 
-	select TIMER_HAS_64BIT_CYCLE_COUNTER
+    bool 
+    select TIMER_HAS_64BIT_CYCLE_COUNTER
+    default y if DT_HAS_TMS570_TIMER_ENABLED
