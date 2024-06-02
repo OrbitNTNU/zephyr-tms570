@@ -45,15 +45,13 @@ void sys_clock_set_timeout(int32_t ticks, bool idle)
 
 uint32_t sys_clock_cycle_get_32(void)
 {
-        return (uint32_t)ticks * CYC_PER_TICK;
+        return (uint32_t)ticks;
 }
 
-#ifdef CONFIG_TIMER_HAS_64BIT_CYCLE_COUNTER
 uint64_t sys_clock_cycle_get_64(void)
 {
-        return ticks * CYC_PER_TICK;
+        return ticks; 
 }
-#endif
 
 static int set_udc0(void)
 {
@@ -75,7 +73,7 @@ static void timer_isr(void *arg)
 {
         ARG_UNUSED(arg);
 
-        ticks++;
+        ticks += k_ticks_to_cyc_floor32(1);
 
         /* Clear interrupt flag */
         sys_write32(INT0CLR, DRV_REG + INTFLAG_OFFSET);
