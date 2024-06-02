@@ -18,7 +18,7 @@
 
 static void set_irq_bit(unsigned int irq, uintptr_t base_offset)
 {
-        unsigned int offset = irq / IRQ_PER;
+        unsigned int offset = irq / IRQ_PER * sizeof(uint32_t);
         unsigned int bit = irq % IRQ_PER;
 
         sys_write32(1 << bit, DRV_REG + base_offset + offset);
@@ -26,7 +26,7 @@ static void set_irq_bit(unsigned int irq, uintptr_t base_offset)
 
 static int get_irq_bit(unsigned int irq, uintptr_t base_offset)
 {
-        unsigned int offset = irq / IRQ_PER;
+        unsigned int offset = (irq / IRQ_PER) * sizeof(uint32_t);
         unsigned int bit = irq % IRQ_PER;
 
         return sys_read32(DRV_REG + base_offset + offset) & (1 << bit);
