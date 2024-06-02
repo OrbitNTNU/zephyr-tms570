@@ -151,6 +151,10 @@ static int uart_tms570_init(const struct device *dev)
          * of the peripheral. */
         sys_set_bits(reg_base + CGR1_OFFSET, SWnRST_BIT);
 
+#ifdef CONFIG_UART_INTERRUPT_DRIVEN
+        cfg->irq_connect(dev);
+#endif
+
         return 0;
 }
 
