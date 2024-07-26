@@ -35,7 +35,7 @@
         current-speed = <38400>;
         reg = <0xfff7e400 256>;
         status = "okay";
-        interrupts = <27 IRQ_DEFAULT_PRIORITY>;
+        interrupts = <13 IRQ_DEFAULT_PRIORITY>;
     };
 
     uart1: serial@fff7e500 {
