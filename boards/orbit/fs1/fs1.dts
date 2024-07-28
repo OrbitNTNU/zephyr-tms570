@@ -49,6 +49,19 @@
         interrupts = <64 IRQ_DEFAULT_PRIORITY>;
     };
 
+    i2c0: i2c@fff7d400 {
+        pinctrl-0 = <&i2c_scl_0_17 &i2c_sda_0_25>;
+        pinctrl-names = "default";
+        clocks = <&clock TMS570_CLK_VCLK>;
+        compatible = "tms570,i2c";
+        reg = <0xfff7d400 256>;
+        module-clock-frequency = <8000000>;
+        interrupts = <66 IRQ_DEFAULT_PRIORITY>;
+        status = "okay";
+        #address-cells = <1>;
+        #size-cells = <0>;
+    };
+
     clock: clock-controller@ffffff00 {
         compatible = "tms570,clock";
         reg = <0xffffff00 256>;
@@ -106,5 +119,12 @@
     };
     scitx_8_1: scitx_8_1 {
         pinmux = <TMS570_PINMUX(8, 1)>;
+    };
+
+    i2c_scl_0_17: i2c_scl_0_17 {
+        pinmux = <TMS570_PINMUX(0, 17)>;
+    };
+    i2c_sda_0_25: i2c_sda_0_25 {
+        pinmux = <TMS570_PINMUX(0, 25)>;
     };
 };

@@ -1,0 +1,16 @@
+description: TI TMS570 I2C
+
+compatible: "tms570,i2c"
+
+include: [i2c-controller.yaml, pinctrl-device.yaml, base.yaml]
+
+properties:
+  reg:
+    required: true
+
+  interrupts:
+    required: true
+
+  module-clock-frequency:
+    required: true
+    type: int
