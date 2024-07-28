@@ -17,8 +17,10 @@
 #define PINMMR_SIZE   (48) /* Number of PINMMR registers */
 
 #define PIN_REG_OFFSET (10)
-#define PIN_BIT(pin)   (1 << (pin & ((1 << PIN_REG_OFFSET) - 1)))
+#define PIN_BIT(pin)   (pin & ((1 << PIN_REG_OFFSET) - 1))
 #define PIN_REG(pin)   (pin >> PIN_REG_OFFSET)
+
+#define BIT8_MASK(n) ((1 << ((n) << 3)) - 1)
 
 /**
  * @brief Helper function to write values @p kick0, @p kick1 to respective
@@ -60,6 +62,8 @@ static int configure_pin(pinctrl_soc_pin_t pin)
 {
         uintptr_t addr;
         uint16_t offset = PIN_REG(pin);
+        uint32_t bit = PIN_BIT(pin);
+        uint32_t lower = bit / 8;
 
         if (offset >= PINMMR_SIZE) {
                 return -EINVAL;
@@ -67,7 +71,9 @@ static int configure_pin(pinctrl_soc_pin_t pin)
 
         addr = DRV_REG_ADDR + PINMMR_OFFSET + (offset * sizeof(uint32_t));
 
-        sys_write32(PIN_BIT(pin), addr);
+        /* Clear the mask for the current pin */
+        sys_clear_bits(addr, BIT8_MASK(lower + 1) & ~BIT8_MASK(lower));
+        sys_set_bits(addr, bit);
 
         return 0;
 }
