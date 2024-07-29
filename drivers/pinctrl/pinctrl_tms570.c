@@ -73,7 +73,7 @@ static int configure_pin(pinctrl_soc_pin_t pin)
 
         /* Clear the mask for the current pin */
         sys_clear_bits(addr, BIT8_MASK(lower + 1) & ~BIT8_MASK(lower));
-        sys_set_bits(addr, bit);
+        sys_set_bits(addr, 1 << bit);
 
         return 0;
 }
