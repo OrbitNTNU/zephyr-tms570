@@ -54,13 +54,13 @@ static int pll_init(void)
         uint32_t tmp;
         uintptr_t reg_base = DRV_REG;
 
-        /* Configure NF, NR and R, contained in the PLLCTL1 register */
-        tmp = VAL_NF | VAL_NR | VAL_R;
-        sys_write32(tmp, reg_base + PLLCTL1_OFFSET);
-
         /* Configure OD, contained in the PLLCTL2 register. We aren't using
          * modulation, so the rest of the bits can be cleared to 0 */
         sys_write32(VAL_OD, reg_base + PLLCTL2_OFFSET);
+
+        /* Configure NF, NR and R, contained in the PLLCTL1 register */
+        tmp = VAL_NF | VAL_NR | VAL_R;
+        sys_write32(tmp, reg_base + PLLCTL1_OFFSET);
 
         /* Unset the PLL disable bit in the clock source disable register */
         sys_clear_bits(reg_base + CSDIS_OFFSET, PLL_DISABLE);
