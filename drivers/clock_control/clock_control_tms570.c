@@ -141,15 +141,11 @@ static unsigned int clock_ratio(unsigned int domain, uintptr_t reg_base)
                 /* RTI is derived from VCLK by default. The TRM states that
                  * clock source *other* than VCLK require the RTI prescaler
                  * to ensure that the frequency of RTI to be at least
-                 * 3 times less than VCLK. The TRM does not state that this
-                 * same rule is applied when using VCLK as the source,
-                 * however from testing that seems like the case.
+                 * 3 times less than VCLK.
+                 * As RCLKSRC can only hold dividers that are multiple of twos,
+                 * 3 is rounded up to 4.
                  *
-                 * As it seems like RCLKSRC can only hold dividers that are
-                 * multiple of twos, 3 is rounded up to 4.
-                 *
-                 * This is not based on documentation, only testing and may
-                 * therefore be wrong. */
+                 * This is documented in section 10.5.2.3 of the TRM. */
                 return vclk_ratio(reg_base) * 4;
         }
         }
