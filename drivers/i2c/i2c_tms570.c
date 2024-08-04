@@ -5,27 +5,35 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/pinctrl.h>
+#include <zephyr/sys_clock.h>
+#include <zephyr/logging/log.h>
+
+LOG_MODULE_REGISTER(i2c_tms570);
 
 #define DT_DRV_COMPAT tms570_i2c
 
-#define OAR_OFFSET (0x00)
-#define IMR_OFFSET (0x04)
-#define STR_OFFSET (0x08)
-#define CKL_OFFSET (0x0c)
-#define CKH_OFFSET (0x10)
-#define CNT_OFFSET (0x14)
-#define DRR_OFFSET (0x18)
-#define DXR_OFFSET (0x20)
-#define MDR_OFFSET (0x24)
-#define IVR_OFFSET (0x28)
-#define PSC_OFFSET (0x30)
-#define SAR_OFFSET (0x1c)
+#define OAR_OFFSET   (0x00)
+#define IMR_OFFSET   (0x04)
+#define STR_OFFSET   (0x08)
+#define CKL_OFFSET   (0x0c)
+#define CKH_OFFSET   (0x10)
+#define CNT_OFFSET   (0x14)
+#define DRR_OFFSET   (0x18)
+#define SAR_OFFSET   (0x1c)
+#define DXR_OFFSET   (0x20)
+#define MDR_OFFSET   (0x24)
+#define IVR_OFFSET   (0x28)
+#define PSC_OFFSET   (0x30)
+#define DMACR_OFFSET (0x3c)
+#define PFNC_OFFSET  (0x48)
+#define PDIS_OFFSET  (0x64)
 
 /* Interrupt mask enable bits */
 #define AAS_EN_BIT   (1 << 6)
 #define SCD_EN_BIT   (1 << 5)
 #define TXRDY_EN_BIT (1 << 4)
 #define RXRDY_EN_BIT (1 << 3)
+#define IRQ_EN_MASK  (AAS_EN_BIT | SCD_EN_BIT | TXRDY_EN_BIT | RXRDY_EN_BIT)
 
 /* Interrupt values (IVR) */
 #define AAS_IRQ   (0x7)
@@ -36,8 +44,11 @@
 /* Status register bits */
 #define SDIR_BIT  (1 << 14)
 #define BB_BIT    (1 << 12)
+#define AAS_BIT   (1 << 9)
+#define SCD_BIT   (1 << 5)
 #define TXRDY_BIT (1 << 4)
 #define RXRDY_BIT (1 << 3)
+#define NACK_BIT  (1 << 1)
 #define AL_BIT    (1 << 0)
 
 /* Mode register bits */
@@ -51,7 +62,7 @@
 #define MOD_CLK_MIN (6700000)
 #define MOD_CLK_MAX (13300000)
 
-#define TIMEOUT_MSEC   (K_MSEC(100))
+#define TIMEOUT_MSEC   (K_MSEC(10))
 #define RETRY_ATTEMPTS (10)
 
 struct i2c_tms570_cfg {
@@ -69,186 +80,35 @@ struct i2c_tms570_data {
         DEVICE_MMIO_RAM;
 
         struct k_mutex lock;
+
+#if defined(CONFIG_I2C_TARGET)
+        struct i2c_target_config *target_cfg;
+#endif
 };
 
-static ALWAYS_INLINE bool i2c_tms570_bus_busy(uintptr_t reg_base)
+static ALWAYS_INLINE bool is_bus_busy(uintptr_t reg_base)
 {
         return sys_read32(reg_base + STR_OFFSET) & BB_BIT;
 }
 
-static bool i2c_tms570_arb_lost(uintptr_t reg_base)
+static ALWAYS_INLINE bool is_arb_lost(uintptr_t reg_base)
 {
-        bool result = sys_read32(reg_base + STR_OFFSET) & AL_BIT;
-
-        /* Clear status bit */
-        sys_set_bits(reg_base + STR_OFFSET, AL_BIT);
-
-        return result;
+        return sys_read32(reg_base + STR_OFFSET) & AL_BIT;
 }
 
-static ALWAYS_INLINE bool i2c_tms570_is_controller(uintptr_t reg_base)
+static ALWAYS_INLINE bool is_nack(uintptr_t reg_base)
+{
+        return sys_read32(reg_base + STR_OFFSET) & NACK_BIT;
+}
+
+static ALWAYS_INLINE bool is_controller(uintptr_t reg_base)
 {
         return sys_read32(reg_base + MDR_OFFSET) & MST_BIT;
 }
 
-static int i2c_tms570_start_transfer(uintptr_t reg_base)
+static ALWAYS_INLINE bool is_stop(uintptr_t reg_base)
 {
-        unsigned int i;
-
-        for (i = 0; i < RETRY_ATTEMPTS; i++) {
-                while (i2c_tms570_bus_busy(reg_base)) {
-                }
-
-                /* Attempt to set device as I2C controller, by setting the MST (master/controller)
-                 * bit and STT (START) */
-                sys_set_bits(reg_base + MDR_OFFSET, MST_BIT | STT_BIT);
-
-                /* Wait to give time to determine if arbitration is lost or not.
-                 * TODO: This is quite dirty, should be improved. Is the start
-                 * bit even sent here?*/
-                k_busy_wait(1);
-
-                /* Arbitration won, which means we are now acting as controller of bus */
-                if (!i2c_tms570_arb_lost(reg_base)) {
-                        return 0;
-                }
-
-                /* Arbitration lost. Clear status flag and try again. */
-                sys_set_bits(reg_base + STR_OFFSET, AL_BIT);
-        }
-
-        return -EBUSY;
-}
-
-/**
- * @brief End transfer, waiting for bus busy bit and MST bit to clear.
- *
- * These must be cleared before initiating another transfer, otherwise the next
- * transfer could be compromised. Note that a stop condition is not manually generated here,
- * as that should already have been done by setting the count and stop bits.
- *
- * @param reg_base
- */
-static void i2c_tms570_end_transfer(uintptr_t reg_base)
-{
-        while (i2c_tms570_bus_busy(reg_base) || i2c_tms570_is_controller(reg_base)) {
-        }
-}
-
-/**
- * @brief Set target/slave address of transmission
- *
- * @param dev
- * @param addr
- */
-static ALWAYS_INLINE void i2c_tms570_set_sar(uintptr_t reg_base, uint16_t addr)
-{
-        sys_write32(addr, reg_base + SAR_OFFSET);
-}
-
-static void i2c_tms570_set_dir(uintptr_t reg_base, bool dir_rx)
-{
-        if (dir_rx) {
-                sys_clear_bits(reg_base + MDR_OFFSET, TRX_BIT);
-                return;
-        }
-
-        sys_set_bits(reg_base + MDR_OFFSET, TRX_BIT);
-}
-
-/**
- * @brief Set the CNT register, and enable the stop condition
- *
- * Setting the count register, and enabling the stop condition, will ensure
- * that the stop condition is generated when the count reaches 0.
- *
- * @param reg_base
- * @param count
- */
-static void i2c_tms570_set_count(uintptr_t reg_base, uint16_t count)
-{
-        sys_write16(count, reg_base + CNT_OFFSET);
-        sys_set_bits(reg_base + MDR_OFFSET, STP_BIT);
-}
-
-static int i2c_tms570_rx(const struct device *dev, struct i2c_msg *msg)
-{
-        uintptr_t reg_base;
-
-        reg_base = DEVICE_MMIO_GET(dev);
-
-        for (uint32_t i = 0; i < msg->len; i++) {
-                while (!(sys_read32(reg_base + STR_OFFSET) & RXRDY_BIT)) {
-                }
-
-                msg->buf[i] = sys_read8(reg_base + DRR_OFFSET);
-        }
-}
-
-static int i2c_tms570_tx(const struct device *dev, struct i2c_msg *msg)
-{
-        uintptr_t reg_base;
-
-        reg_base = DEVICE_MMIO_GET(dev);
-
-        for (uint32_t i = 0; i < msg->len; i++) {
-                while (!(sys_read32(reg_base + STR_OFFSET) & TXRDY_BIT)) {
-                }
-
-                sys_write8(reg_base + DXR_OFFSET, msg->buf[i]);
-        }
-}
-
-static int i2c_tms570_transfer(const struct device *dev, struct i2c_msg *msgs, uint8_t count,
-                               uint16_t addr)
-{
-        int status;
-        uintptr_t reg_base;
-        struct i2c_tms570_data *data = dev->data;
-
-        reg_base = DEVICE_MMIO_GET(dev);
-
-        /* This only prevents other threads from starting a transfer, however at this point another
-         * controller could initiate a transfer. In that case, we either wait for that to complete
-         * before continuing, or we lose arbitration, which again forces us to wait for the other
-         * transaction to complete. In that sense, the I2C bus itself should act as a "lock" between
-         * acting as controller and acting as target. With that, we don't need to perform any
-         * locking in the ISR.*/
-        status = k_mutex_lock(&data->lock, TIMEOUT_MSEC);
-        if (status != 0) {
-                return status;
-        }
-
-        for (uint8_t i = 0; i < count; i++) {
-                status = i2c_tms570_start_transfer(reg_base);
-                if (status != 0) {
-                        goto exit;
-                }
-                i2c_tms570_set_sar(reg_base, addr);
-                i2c_tms570_set_dir(reg_base, msgs[i].flags & I2C_MSG_READ);
-                i2c_tms570_set_count(reg_base, msgs[i].len);
-
-                if (msgs[i].flags & I2C_MSG_READ) {
-                        status = i2c_tms570_rx(dev, &msgs[i]);
-                } else {
-                        status = i2c_tms570_tx(dev, &msgs[i]);
-                }
-
-                i2c_tms570_end_transfer(reg_base);
-
-                if (status != 0) {
-                        goto exit;
-                }
-        }
-
-exit:
-        (void)k_mutex_unlock(&data->lock);
-
-        return status;
-}
-
-static int i2c_tms570_isr(const struct device *dev)
-{
+        return sys_read32(reg_base + STR_OFFSET) & SCD_EN_BIT;
 }
 
 /**
@@ -264,7 +124,7 @@ static int i2c_tms570_isr(const struct device *dev)
  * @retval 0 Success
  * @retval <0 Negative errno code
  */
-static int i2c_tms570_calc_psc(const struct i2c_tms570_cfg *cfg, uint8_t *psc)
+static int calc_psc(const struct i2c_tms570_cfg *cfg, uint8_t *psc)
 {
         int status;
         uint32_t vclk_freq;
@@ -297,14 +157,14 @@ static int i2c_tms570_calc_psc(const struct i2c_tms570_cfg *cfg, uint8_t *psc)
  * @retval 0 Success
  * @retval <0 Negative errno code
  */
-static int i2c_tms570_calc_mfreq(const struct i2c_tms570_cfg *cfg, uint32_t nominal, uint16_t *ckl,
-                                 uint16_t *ckh)
+static int calc_mfreq(const struct i2c_tms570_cfg *cfg, uint32_t nominal, uint16_t *ckl,
+                      uint16_t *ckh)
 {
         int status;
         uint8_t psc;
         unsigned int d;
 
-        status = i2c_tms570_calc_psc(cfg, &psc);
+        status = calc_psc(cfg, &psc);
         if (status != 0) {
                 return status;
         }
@@ -326,6 +186,230 @@ static int i2c_tms570_calc_mfreq(const struct i2c_tms570_cfg *cfg, uint32_t nomi
         return 0;
 }
 
+static int xfer_start(uintptr_t reg_base)
+{
+        unsigned int i;
+        k_timepoint_t timeout;
+
+        timeout = sys_timepoint_calc(TIMEOUT_MSEC);
+
+        for (i = 0; i < RETRY_ATTEMPTS; i++) {
+                while (is_bus_busy(reg_base)) {
+                        if (sys_timepoint_expired(timeout)) {
+                                return -ETIMEDOUT;
+                        }
+                }
+
+                /* Attempt to set device as I2C controller, by setting the
+                 * MST (master/controller) bit and STT (START) */
+                sys_set_bits(reg_base + MDR_OFFSET, MST_BIT | STT_BIT);
+
+                /* TODO: ARDY may be better suited */
+                while (!is_bus_busy(reg_base)) {
+                        if (sys_timepoint_expired(timeout)) {
+                                return -ETIMEDOUT;
+                        }
+                }
+
+                if (is_nack(reg_base)) {
+                        return -EIO;
+                } else if (!is_arb_lost(reg_base)) {
+                        /* Successfully taken control of bus */
+                        return 0;
+                }
+
+                /* Arbitration lost. Clear status flag and try again. */
+                sys_set_bits(reg_base + STR_OFFSET, AL_BIT);
+        }
+
+        return -EBUSY;
+}
+
+/**
+ * @brief End transfer, waiting for bus busy bit and MST bit to clear.
+ *
+ * These must be cleared before initiating another transfer, otherwise the next
+ * transfer could be compromised. Note that a stop condition is not manually generated here,
+ * as that should already have been done by setting the count and stop bits.
+ *
+ * @param reg_base
+ * @return int
+ * @retval 0 Success
+ * @retval -ETIMEDOUT Timed out waiting for BB and MST to clear
+ */
+static int xfer_end(uintptr_t reg_base)
+{
+        k_timepoint_t timeout = sys_timepoint_calc(TIMEOUT_MSEC);
+
+        while (!is_stop(reg_base) || is_bus_busy(reg_base) || is_controller(reg_base)) {
+                if (sys_timepoint_expired(timeout)) {
+                        return -ETIMEDOUT;
+                }
+        }
+
+        /* Clear stop condition */
+        sys_set_bits(reg_base + STR_OFFSET, SCD_BIT);
+
+        return 0;
+}
+
+/**
+ * @brief Set target/slave address of transmission
+ *
+ * @param dev
+ * @param addr
+ */
+static ALWAYS_INLINE void set_sar(uintptr_t reg_base, uint16_t addr)
+{
+        sys_write32(addr, reg_base + SAR_OFFSET);
+}
+
+static void set_dir(uintptr_t reg_base, bool dir_rx)
+{
+        if (dir_rx) {
+                sys_clear_bits(reg_base + MDR_OFFSET, TRX_BIT);
+                return;
+        }
+
+        sys_set_bits(reg_base + MDR_OFFSET, TRX_BIT);
+}
+
+/**
+ * @brief Set the CNT register, and enable the stop condition
+ *
+ * Setting the count register, and enabling the stop condition, will ensure
+ * that the stop condition is generated when the count reaches 0.
+ *
+ * @param reg_base
+ * @param count
+ */
+static void set_count(uintptr_t reg_base, uint16_t count)
+{
+        sys_write32(count, reg_base + CNT_OFFSET);
+
+        /* When in non-repeat mode, the stop condition is only generated when
+         * CNT reaches 0. The STP bit is therefore set here, to ensure the
+         * stop condition is generated later. */
+        sys_set_bits(reg_base + MDR_OFFSET, STP_BIT);
+}
+
+static int rx_msg(const struct device *dev, struct i2c_msg *msg)
+{
+        uintptr_t reg_base;
+        k_timepoint_t timeout;
+
+        reg_base = DEVICE_MMIO_GET(dev);
+        timeout = sys_timepoint_calc(TIMEOUT_MSEC);
+
+        for (uint32_t i = 0; i < msg->len; i++) {
+                while (!(sys_read32(reg_base + STR_OFFSET) & RXRDY_BIT)) {
+                        if (sys_timepoint_expired(timeout)) {
+                                return -ETIMEDOUT;
+                        }
+                }
+
+                msg->buf[i] = (uint8_t)sys_read32(reg_base + DRR_OFFSET);
+        }
+
+        return 0;
+}
+
+static int tx_msg(const struct device *dev, struct i2c_msg *msg)
+{
+        uintptr_t reg_base;
+        k_timepoint_t timeout;
+
+        reg_base = DEVICE_MMIO_GET(dev);
+        timeout = sys_timepoint_calc(TIMEOUT_MSEC);
+
+        for (uint32_t i = 0; i < msg->len; i++) {
+                while (!(sys_read32(reg_base + STR_OFFSET) & TXRDY_BIT)) {
+                        if (is_nack(reg_base)) {
+                                return -EIO;
+                        } else if (sys_timepoint_expired(timeout)) {
+                                return -ETIMEDOUT;
+                        }
+                }
+
+                sys_write32(msg->buf[i], reg_base + DXR_OFFSET);
+        }
+
+        return 0;
+}
+
+static int xfer_msg(const struct device *dev, struct i2c_msg *msg, uint16_t addr)
+{
+        int status;
+        uintptr_t reg_base;
+
+        reg_base = DEVICE_MMIO_GET(dev);
+
+        set_sar(reg_base, addr);
+        set_dir(reg_base, msg->flags & I2C_MSG_READ);
+        set_count(reg_base, msg->len);
+
+        status = xfer_start(reg_base);
+        if (status != 0) {
+                goto error;
+        }
+
+        if (msg->flags & I2C_MSG_READ) {
+                status = rx_msg(dev, msg);
+        } else {
+                status = tx_msg(dev, msg);
+        }
+
+        if (status != 0) {
+                goto error;
+        }
+
+        status = xfer_end(reg_base);
+        if (status != 0) {
+                goto error;
+        }
+
+error:
+        /* Reset on error, to ensure the peripheral releases the bus */
+        sys_clear_bits(reg_base + MDR_OFFSET, IRS_BIT);
+        sys_set_bits(reg_base + MDR_OFFSET, IRS_BIT);
+
+        return status;
+}
+
+static int i2c_tms570_transfer(const struct device *dev, struct i2c_msg *msgs, uint8_t count,
+                               uint16_t addr)
+{
+        int status;
+        uintptr_t reg_base;
+        struct i2c_tms570_data *data;
+
+        reg_base = DEVICE_MMIO_GET(dev);
+        data = dev->data;
+
+        /* This only prevents other threads from starting a transfer, however at this point another
+         * controller could initiate a transfer. In that case, we either wait for that to complete
+         * before continuing, or we lose arbitration, which again forces us to wait for the other
+         * transaction to complete. In that sense, the I2C bus itself should act as a "lock" between
+         * acting as controller and acting as target. With that, we don't need to perform any
+         * locking in the ISR.*/
+        status = k_mutex_lock(&data->lock, TIMEOUT_MSEC);
+        if (status != 0) {
+                return status;
+        }
+
+        for (uint8_t i = 0; i < count; i++) {
+                status = xfer_msg(dev, &msgs[i], addr);
+                if (status != 0) {
+                        LOG_ERR("xfer failed with status %i", status);
+                        break;
+                }
+        }
+
+        (void)k_mutex_unlock(&data->lock);
+
+        return status;
+}
+
 static int i2c_tms570_configure(const struct device *dev, uint32_t config)
 {
         int status;
@@ -336,10 +420,6 @@ static int i2c_tms570_configure(const struct device *dev, uint32_t config)
         struct i2c_tms570_data *data = dev->data;
 
         reg_base = DEVICE_MMIO_GET(dev);
-
-        if (config & I2C_ADDR_10_BITS) {
-                return -ENOTSUP;
-        }
 
         speed = I2C_SPEED_GET(config);
         switch (speed) {
@@ -363,13 +443,13 @@ static int i2c_tms570_configure(const struct device *dev, uint32_t config)
         sys_clear_bits(reg_base + MDR_OFFSET, IRS_BIT);
 
         /* Set bus speed */
-        status = i2c_tms570_calc_mfreq(dev->config, speed, &ckl, &ckh);
+        status = calc_mfreq(dev->config, speed, &ckl, &ckh);
         if (status != 0) {
                 goto exit;
         }
 
-        sys_write16(ckl, reg_base + CKL_OFFSET);
-        sys_write16(ckh, reg_base + CKH_OFFSET);
+        sys_write32(ckl, reg_base + CKL_OFFSET);
+        sys_write32(ckh, reg_base + CKH_OFFSET);
 
 exit:
         /* Go out of reset */
@@ -404,24 +484,136 @@ static int i2c_tms570_init(const struct device *dev)
         }
 
         /* Adjust I2C module clock frequency */
-        status = i2c_tms570_calc_psc(cfg, &psc_value);
+        status = calc_psc(cfg, &psc_value);
         if (status != 0) {
                 return status;
         }
 
-        sys_write8(psc_value, reg_base + PSC_OFFSET);
+        sys_write32(psc_value, reg_base + PSC_OFFSET);
+
+        sys_write32(0, reg_base + DMACR_OFFSET);
+
+        /* TODO: needed? */
+        sys_write32(0, reg_base + PFNC_OFFSET);
 
         cfg->irq_connect(dev);
+
+        /* Go out of reset */
+        sys_set_bits(reg_base + MDR_OFFSET, IRS_BIT);
+}
+
+static void i2c_tms570_isr(const struct device *dev)
+{
+        int status;
+        uint8_t byte;
+        uint32_t ivr;
+        uintptr_t reg_base;
+        struct i2c_tms570_data *data;
+        const struct i2c_target_callbacks *callbacks;
+
+        reg_base = DEVICE_MMIO_GET(dev);
+        data = dev->data;
+        callbacks = data->target_cfg->callbacks;
+
+        /* Most likely an SCD interrupt, generated when acting as the controller.
+         * In that case, we don't want to read and clear the interrutp/status
+         * flag as that is handled by the controller logic. */
+        if (!(sys_read32(reg_base + STR_OFFSET) & AAS_BIT)) {
+                return;
+        }
+
+        ivr = sys_read32(reg_base + IVR_OFFSET);
+
+        switch (ivr) {
+        case AAS_IRQ:
+                if (sys_read32(reg_base + STR_OFFSET) & SDIR_BIT) {
+                        /* SDIR=1 means device is target transmitter */
+                        status = callbacks->read_requested(data->target_cfg, &byte);
+
+                        sys_write32(byte, reg_base + DXR_OFFSET);
+                } else {
+                        /* SDIR=0 means device is either controller
+                         * transmitter/receiever or target receiever. As we have
+                         * already checked the AAS bit to ensure we are target,
+                         * we can safely assume that we are then target receiever.
+                         */
+                        status = callbacks->write_requested(data->target_cfg);
+                }
+                break;
+        case SCD_IRQ:
+                status = callbacks->stop(data->target_cfg);
+                break;
+        case TXRDY_IRQ:
+                status = callbacks->read_processed(data->target_cfg, &byte);
+
+                sys_write32(byte, reg_base + DXR_OFFSET);
+                break;
+        case RXRDY_IRQ:
+                byte = sys_read32(reg_base + DRR_OFFSET);
+
+                status = callbacks->write_received(data->target_cfg, byte);
+                break;
+        default:
+                CODE_UNREACHABLE;
+        }
+
+        if (status != 0) {
+                LOG_ERR("irq failed with status %i (mode %" PRIu32 ")", status, ivr);
+        }
 }
 
 static int i2c_tms570_target_register(const struct device *dev, struct i2c_target_config *cfg)
 {
-        /* only enable aas interrupts. no interrupt should be generated when
-         * we control the bbus. */
+        int status;
+        uintptr_t reg_base;
+        struct i2c_tms570_data *data;
+
+        reg_base = DEVICE_MMIO_GET(dev);
+        data = dev->data;
+
+        status = k_mutex_lock(&data->lock, TIMEOUT_MSEC);
+        if (status != 0) {
+                return status;
+        }
+
+        if (data->target_cfg != NULL) {
+                status = -EBUSY;
+                goto exit;
+        }
+
+        data->target_cfg = cfg;
+
+        sys_write32(cfg->address, reg_base + OAR_OFFSET);
+        sys_set_bits(reg_base + IMR_OFFSET, IRQ_EN_MASK);
+
+exit:
+        (void)k_mutex_unlock(&data->lock);
+
+        return status;
 }
 
 static int i2c_tms570_target_unregister(const struct device *dev, struct i2c_target_config *cfg)
 {
+        int status;
+        uintptr_t reg_base;
+        struct i2c_tms570_data *data;
+
+        reg_base = DEVICE_MMIO_GET(dev);
+        data = dev->data;
+
+        status = k_mutex_lock(&data->lock, TIMEOUT_MSEC);
+        if (status != 0) {
+                return status;
+        }
+
+        sys_write32(0, reg_base + IMR_OFFSET);
+        sys_write32(0, reg_base + OAR_OFFSET);
+
+        data->target_cfg = NULL;
+
+        (void)k_mutex_unlock(&data->lock);
+
+        return status;
 }
 
 static const struct i2c_driver_api i2c_tms570_driver_api = {
