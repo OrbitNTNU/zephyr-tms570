@@ -62,7 +62,7 @@ LOG_MODULE_REGISTER(i2c_tms570);
 #define MOD_CLK_MIN (6700000)
 #define MOD_CLK_MAX (13300000)
 
-#define TIMEOUT_MSEC   (K_MSEC(10))
+#define TIMEOUT_MSEC   (K_MSEC(100))
 #define RETRY_ATTEMPTS (10)
 
 struct i2c_tms570_cfg {
