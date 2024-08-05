@@ -7,8 +7,8 @@
 #define DT_DRV_COMPAT tms570_intc
 #define DRV_REG       DT_INST_REG_ADDR(0)
 
-#define IRQINDEX_OFFSET  (0x0) /* Index of currently active IRQ */
-#define FIQINDEX_OFFSET  (0x4) /* Index of currently active FIQ */
+#define IRQINDEX_OFFSET  (0x0)  /* Index of currently active IRQ */
+#define FIQINDEX_OFFSET  (0x4)  /* Index of currently active FIQ */
 #define REQENASET_OFFSET (0x30) /* Set/enable interrupt */
 #define REQENACLR_OFFSET (0x40) /* Clear/disable interrupt */
 
