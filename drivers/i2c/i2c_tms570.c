@@ -186,6 +186,19 @@ static int calc_mfreq(const struct i2c_tms570_cfg *cfg, uint32_t nominal, uint16
         return 0;
 }
 
+static uint32_t intr_disable(uintptr_t reg_base)
+{
+        uint32_t old = sys_read32(reg_base + IMR_OFFSET);
+        sys_write32(0, reg_base + IMR_OFFSET);
+
+        return old;
+}
+
+static void intr_enable(uintptr_t reg_base, uint32_t mask)
+{
+        sys_write32(mask, reg_base + IMR_OFFSET);
+}
+
 static int xfer_start(uintptr_t reg_base)
 {
         unsigned int i;
@@ -381,21 +394,18 @@ static int i2c_tms570_transfer(const struct device *dev, struct i2c_msg *msgs, u
 {
         int status;
         uintptr_t reg_base;
+        uint32_t irq_mask;
         struct i2c_tms570_data *data;
 
         reg_base = DEVICE_MMIO_GET(dev);
         data = dev->data;
 
-        /* This only prevents other threads from starting a transfer, however at this point another
-         * controller could initiate a transfer. In that case, we either wait for that to complete
-         * before continuing, or we lose arbitration, which again forces us to wait for the other
-         * transaction to complete. In that sense, the I2C bus itself should act as a "lock" between
-         * acting as controller and acting as target. With that, we don't need to perform any
-         * locking in the ISR.*/
         status = k_mutex_lock(&data->lock, TIMEOUT_MSEC);
         if (status != 0) {
                 return status;
         }
+
+        irq_mask = intr_disable(reg_base);
 
         for (uint8_t i = 0; i < count; i++) {
                 status = xfer_msg(dev, &msgs[i], addr);
@@ -404,6 +414,8 @@ static int i2c_tms570_transfer(const struct device *dev, struct i2c_msg *msgs, u
                         break;
                 }
         }
+
+        intr_enable(reg_base, irq_mask);
 
         (void)k_mutex_unlock(&data->lock);
 
@@ -515,13 +527,6 @@ static void i2c_tms570_isr(const struct device *dev)
         data = dev->data;
         callbacks = data->target_cfg->callbacks;
 
-        /* Most likely an SCD interrupt, generated when acting as the controller.
-         * In that case, we don't want to read and clear the interrutp/status
-         * flag as that is handled by the controller logic. */
-        if (!(sys_read32(reg_base + STR_OFFSET) & AAS_BIT)) {
-                return;
-        }
-
         ivr = sys_read32(reg_base + IVR_OFFSET);
 
         switch (ivr) {
@@ -584,7 +589,7 @@ static int i2c_tms570_target_register(const struct device *dev, struct i2c_targe
         data->target_cfg = cfg;
 
         sys_write32(cfg->address, reg_base + OAR_OFFSET);
-        sys_set_bits(reg_base + IMR_OFFSET, IRQ_EN_MASK);
+        intr_enable(reg_base, IRQ_EN_MASK);
 
 exit:
         (void)k_mutex_unlock(&data->lock);
@@ -606,7 +611,7 @@ static int i2c_tms570_target_unregister(const struct device *dev, struct i2c_tar
                 return status;
         }
 
-        sys_write32(0, reg_base + IMR_OFFSET);
+        (void)intr_disable(reg_base);
         sys_write32(0, reg_base + OAR_OFFSET);
 
         data->target_cfg = NULL;
