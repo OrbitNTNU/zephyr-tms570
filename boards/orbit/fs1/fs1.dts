@@ -25,7 +25,7 @@
         cpu0: cpu@0 {
             compatible = "arm,cortex-r4f";
             reg = <0>;
-            clock-frequency = <100000000>;
+            clock-frequency = <32000000>;
         };
     };
 
@@ -65,7 +65,7 @@
     clock: clock-controller@ffffff00 {
         compatible = "tms570,clock";
         reg = <0xffffff00 256>;
-        clock-frequency = <100000000>;
+        clock-frequency = <32000000>;
         #clock-cells = <1>;
     };
 
@@ -87,8 +87,8 @@
     pll: pll {
         compatible = "tms570,pll";
 
-        nr = <4>;
-        nf = <25>;
+        nr = <1>;
+        nf = <2>;
         od = <1>;
         r = <1>;
     };
