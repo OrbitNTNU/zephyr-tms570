@@ -503,15 +503,15 @@ static int i2c_tms570_init(const struct device *dev)
 
         sys_write32(psc_value, reg_base + PSC_OFFSET);
 
+        /* Disable DMA use */
         sys_write32(0, reg_base + DMACR_OFFSET);
-
-        /* TODO: needed? */
-        sys_write32(0, reg_base + PFNC_OFFSET);
 
         cfg->irq_connect(dev);
 
         /* Go out of reset */
         sys_set_bits(reg_base + MDR_OFFSET, IRS_BIT);
+
+        return 0;
 }
 
 static void i2c_tms570_isr(const struct device *dev)
