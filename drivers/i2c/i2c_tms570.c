@@ -400,7 +400,7 @@ static int i2c_tms570_transfer(const struct device *dev, struct i2c_msg *msgs, u
         reg_base = DEVICE_MMIO_GET(dev);
         data = dev->data;
 
-        status = k_mutex_lock(&data->lock, TIMEOUT_MSEC);
+        status = k_mutex_lock(&data->lock, K_FOREVER);
         if (status != 0) {
                 return status;
         }
@@ -446,7 +446,7 @@ static int i2c_tms570_configure(const struct device *dev, uint32_t config)
                 return -ENOTSUP;
         }
 
-        status = k_mutex_lock(&data->lock, TIMEOUT_MSEC);
+        status = k_mutex_lock(&data->lock, K_FOREVER);
         if (status != 0) {
                 return status;
         }
@@ -576,7 +576,7 @@ static int i2c_tms570_target_register(const struct device *dev, struct i2c_targe
         reg_base = DEVICE_MMIO_GET(dev);
         data = dev->data;
 
-        status = k_mutex_lock(&data->lock, TIMEOUT_MSEC);
+        status = k_mutex_lock(&data->lock, K_FOREVER);
         if (status != 0) {
                 return status;
         }
@@ -606,7 +606,7 @@ static int i2c_tms570_target_unregister(const struct device *dev, struct i2c_tar
         reg_base = DEVICE_MMIO_GET(dev);
         data = dev->data;
 
-        status = k_mutex_lock(&data->lock, TIMEOUT_MSEC);
+        status = k_mutex_lock(&data->lock, K_FOREVER);
         if (status != 0) {
                 return status;
         }
