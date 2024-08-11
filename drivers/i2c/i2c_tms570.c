@@ -8,6 +8,9 @@
 #include <zephyr/sys_clock.h>
 #include <zephyr/logging/log.h>
 
+/* in ${ZEPHYR_BASE}/drivers/i2c */
+#include "i2c_bitbang.h"
+
 LOG_MODULE_REGISTER(i2c_tms570);
 
 #define DT_DRV_COMPAT tms570_i2c
@@ -26,7 +29,9 @@ LOG_MODULE_REGISTER(i2c_tms570);
 #define PSC_OFFSET   (0x30)
 #define DMACR_OFFSET (0x3c)
 #define PFNC_OFFSET  (0x48)
-#define PDIS_OFFSET  (0x64)
+#define PDIR_OFFSET  (0x4c)
+#define DIN_OFFSET   (0x50)
+#define DOUT_OFFSET  (0x54)
 
 /* Interrupt mask enable bits */
 #define AAS_EN_BIT   (1 << 6)
@@ -57,6 +62,13 @@ LOG_MODULE_REGISTER(i2c_tms570);
 #define MST_BIT (1 << 10)
 #define TRX_BIT (1 << 9)
 #define IRS_BIT (1 << 5)
+
+/* PFNC register bits */
+#define PFNC_BIT (1 << 0)
+
+/* PDIR, DIN and DOUT bits */
+#define SDA_BIT (1 << 1)
+#define SCL_BIT (1 << 0)
 
 /* From the TRM: module clock frequency must be between 6.7MHz and 13.3 MHz */
 #define MOD_CLK_MIN (6700000)
@@ -306,6 +318,34 @@ static void set_count(uintptr_t reg_base, uint16_t count)
         sys_set_bits(reg_base + MDR_OFFSET, STP_BIT);
 }
 
+static void set_pin(uintptr_t reg_base, unsigned int bit, int state)
+{
+        if (state) {
+                sys_set_bits(reg_base + DOUT_OFFSET, bit);
+        } else {
+                sys_clear_bits(reg_base + DOUT_OFFSET, bit);
+        }
+}
+
+static void set_sda(void *context, int state)
+{
+        uintptr_t reg_base = *(uintptr_t *)context;
+        set_pin(reg_base, SDA_BIT, state);
+};
+
+static void set_scl(void *context, int state)
+{
+        uintptr_t reg_base = *(uintptr_t *)context;
+        set_pin(reg_base, SCL_BIT, state);
+};
+
+static int get_sda(void *context)
+{
+        uintptr_t reg_base = *(uintptr_t *)context;
+
+        return sys_read32(reg_base + DIN_OFFSET) & SDA_BIT;
+};
+
 static int rx_msg(const struct device *dev, struct i2c_msg *msg)
 {
         uintptr_t reg_base;
@@ -381,10 +421,10 @@ static int xfer_msg(const struct device *dev, struct i2c_msg *msg, uint16_t addr
                 goto error;
         }
 
+        return status;
+
 error:
-        /* Reset on error, to ensure the peripheral releases the bus */
-        sys_clear_bits(reg_base + MDR_OFFSET, IRS_BIT);
-        sys_set_bits(reg_base + MDR_OFFSET, IRS_BIT);
+        (void)i2c_recover_bus(dev);
 
         return status;
 }
@@ -416,6 +456,48 @@ static int i2c_tms570_transfer(const struct device *dev, struct i2c_msg *msgs, u
         }
 
         intr_enable(reg_base, irq_mask);
+
+        (void)k_mutex_unlock(&data->lock);
+
+        return status;
+}
+
+static struct i2c_bitbang_io bitbang_io = {
+        .set_scl = set_scl,
+        .set_sda = set_sda,
+        .get_sda = get_sda,
+};
+
+static int i2c_tms570_recover_bus(const struct device *dev)
+{
+        LOG_DBG("attempting to recover bus");
+
+        int status;
+        uintptr_t reg_base;
+        struct i2c_tms570_data *data = dev->data;
+        struct i2c_bitbang bitbang;
+
+        reg_base = DEVICE_MMIO_GET(dev);
+
+        status = k_mutex_lock(&data->lock, K_FOREVER);
+        if (status != 0) {
+                return status;
+        }
+
+        /* Enter reset and enable the pins to be used as GPIO */
+        sys_clear_bits(reg_base + MDR_OFFSET, IRS_BIT);
+        sys_set_bits(reg_base + PFNC_OFFSET, PFNC_BIT);
+        sys_set_bits(reg_base + PDIR_OFFSET, SDA_BIT | SCL_BIT);
+
+        i2c_bitbang_init(&bitbang, &bitbang_io, &reg_base);
+
+        status = i2c_bitbang_recover_bus(&bitbang);
+        if (status != 0) {
+                LOG_ERR("bus recovery failed: %i", status);
+        }
+
+        sys_clear_bits(reg_base + PFNC_OFFSET, PFNC_BIT);
+        sys_set_bits(reg_base + MDR_OFFSET, IRS_BIT);
 
         (void)k_mutex_unlock(&data->lock);
 
@@ -624,6 +706,7 @@ static int i2c_tms570_target_unregister(const struct device *dev, struct i2c_tar
 static const struct i2c_driver_api i2c_tms570_driver_api = {
         .transfer = i2c_tms570_transfer,
         .configure = i2c_tms570_configure,
+        .recover_bus = i2c_tms570_recover_bus,
 
 #if defined(CONFIG_I2C_TARGET)
         .target_register = i2c_tms570_target_register,
