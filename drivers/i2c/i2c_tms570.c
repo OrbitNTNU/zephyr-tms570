@@ -653,7 +653,8 @@ static void i2c_tms570_isr(const struct device *dev)
                 status = callbacks->write_received(data->target_cfg, byte);
                 break;
         default:
-                CODE_UNREACHABLE;
+                __ASSERT_NO_MSG(0);
+                status = -ENOTSUP;
         }
 
         if (status != 0) {
