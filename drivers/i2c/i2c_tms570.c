@@ -613,6 +613,11 @@ static void i2c_tms570_isr(const struct device *dev)
         is_tx = sys_read32(reg_base + STR_OFFSET) & SDIR_BIT;
         ivr = sys_read32(reg_base + IVR_OFFSET);
 
+        if (ivr == 0) {
+                /* Phantom interrupt */
+                return;
+        }
+
         if (ivr == TXRDY_IRQ && !is_tx) {
                 /* TXRDY is set to 1 at reset */
                 return;
