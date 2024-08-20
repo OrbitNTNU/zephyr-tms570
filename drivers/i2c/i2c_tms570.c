@@ -602,6 +602,7 @@ static void i2c_tms570_isr(const struct device *dev)
         uint8_t byte;
         uint32_t ivr;
         uintptr_t reg_base;
+        bool is_tx;
         struct i2c_tms570_data *data;
         const struct i2c_target_callbacks *callbacks;
 
@@ -609,12 +610,17 @@ static void i2c_tms570_isr(const struct device *dev)
         data = dev->data;
         callbacks = data->target_cfg->callbacks;
 
+        is_tx = sys_read32(reg_base + STR_OFFSET) & SDIR_BIT;
         ivr = sys_read32(reg_base + IVR_OFFSET);
+
+        if (ivr == TXRDY_IRQ && !is_tx) {
+                /* TXRDY is set to 1 at reset */
+                return;
+        }
 
         switch (ivr) {
         case AAS_IRQ:
-                if (sys_read32(reg_base + STR_OFFSET) & SDIR_BIT) {
-                        /* SDIR=1 means device is target transmitter */
+                if (is_tx) {
                         status = callbacks->read_requested(data->target_cfg, &byte);
 
                         sys_write32(byte, reg_base + DXR_OFFSET);
