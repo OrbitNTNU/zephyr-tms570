@@ -32,7 +32,7 @@
     uart0: serial@fff7e400 {
         clocks = <&clock TMS570_CLK_VCLK>;
         compatible = "tms570,uart";
-        current-speed = <38400>;
+        current-speed = <115200>;
         reg = <0xfff7e400 256>;
         status = "okay";
         interrupts = <13 IRQ_DEFAULT_PRIORITY>;
