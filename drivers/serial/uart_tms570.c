@@ -81,8 +81,10 @@ struct uart_tms570_data {
  */
 static uint32_t calc_baud_reg(const struct uart_tms570_cfg *cfg)
 {
-        uint32_t rate;
         int ret;
+        uint32_t rate;
+        uint32_t prescaler;
+        uint32_t div;
 
         ret = clock_control_get_rate(cfg->clk_ctrl, (clock_control_subsys_t)&cfg->clk_domain,
                                      &rate);
@@ -91,7 +93,10 @@ static uint32_t calc_baud_reg(const struct uart_tms570_cfg *cfg)
                 return 0;
         }
 
-        return rate / (cfg->baud << 4) - 1;
+        prescaler = rate / (cfg->baud * 16) - 1;
+        div = rate / (cfg->baud) - 16 * (1 + prescaler);
+
+        return ((div & 0xf) << 24) | prescaler;
 }
 
 static inline int is_ready(uintptr_t reg_base, uint32_t mask)
