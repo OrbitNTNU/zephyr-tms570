@@ -1,4 +1,5 @@
 
+#include <zephyr/spinlock.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/arch/cpu.h>
 #include <zephyr/drivers/timer/system_timer.h>
@@ -27,6 +28,7 @@ static const struct device *const clk_ctrl = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(0
 
 #define CYC_PER_TICK (sys_clock_hw_cycles_per_sec() / CONFIG_SYS_CLOCK_TICKS_PER_SEC)
 
+static struct k_spinlock ticks_lock;
 static volatile uint64_t ticks;
 
 /* Tickless mode is not supported, and so this function can return 0 as
@@ -45,12 +47,18 @@ void sys_clock_set_timeout(int32_t ticks, bool idle)
 
 uint32_t sys_clock_cycle_get_32(void)
 {
-        return (uint32_t)ticks;
+        return (uint32_t)sys_clock_cycle_get_64();
 }
 
 uint64_t sys_clock_cycle_get_64(void)
 {
-        return ticks; 
+        uint64_t ret = 0;
+
+        K_SPINLOCK(&ticks_lock) {
+                ret = ticks;
+        }
+
+        return ret;
 }
 
 static int set_udc0(void)
@@ -73,7 +81,9 @@ static void timer_isr(void *arg)
 {
         ARG_UNUSED(arg);
 
-        ticks += k_ticks_to_cyc_floor32(1);
+        K_SPINLOCK(&ticks_lock) {
+                ticks += k_ticks_to_cyc_floor32(1);
+        }
 
         /* Clear interrupt flag */
         sys_write32(INT0CLR, DRV_REG + INTFLAG_OFFSET);
