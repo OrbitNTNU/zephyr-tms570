@@ -39,9 +39,9 @@ uint32_t sys_clock_elapsed(void)
 }
 
 /* Calls to this function are ignored, as we are not supporting tickless mode */
-void sys_clock_set_timeout(int32_t ticks, bool idle)
+void sys_clock_set_timeout(int32_t ticks_set, bool idle)
 {
-        ARG_UNUSED(ticks);
+        ARG_UNUSED(ticks_set);
         ARG_UNUSED(idle);
 }
 
