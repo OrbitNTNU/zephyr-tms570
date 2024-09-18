@@ -105,65 +105,6 @@ static inline int is_ready(uintptr_t reg_base, uint32_t mask)
 }
 
 /**
- * @brief Initialize UART device @p dev
- *
- * This implements the steps outlined in TMS570LS1224 technical reference
- * manual, section 30.5.
- *
- * @param dev
- * @return int Always 0
- */
-static int uart_tms570_init(const struct device *dev)
-{
-        int status;
-        uint32_t tmp;
-        uintptr_t reg_base;
-        const struct uart_tms570_cfg *cfg = dev->config;
-
-        DEVICE_MMIO_MAP(dev, K_MEM_CACHE_NONE);
-        reg_base = DEVICE_MMIO_GET(dev);
-
-        status = pinctrl_apply_state(cfg->pincfg, PINCTRL_STATE_DEFAULT);
-        /* -ENOENT means that pinctrl was not specified, which is fine in this case
-         * as it is optional. */
-        if (status < 0 && status != -ENOENT) {
-                return status;
-        }
-
-        /* Set RESET bit to 1 */
-        sys_set_bits(reg_base + CGR0_OFFSET, RESET_BIT);
-
-        /* Set SWnRST bit to 0. Only when this bit is 0 can the SCI registers
-         * be configured. This is set back to 1 at the end of the function */
-        sys_clear_bits(reg_base + CGR1_OFFSET, SWnRST_BIT);
-
-        sys_write32(FRAME7_BITS, reg_base + FORMAT_OFFSET);
-
-        /* Configure TX and RX pins */
-        sys_set_bits(reg_base + PIO0_OFFSET, TXFUNC_BIT | RXFUNC_BIT);
-
-        /* Set the BAUD register */
-        sys_write32(calc_baud_reg(cfg), reg_base + BRS_OFFSET);
-
-        /* Enable clock. Enable CONT bit for emulation environment.
-         * Additionally, enable LOOPBACK bit for use in a self test. */
-        tmp = CLOCK_BIT | CONT_BIT | ASYNC_BIT;
-        tmp |= TXENA_BIT | RXENA_BIT;
-
-        sys_write32(tmp, reg_base + CGR1_OFFSET);
-
-        /* Set the SWnRST bit back to 1. This prevents further configuration
-         * of the peripheral. */
-        sys_set_bits(reg_base + CGR1_OFFSET, SWnRST_BIT);
-
-#ifdef CONFIG_UART_INTERRUPT_DRIVEN
-        cfg->irq_connect(dev);
-#endif
-
-        return 0;
-}
-
-/**
  * @brief Receive data from the UART peripheral, using the polling method
  *
  * @param dev
@@ -321,6 +262,65 @@ static const struct uart_driver_api uart_tms570_driver_api = {
         .irq_callback_set = uart_tms570_irq_callback_set,
 #endif
 };
+
+/**
+ * @brief Initialize UART device @p dev
+ *
+ * This implements the steps outlined in TMS570LS1224 technical reference
+ * manual, section 30.5.
+ *
+ * @param dev
+ * @return int Always 0
+ */
+static int uart_tms570_init(const struct device *dev)
+{
+        int status;
+        uint32_t tmp;
+        uintptr_t reg_base;
+        const struct uart_tms570_cfg *cfg = dev->config;
+
+        DEVICE_MMIO_MAP(dev, K_MEM_CACHE_NONE);
+        reg_base = DEVICE_MMIO_GET(dev);
+
+        status = pinctrl_apply_state(cfg->pincfg, PINCTRL_STATE_DEFAULT);
+        /* -ENOENT means that pinctrl was not specified, which is fine in this case
+         * as it is optional. */
+        if (status < 0 && status != -ENOENT) {
+                return status;
+        }
+
+        /* Set RESET bit to 1 */
+        sys_set_bits(reg_base + CGR0_OFFSET, RESET_BIT);
+
+        /* Set SWnRST bit to 0. Only when this bit is 0 can the SCI registers
+         * be configured. This is set back to 1 at the end of the function */
+        sys_clear_bits(reg_base + CGR1_OFFSET, SWnRST_BIT);
+
+        sys_write32(FRAME7_BITS, reg_base + FORMAT_OFFSET);
+
+        /* Configure TX and RX pins */
+        sys_set_bits(reg_base + PIO0_OFFSET, TXFUNC_BIT | RXFUNC_BIT);
+
+        /* Set the BAUD register */
+        sys_write32(calc_baud_reg(cfg), reg_base + BRS_OFFSET);
+
+        /* Enable clock. Enable CONT bit for emulation environment.
+         * Additionally, enable LOOPBACK bit for use in a self test. */
+        tmp = CLOCK_BIT | CONT_BIT | ASYNC_BIT;
+        tmp |= TXENA_BIT | RXENA_BIT;
+
+        sys_write32(tmp, reg_base + CGR1_OFFSET);
+
+        /* Set the SWnRST bit back to 1. This prevents further configuration
+         * of the peripheral. */
+        sys_set_bits(reg_base + CGR1_OFFSET, SWnRST_BIT);
+
+#ifdef CONFIG_UART_INTERRUPT_DRIVEN
+        cfg->irq_connect(dev);
+#endif
+
+        return 0;
+}
 
 #ifdef CONFIG_UART_INTERRUPT_DRIVEN
 #define UART_TMS570_IRQ_ENABLE_FN(n)                                                               \
