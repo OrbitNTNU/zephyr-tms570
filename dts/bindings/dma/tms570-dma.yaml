@@ -1,0 +1,19 @@
+
+description: "DMA controller for TMS570"
+compatible: "tms570,dma"
+
+include: [dma-controller.yaml, base.yaml]
+
+properties:
+  reg:
+    required: true
+
+  interrupts:
+    required: true
+
+  "#dma-cells":
+    const: 2
+
+dma-cells:
+  - dma-channels
+  - dma-requests

@@ -77,6 +77,17 @@
         status = "okay";
     };
 
+    dmac: dma-controller@fffff000 {
+        #dma-cells = <2>;
+        compatible = "tms570,dma";
+        status = "okay";
+        reg = <0xfffff000 DT_SIZE_K(1)>, <0xfff80000 DT_SIZE_K(4)>;
+        reg-names = "control", "packets";
+        interrupts = <40 IRQ_DEFAULT_PRIORITY>, <33 IRQ_DEFAULT_PRIORITY>;
+        dma-channels = <16>;
+        dma-requests = <32>;
+    };
+
     timer: timer@fffffc00 {
         compatible = "tms570,timer";
         interrupts = <2 IRQ_DEFAULT_PRIORITY>;

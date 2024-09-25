@@ -1,0 +1,5 @@
+
+config DMA_TMS570
+    bool "Using TMS570 DMA Driver"
+    default y
+    depends on DT_HAS_TMS570_DMA_ENABLED
