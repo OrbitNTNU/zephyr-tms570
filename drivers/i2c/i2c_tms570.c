@@ -356,7 +356,9 @@ static int rx_msg(const struct device *dev, struct i2c_msg *msg)
 
         for (uint32_t i = 0; i < msg->len; i++) {
                 while (!(sys_read32(reg_base + STR_OFFSET) & RXRDY_BIT)) {
-                        if (sys_timepoint_expired(timeout)) {
+                        if (is_nack(reg_base)) {
+                                return -EIO;
+                        } else if (sys_timepoint_expired(timeout)) {
                                 return -ETIMEDOUT;
                         }
                 }
