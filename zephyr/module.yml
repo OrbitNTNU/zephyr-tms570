@@ -1,4 +1,4 @@
-name: orbit-hw
+name: zephyr-tms570
 build:
   cmake: .
   kconfig: Kconfig
