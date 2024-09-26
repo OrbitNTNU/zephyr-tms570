@@ -7,6 +7,13 @@
 #include <zephyr/drivers/pinctrl.h>
 #include <zephyr/drivers/clock_control.h>
 #include <zephyr/irq.h>
+#include <zephyr/logging/log.h>
+
+LOG_MODULE_REGISTER(tms570_uart);
+
+#ifdef CONFIG_UART_ASYNC_API
+#include <zephyr/drivers/dma.h>
+#endif
 
 #define DT_DRV_COMPAT tms570_uart
 
@@ -45,6 +52,8 @@
 /* SETINT/CLEARINT bits */
 #define TXINT_BIT   (1 << 8)
 #define RXINT_BIT   (1 << 9)
+#define TXDMA_BIT   (1 << 16)
+#define RXDMA_BITS  (1 << 17 | 1 << 18)
 /* Framing error interrupt, overrun error interrupt and parity error interrupt */
 #define ERRINT_BITS ((1 << 26) | (1 << 25) | (1 << 24))
 
@@ -61,6 +70,14 @@ struct uart_tms570_cfg {
 #ifdef CONFIG_UART_INTERRUPT_DRIVEN
         void (*irq_connect)(const struct device *);
 #endif
+
+#ifdef CONFIG_UART_ASYNC_API
+        const struct device *dma_dev;
+        int dma_request_rx;
+        int dma_request_tx;
+        int dma_channel_rx;
+        int dma_channel_tx;
+#endif
 };
 
 struct uart_tms570_data {
@@ -69,6 +86,30 @@ struct uart_tms570_data {
 #ifdef CONFIG_UART_INTERRUPT_DRIVEN
         uart_irq_callback_user_data_t cb;
         void *cb_data;
+#endif
+
+#ifdef CONFIG_UART_ASYNC_API
+        uart_callback_t async_cb;
+        void *async_data;
+
+        const struct device *dev;
+
+        struct {
+                uint8_t *buf;
+                size_t buf_size;
+                size_t offset;
+
+                uint8_t *next_buf;
+                size_t next_buf_size;
+
+                int32_t timeout_usec;
+                struct k_work_delayable timeout_work;
+                struct k_work_delayable done_work;
+
+                struct dma_block_config dma_blk;
+
+                struct dma_config dma_cfg;
+        } dma_rx, dma_tx;
 #endif
 };
 
@@ -241,6 +282,357 @@ static void uart_tms570_isr(const struct device *dev)
 }
 #endif
 
+#ifdef CONFIG_UART_ASYNC_API
+static void async_event(const struct device *dev, struct uart_event *event)
+{
+        struct uart_tms570_data *data = dev->data;
+
+        if (data->async_cb != NULL) {
+                data->async_cb(dev, event, data->async_data);
+        }
+}
+
+static void async_timer_restart(struct k_work_delayable *dwork, int32_t timeout)
+{
+        if (timeout == SYS_FOREVER_US || timeout == 0) {
+                timeout = 1;
+        }
+
+        (void)k_work_reschedule(dwork, K_USEC(timeout));
+}
+
+static int uart_tms570_callback_set(const struct device *dev, uart_callback_t cb, void *user_data)
+{
+        struct uart_tms570_data *data = dev->data;
+
+        data->async_cb = cb;
+        data->async_data = user_data;
+
+        return 0;
+}
+
+static int uart_tms570_rx_enable(const struct device *dev, uint8_t *buf, size_t size,
+                                 int32_t timeout_usec)
+{
+        int status;
+        struct uart_event evt;
+        const struct uart_tms570_cfg *cfg = dev->config;
+        struct uart_tms570_data *data = dev->data;
+
+        if (cfg->dma_request_rx == -1 || cfg->dma_channel_rx == -1) {
+                LOG_ERR("uart not configured for async use");
+                return -EINVAL;
+        }
+
+        data->dma_rx.buf = buf;
+        data->dma_rx.buf_size = size;
+        data->dma_rx.timeout_usec = timeout_usec;
+
+        data->dma_rx.dma_blk.dest_address = (uint32_t)buf;
+        data->dma_rx.dma_blk.block_size = size;
+
+        status = dma_config(cfg->dma_dev, cfg->dma_channel_rx, &data->dma_rx.dma_cfg);
+        if (status != 0) {
+                return status;
+        }
+
+        status = dma_start(cfg->dma_dev, cfg->dma_channel_rx);
+        if (status != 0) {
+                return status;
+        }
+
+        evt.type = UART_RX_BUF_REQUEST;
+        if (data->async_cb != NULL) {
+                data->async_cb(dev, &evt, data->async_data);
+        }
+
+        return status;
+}
+
+static int uart_tms570_rx_disable(const struct device *dev)
+{
+        int status;
+        const struct uart_tms570_cfg *cfg = dev->config;
+        struct uart_tms570_data *data = dev->data;
+        struct dma_status dma_stat;
+        struct uart_event evt;
+        size_t total_len;
+
+        status = dma_get_status(cfg->dma_dev, cfg->dma_channel_rx, &dma_stat);
+        if (status != 0) {
+                LOG_ERR("unable to get dma status: %i", status);
+                return status;
+        }
+
+        total_len = data->dma_rx.buf_size - dma_stat.pending_length;
+
+        evt = (struct uart_event){
+                .type = UART_RX_RDY,
+                .data.rx.buf = data->dma_rx.buf,
+                .data.rx.offset = data->dma_rx.offset,
+                .data.rx.len = total_len,
+        };
+        async_event(dev, &evt);
+
+        data->dma_rx.offset = 0;
+
+        evt = (struct uart_event){
+                .type = UART_RX_BUF_RELEASED,
+                .data.rx_buf.buf = data->dma_rx.buf,
+        };
+        async_event(dev, &evt);
+
+        if (data->dma_rx.next_buf == NULL) {
+                evt = (struct uart_event){
+                        .type = UART_RX_BUF_RELEASED,
+                        .data.rx_buf.buf = data->dma_rx.next_buf,
+                };
+                async_event(dev, &evt);
+        }
+
+        data->dma_rx.buf = NULL;
+        data->dma_rx.buf_size = 0;
+        data->dma_rx.next_buf = NULL;
+        data->dma_rx.next_buf_size = 0;
+
+        (void)dma_stop(cfg->dma_dev, cfg->dma_channel_rx);
+
+        evt.type = UART_RX_DISABLED;
+        async_event(dev, &evt);
+
+        (void)k_work_cancel_delayable(&data->dma_rx.timeout_work);
+
+        return 0;
+}
+
+static int uart_tms570_rx_buf_rsp(const struct device *dev, uint8_t *buf, size_t size)
+{
+        struct uart_tms570_data *data = dev->data;
+
+        data->dma_rx.next_buf = buf;
+        data->dma_rx.next_buf_size = size;
+
+        return 0;
+}
+
+static void async_rx_timeout(struct k_work *work)
+{
+        int status;
+        size_t total_len;
+        struct dma_status dma_stat;
+        struct k_work_delayable *dwork;
+        const struct device *dev;
+        const struct uart_tms570_cfg *cfg;
+        struct uart_tms570_data *data;
+        struct uart_event evt;
+        unsigned int irq_key;
+
+        dwork = k_work_delayable_from_work(work);
+        data = CONTAINER_OF(dwork, struct uart_tms570_data, dma_rx.timeout_work);
+        dev = data->dev;
+        cfg = dev->config;
+
+        (void)k_work_cancel_delayable(&data->dma_rx.timeout_work);
+
+        irq_key = irq_lock();
+
+        status = dma_get_status(cfg->dma_dev, cfg->dma_channel_rx, &dma_stat);
+        if (status != 0) {
+                LOG_ERR("unable to get dma status: %i", status);
+                return;
+        }
+
+        total_len = data->dma_rx.buf_size - dma_stat.pending_length;
+
+        evt = (struct uart_event){
+                .type = UART_RX_RDY,
+                .data.rx.buf = data->dma_rx.buf,
+                .data.rx.offset = data->dma_rx.offset,
+                .data.rx.len = total_len,
+        };
+        async_event(dev, &evt);
+
+        data->dma_rx.offset = 0;
+
+        evt = (struct uart_event){
+                .type = UART_RX_BUF_RELEASED,
+                .data.rx_buf.buf = data->dma_rx.buf,
+        };
+        async_event(dev, &evt);
+
+        data->dma_rx.buf = data->dma_rx.next_buf;
+        data->dma_rx.buf_size = data->dma_rx.next_buf_size;
+
+        data->dma_rx.next_buf = NULL;
+        data->dma_rx.next_buf_size = 0;
+
+        evt.type = UART_RX_BUF_REQUEST;
+        async_event(dev, &evt);
+
+        if (data->dma_rx.buf == NULL) {
+                (void)dma_stop(cfg->dma_dev, cfg->dma_channel_rx);
+
+                evt.type = UART_RX_DISABLED;
+                async_event(dev, &evt);
+        } else {
+                (void)dma_reload(cfg->dma_dev, cfg->dma_channel_rx, 0, (uint32_t)data->dma_rx.buf,
+                                 data->dma_rx.buf_size);
+
+                (void)dma_start(cfg->dma_dev, cfg->dma_channel_rx);
+        }
+
+        irq_unlock(irq_key);
+}
+
+static void uart_tms570_async_rx_isr(const struct device *dma, void *user_data, uint32_t channel,
+                                     int status)
+{
+        const struct device *dev = user_data;
+        struct uart_tms570_data *data = dev->data;
+
+        /* In circular mode `DMA_STATUS_COMPLETE` indicates buffer full, whereas
+         * `DMA_STATUS_BLOCK` indicates a "water mark", in this case a byte */
+        if (status == DMA_STATUS_COMPLETE) {
+                async_timer_restart(&data->dma_rx.timeout_work, 0);
+        } else {
+                async_timer_restart(&data->dma_rx.timeout_work, data->dma_rx.timeout_usec);
+        }
+}
+
+static int uart_tms570_tx(const struct device *dev, const uint8_t *bytes, size_t size,
+                          int32_t timeout)
+{
+        int status;
+        uintptr_t reg_base;
+        const struct uart_tms570_cfg *cfg = dev->config;
+        struct uart_tms570_data *data = dev->data;
+
+        reg_base = DEVICE_MMIO_GET(dev);
+
+        if (cfg->dma_request_tx == -1 || cfg->dma_channel_tx == -1) {
+                LOG_ERR("uart not configured for async use");
+                return -EINVAL;
+        }
+
+        data->dma_tx.buf = (uint8_t *)bytes;
+        data->dma_tx.buf_size = size;
+        data->dma_tx.timeout_usec = timeout;
+        data->dma_tx.offset = 0;
+        data->dma_tx.dma_blk.block_size = data->dma_tx.buf_size;
+        data->dma_tx.dma_blk.source_address = (uint32_t)data->dma_tx.buf;
+
+        status = dma_config(cfg->dma_dev, cfg->dma_channel_tx, &data->dma_tx.dma_cfg);
+        if (status != 0) {
+                LOG_ERR("unable to configure dma");
+                return status;
+        }
+
+        async_timer_restart(&data->dma_tx.timeout_work, data->dma_tx.timeout_usec);
+
+        status = dma_start(cfg->dma_dev, cfg->dma_channel_tx);
+        if (status != 0) {
+                LOG_ERR("unable to start dma");
+                return status;
+        }
+
+        sys_clear_bits(reg_base + CGR1_OFFSET, TXENA_BIT);
+        sys_set_bits(reg_base + CGR1_OFFSET, TXENA_BIT);
+
+        return 0;
+}
+
+static int uart_tms570_tx_abort(const struct device *dev)
+{
+        int status;
+        struct uart_event evt;
+        struct dma_status dma_stat;
+        const struct uart_tms570_cfg *cfg;
+        struct uart_tms570_data *data;
+
+        cfg = dev->config;
+        data = dev->data;
+
+        (void)k_work_cancel_delayable(&data->dma_tx.done_work);
+        (void)k_work_cancel_delayable(&data->dma_tx.timeout_work);
+
+        status = dma_get_status(cfg->dma_dev, cfg->dma_channel_tx, &dma_stat);
+        if (status != 0) {
+                LOG_ERR("unable to get dma status: %i", status);
+                return status;
+        }
+
+        (void)dma_stop(cfg->dma_dev, cfg->dma_channel_tx);
+
+        evt = (struct uart_event){
+                .type = UART_TX_ABORTED,
+                .data.tx.buf = data->dma_tx.buf,
+                .data.tx.len = data->dma_tx.buf_size - dma_stat.pending_length,
+        };
+        async_event(dev, &evt);
+
+        return 0;
+}
+
+static void async_tx_timeout(struct k_work *work)
+{
+        struct k_work_delayable *dwork;
+        struct uart_tms570_data *data;
+
+        dwork = k_work_delayable_from_work(work);
+        data = CONTAINER_OF(dwork, struct uart_tms570_data, dma_tx.timeout_work);
+
+        (void)uart_tms570_tx_abort(data->dev);
+}
+
+static void async_tx_done(struct k_work *work)
+{
+        int status;
+        struct k_work_delayable *dwork;
+        struct uart_tms570_data *data;
+        struct uart_event evt;
+        struct dma_status dma_stat;
+        const struct uart_tms570_cfg *cfg;
+        const struct device *dev;
+
+        dwork = k_work_delayable_from_work(work);
+        data = CONTAINER_OF(dwork, struct uart_tms570_data, dma_tx.done_work);
+        dev = data->dev;
+        cfg = dev->config;
+
+        status = dma_get_status(cfg->dma_dev, cfg->dma_channel_tx, &dma_stat);
+        if (status != 0) {
+                LOG_ERR("unable to get dma status %i", status);
+                return;
+        }
+
+        (void)k_work_cancel_delayable(&data->dma_tx.done_work);
+        (void)k_work_cancel_delayable(&data->dma_tx.timeout_work);
+
+        (void)dma_stop(cfg->dma_dev, cfg->dma_channel_tx);
+
+        evt = (struct uart_event){
+                .type = UART_TX_DONE,
+                .data.tx.buf = data->dma_tx.buf,
+                .data.tx.len = data->dma_tx.buf_size - dma_stat.pending_length,
+        };
+        async_event(dev, &evt);
+}
+
+static void uart_tms570_async_tx_isr(const struct device *dma, void *user_data, uint32_t channel,
+                                     int status)
+{
+        const struct device *dev = user_data;
+        struct uart_tms570_data *data = dev->data;
+
+        if (status != DMA_STATUS_BLOCK) {
+                return;
+        }
+
+        async_timer_restart(&data->dma_tx.done_work, 0);
+}
+
+#endif
+
 static const struct uart_driver_api uart_tms570_driver_api = {
         .poll_in = uart_tms570_poll_in,
         .poll_out = uart_tms570_poll_out,
@@ -261,7 +653,73 @@ static const struct uart_driver_api uart_tms570_driver_api = {
         .irq_update = uart_tms570_irq_update,
         .irq_callback_set = uart_tms570_irq_callback_set,
 #endif
+
+#ifdef CONFIG_UART_ASYNC_API
+        .rx_enable = uart_tms570_rx_enable,
+        .rx_buf_rsp = uart_tms570_rx_buf_rsp,
+        .rx_disable = uart_tms570_rx_disable,
+        .tx = uart_tms570_tx,
+        .tx_abort = uart_tms570_tx_abort,
+        .callback_set = uart_tms570_callback_set,
+#endif
 };
+
+#ifdef CONFIG_UART_ASYNC_API
+static void uart_tms570_async_init(const struct device *dev)
+{
+        uintptr_t reg_base;
+        const struct uart_tms570_cfg *cfg = dev->config;
+        struct uart_tms570_data *data = dev->data;
+
+        reg_base = DEVICE_MMIO_GET(dev);
+
+        data->dev = dev;
+
+        data->dma_rx.dma_blk = (struct dma_block_config){
+                .source_address = reg_base + RDBUF_OFFSET + 3,
+                .source_addr_adj = DMA_ADDR_ADJ_NO_CHANGE,
+                .dest_addr_adj = DMA_ADDR_ADJ_INCREMENT,
+        };
+
+        data->dma_rx.dma_cfg = (struct dma_config){
+                .source_data_size = 1,
+                .dest_data_size = 1,
+                .channel_direction = PERIPHERAL_TO_MEMORY,
+                .dma_slot = cfg->dma_request_rx,
+                .dma_callback = uart_tms570_async_rx_isr,
+                .user_data = (void *)dev,
+                .head_block = &data->dma_rx.dma_blk,
+                .block_count = 1,
+                .cyclic = 1,
+                .channel_priority = 1,
+        };
+
+        data->dma_tx.dma_blk = (struct dma_block_config){
+                .dest_address = reg_base + TDBUF_OFFSET + 3,
+                .dest_addr_adj = DMA_ADDR_ADJ_NO_CHANGE,
+                .source_addr_adj = DMA_ADDR_ADJ_INCREMENT,
+        };
+
+        data->dma_tx.dma_cfg = (struct dma_config){
+                .source_data_size = 1,
+                .dest_data_size = 1,
+                .dma_slot = cfg->dma_request_tx,
+                .user_data = (void *)dev,
+                .channel_direction = MEMORY_TO_PERIPHERAL,
+                .head_block = &data->dma_tx.dma_blk,
+                .block_count = 1,
+                .dma_callback = uart_tms570_async_tx_isr,
+                .channel_priority = 1,
+        };
+
+        k_work_init_delayable(&data->dma_rx.timeout_work, async_rx_timeout);
+        k_work_init_delayable(&data->dma_tx.timeout_work, async_tx_timeout);
+        k_work_init_delayable(&data->dma_tx.done_work, async_tx_done);
+
+        sys_set_bits(reg_base + SETINT_OFFSET, RXDMA_BITS | TXDMA_BIT);
+}
+
+#endif
 
 /**
  * @brief Initialize UART device @p dev
@@ -311,13 +769,17 @@ static int uart_tms570_init(const struct device *dev)
 
         sys_write32(tmp, reg_base + CGR1_OFFSET);
 
-        /* Set the SWnRST bit back to 1. This prevents further configuration
-         * of the peripheral. */
-        sys_set_bits(reg_base + CGR1_OFFSET, SWnRST_BIT);
+#ifdef CONFIG_UART_ASYNC_API
+        uart_tms570_async_init(dev);
+#endif
 
 #ifdef CONFIG_UART_INTERRUPT_DRIVEN
         cfg->irq_connect(dev);
 #endif
+
+        /* Set the SWnRST bit back to 1. This prevents further configuration
+         * of the peripheral. */
+        sys_set_bits(reg_base + CGR1_OFFSET, SWnRST_BIT);
 
         return 0;
 }
@@ -336,6 +798,18 @@ static int uart_tms570_init(const struct device *dev)
 #define UART_TMS570_IRQ_CFG(n)
 #endif /* CONFIG_UART_INTERRUPT_DRIVEN */
 
+#ifdef CONFIG_UART_ASYNC_API
+#define UART_TMS570_ASYNC_CFG(n)                                                                   \
+        .dma_dev = DEVICE_DT_GET(DT_INST(0, tms570_dma)),                                          \
+        .dma_request_rx = DT_INST_PROP_OR(n, dma_request_rx, -1),                                  \
+        .dma_request_tx = DT_INST_PROP_OR(n, dma_request_tx, -1),                                  \
+        .dma_channel_rx = DT_INST_PROP_OR(n, dma_channel_rx, -1),                                  \
+        .dma_channel_tx = DT_INST_PROP_OR(n, dma_channel_tx, -1),
+
+#else
+#define UART_TMS570_ASYNC_CFG(n)
+#endif
+
 #define UART_TMS570_INIT(node)                                                                     \
         PINCTRL_DT_INST_DEFINE(node);                                                              \
         UART_TMS570_IRQ_ENABLE_FN(node);                                                           \
@@ -345,7 +819,7 @@ static int uart_tms570_init(const struct device *dev)
                 .pincfg = PINCTRL_DT_INST_DEV_CONFIG_GET(node),                                    \
                 .clk_ctrl = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(node)),                              \
                 .clk_domain = DT_CLOCKS_CELL(DT_DRV_INST(node), clk_id),                           \
-                UART_TMS570_IRQ_CFG(node)};                                                        \
+                UART_TMS570_ASYNC_CFG(node) UART_TMS570_IRQ_CFG(node)};                            \
         static struct uart_tms570_data uart_tms570_##node##_data;                                  \
                                                                                                    \
         DEVICE_DT_INST_DEFINE(node, &uart_tms570_init, NULL, &uart_tms570_##node##_data,           \

@@ -4,4 +4,5 @@ config UART_TMS570
     default y
     select SERIAL_HAS_DRIVER
     select SERIAL_SUPPORT_INTERRUPT
+    select SERIAL_SUPPORT_ASYNC
     depends on DT_HAS_TMS570_UART_ENABLED && SERIAL

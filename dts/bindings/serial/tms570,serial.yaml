@@ -10,3 +10,19 @@ properties:
 
   clocks:
     required: true
+
+  dma-request-rx:
+    type: int
+    description: DMA Request RX 
+
+  dma-request-tx:
+    type: int
+    description: DMA Request TX 
+
+  dma-channel-rx:
+    type: int
+    description: DMA Channel RX 
+
+  dma-channel-tx:
+    type: int
+    description: DMA Channel TX 
