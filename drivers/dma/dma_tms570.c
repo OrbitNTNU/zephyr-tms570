@@ -576,6 +576,7 @@ static int dma_tms570_isr(const struct device *dev)
 
         btcflag = sys_read32(ctrl_reg_base + BTCFLAG_OFFSET);
         ftcflag = sys_read32(ctrl_reg_base + FTCFLAG_OFFSET);
+        status = DMA_STATUS_BLOCK;
 
         for (i = 0; (btcflag || ftcflag) && i < NUM_CHANNELS; i++, btcflag >>= 1, ftcflag >>= 1) {
                 channel = &data->channels[i];
