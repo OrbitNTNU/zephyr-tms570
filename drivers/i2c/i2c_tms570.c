@@ -390,6 +390,12 @@ static int tx_msg(const struct device *dev, struct i2c_msg *msg)
         return 0;
 }
 
+static void mdr_reset(uintptr_t reg_base)
+{
+        sys_clear_bits(reg_base + MDR_OFFSET, IRS_BIT);
+        sys_set_bits(reg_base + MDR_OFFSET, IRS_BIT);
+}
+
 static int xfer_msg(const struct device *dev, struct i2c_msg *msg, uint16_t addr)
 {
         int status;
@@ -424,7 +430,7 @@ static int xfer_msg(const struct device *dev, struct i2c_msg *msg, uint16_t addr
         return status;
 
 error:
-        (void)i2c_recover_bus(dev);
+        mdr_reset(reg_base);
 
         return status;
 }
