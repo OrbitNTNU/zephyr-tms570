@@ -295,7 +295,8 @@ static void async_event(const struct device *dev, struct uart_event *event)
 static void async_timer_restart(struct k_work_delayable *dwork, int32_t timeout)
 {
         if (timeout == SYS_FOREVER_US || timeout == 0) {
-                timeout = 1;
+                (void)k_work_reschedule(dwork, K_TICKS(1));
+                return;
         }
 
         (void)k_work_reschedule(dwork, K_USEC(timeout));
