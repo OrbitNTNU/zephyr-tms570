@@ -432,9 +432,9 @@ static void async_rx_timeout(struct k_work *work)
         dev = data->dev;
         cfg = dev->config;
 
-        (void)k_work_cancel_delayable(&data->dma_rx.timeout_work);
-
         irq_key = irq_lock();
+
+        (void)k_work_cancel_delayable(&data->dma_rx.timeout_work);
 
         status = dma_get_status(cfg->dma_dev, cfg->dma_channel_rx, &dma_stat);
         if (status != 0) {
@@ -506,6 +506,7 @@ static int uart_tms570_tx(const struct device *dev, const uint8_t *bytes, size_t
         uintptr_t reg_base;
         const struct uart_tms570_cfg *cfg = dev->config;
         struct uart_tms570_data *data = dev->data;
+        int irq_key;
 
         reg_base = DEVICE_MMIO_GET(dev);
 
@@ -521,9 +522,12 @@ static int uart_tms570_tx(const struct device *dev, const uint8_t *bytes, size_t
         data->dma_tx.dma_blk.block_size = data->dma_tx.buf_size;
         data->dma_tx.dma_blk.source_address = (uint32_t)data->dma_tx.buf;
 
+        irq_key = irq_lock();
+
         status = dma_config(cfg->dma_dev, cfg->dma_channel_tx, &data->dma_tx.dma_cfg);
         if (status != 0) {
                 LOG_ERR("unable to configure dma");
+                irq_unlock(irq_key);
                 return status;
         }
 
@@ -532,12 +536,14 @@ static int uart_tms570_tx(const struct device *dev, const uint8_t *bytes, size_t
         status = dma_start(cfg->dma_dev, cfg->dma_channel_tx);
         if (status != 0) {
                 LOG_ERR("unable to start dma");
+                irq_unlock(irq_key);
                 return status;
         }
 
         sys_clear_bits(reg_base + CGR1_OFFSET, TXENA_BIT);
         sys_set_bits(reg_base + CGR1_OFFSET, TXENA_BIT);
 
+        irq_unlock(irq_key);
         return 0;
 }
 
@@ -548,9 +554,12 @@ static int uart_tms570_tx_abort(const struct device *dev)
         struct dma_status dma_stat;
         const struct uart_tms570_cfg *cfg;
         struct uart_tms570_data *data;
+        int irq_key;
 
         cfg = dev->config;
         data = dev->data;
+
+        irq_key = irq_lock();
 
         (void)k_work_cancel_delayable(&data->dma_tx.done_work);
         (void)k_work_cancel_delayable(&data->dma_tx.timeout_work);
@@ -558,6 +567,7 @@ static int uart_tms570_tx_abort(const struct device *dev)
         status = dma_get_status(cfg->dma_dev, cfg->dma_channel_tx, &dma_stat);
         if (status != 0) {
                 LOG_ERR("unable to get dma status: %i", status);
+                irq_unlock(irq_key);
                 return status;
         }
 
@@ -570,6 +580,7 @@ static int uart_tms570_tx_abort(const struct device *dev)
         };
         async_event(dev, &evt);
 
+        irq_unlock(irq_key);
         return 0;
 }
 
