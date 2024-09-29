@@ -1,7 +1,7 @@
 
-This repository acts as a Zephyr module, implementing support for custom
-Orbit NTNU hardware. This includes custom SoC support, such as for the
-`TI TMS570LS1224` SoC, aswell as board configuration files.
+This repository acts as a Zephyr module, implementing support for the
+FramSat-1 and FramSat1.5 on board computer. This includes custom SoC
+support for the `TI TMS570LS1224` SoC, aswell as board configuration files.
 
 ## Usage
 In order to use the `TMS570LS1224` SoC, the included big-endian `arm-none-eabi`
