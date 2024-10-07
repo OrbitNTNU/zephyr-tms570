@@ -8,10 +8,11 @@
 #include <zephyr/sys_clock.h>
 #include <zephyr/logging/log.h>
 
-/* in ${ZEPHYR_BASE}/drivers/i2c */
-#include "i2c_bitbang.h"
-
 LOG_MODULE_REGISTER(i2c_tms570);
+
+/* in ${ZEPHYR_BASE}/drivers/i2c */
+#include "i2c-priv.h"
+#include "i2c_bitbang.h"
 
 #define DT_DRV_COMPAT tms570_i2c
 
@@ -86,6 +87,7 @@ struct i2c_tms570_cfg {
         void (*irq_connect)(const struct device *dev);
 
         uint32_t mod_clk_freq;
+        uint32_t bitrate;
 };
 
 struct i2c_tms570_data {
@@ -598,10 +600,7 @@ static int i2c_tms570_init(const struct device *dev)
 
         cfg->irq_connect(dev);
 
-        /* Go out of reset */
-        sys_set_bits(reg_base + MDR_OFFSET, IRS_BIT);
-
-        return 0;
+        return i2c_tms570_configure(dev, i2c_map_dt_bitrate(cfg->bitrate));
 }
 
 static void i2c_tms570_isr(const struct device *dev)
@@ -754,6 +753,7 @@ static const struct i2c_driver_api i2c_tms570_driver_api = {
                 .clk_ctrl = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(nodeid)),                            \
                 .clk_domain = DT_CLOCKS_CELL(DT_DRV_INST(nodeid), clk_id),                         \
                 .irq_connect = i2c_tms570_##nodeid##_irq_connect,                                  \
+                .bitrate = DT_INST_PROP_OR(nodeid, clock_frequency, I2C_BITRATE_FAST),             \
                 .mod_clk_freq = DT_INST_PROP(nodeid, module_clock_frequency),                      \
         };                                                                                         \
         static struct i2c_tms570_data i2c_tms570_##nodeid##_data;                                  \
