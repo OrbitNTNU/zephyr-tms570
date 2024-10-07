@@ -21,7 +21,6 @@ LOG_MODULE_REGISTER(i2c_tms570);
 #define STR_OFFSET   (0x08)
 #define CKL_OFFSET   (0x0c)
 #define CKH_OFFSET   (0x10)
-#define CNT_OFFSET   (0x14)
 #define DRR_OFFSET   (0x18)
 #define SAR_OFFSET   (0x1c)
 #define DXR_OFFSET   (0x20)
@@ -62,6 +61,7 @@ LOG_MODULE_REGISTER(i2c_tms570);
 #define STP_BIT (1 << 11)
 #define MST_BIT (1 << 10)
 #define TRX_BIT (1 << 9)
+#define RM_BIT  (1 << 7)
 #define IRS_BIT (1 << 5)
 
 /* PFNC register bits */
@@ -213,7 +213,7 @@ static void intr_enable(uintptr_t reg_base, uint32_t mask)
         sys_write32(mask, reg_base + IMR_OFFSET);
 }
 
-static int xfer_start(uintptr_t reg_base)
+static int xfer_start(uintptr_t reg_base, bool restart)
 {
         unsigned int i;
         k_timepoint_t timeout;
@@ -221,9 +221,11 @@ static int xfer_start(uintptr_t reg_base)
         timeout = sys_timepoint_calc(TIMEOUT_MSEC);
 
         for (i = 0; i < RETRY_ATTEMPTS; i++) {
-                while (is_bus_busy(reg_base)) {
-                        if (sys_timepoint_expired(timeout)) {
-                                return -ETIMEDOUT;
+                if (!restart) {
+                        while (is_bus_busy(reg_base)) {
+                                if (sys_timepoint_expired(timeout)) {
+                                        return -ETIMEDOUT;
+                                }
                         }
                 }
 
@@ -268,6 +270,8 @@ static int xfer_end(uintptr_t reg_base)
 {
         k_timepoint_t timeout = sys_timepoint_calc(TIMEOUT_MSEC);
 
+        sys_set_bits(reg_base + MDR_OFFSET, STP_BIT);
+
         while (!is_stop(reg_base) || is_bus_busy(reg_base) || is_controller(reg_base)) {
                 if (sys_timepoint_expired(timeout)) {
                         return -ETIMEDOUT;
@@ -299,25 +303,6 @@ static void set_dir(uintptr_t reg_base, bool dir_rx)
         }
 
         sys_set_bits(reg_base + MDR_OFFSET, TRX_BIT);
-}
-
-/**
- * @brief Set the CNT register, and enable the stop condition
- *
- * Setting the count register, and enabling the stop condition, will ensure
- * that the stop condition is generated when the count reaches 0.
- *
- * @param reg_base
- * @param count
- */
-static void set_count(uintptr_t reg_base, uint16_t count)
-{
-        sys_write32(count, reg_base + CNT_OFFSET);
-
-        /* When in non-repeat mode, the stop condition is only generated when
-         * CNT reaches 0. The STP bit is therefore set here, to ensure the
-         * stop condition is generated later. */
-        sys_set_bits(reg_base + MDR_OFFSET, STP_BIT);
 }
 
 static void set_pin(uintptr_t reg_base, unsigned int bit, int state)
@@ -400,7 +385,7 @@ static void mdr_reset(uintptr_t reg_base)
         sys_set_bits(reg_base + MDR_OFFSET, IRS_BIT);
 }
 
-static int xfer_msg(const struct device *dev, struct i2c_msg *msg, uint16_t addr)
+static int xfer_msg(const struct device *dev, struct i2c_msg *msg, uint16_t addr, bool do_start)
 {
         int status;
         uintptr_t reg_base;
@@ -409,11 +394,12 @@ static int xfer_msg(const struct device *dev, struct i2c_msg *msg, uint16_t addr
 
         set_sar(reg_base, addr);
         set_dir(reg_base, msg->flags & I2C_MSG_READ);
-        set_count(reg_base, msg->len);
 
-        status = xfer_start(reg_base);
-        if (status != 0) {
-                goto error;
+        if (do_start) {
+                status = xfer_start(reg_base, msg->flags & I2C_MSG_RESTART);
+                if (status != 0) {
+                        goto error;
+                }
         }
 
         if (msg->flags & I2C_MSG_READ) {
@@ -426,9 +412,11 @@ static int xfer_msg(const struct device *dev, struct i2c_msg *msg, uint16_t addr
                 goto error;
         }
 
-        status = xfer_end(reg_base);
-        if (status != 0) {
-                goto error;
+        if (msg->flags & I2C_MSG_STOP) {
+                status = xfer_end(reg_base);
+                if (status != 0) {
+                        goto error;
+                }
         }
 
         return status;
@@ -458,7 +446,7 @@ static int i2c_tms570_transfer(const struct device *dev, struct i2c_msg *msgs, u
         irq_mask = intr_disable(reg_base);
 
         for (uint8_t i = 0; i < count; i++) {
-                status = xfer_msg(dev, &msgs[i], addr);
+                status = xfer_msg(dev, &msgs[i], addr, i == 0 || (msgs[i].flags & I2C_MSG_RESTART));
                 if (status != 0) {
                         LOG_ERR("xfer failed with status %i", status);
                         break;
@@ -597,6 +585,8 @@ static int i2c_tms570_init(const struct device *dev)
 
         /* Disable DMA use */
         sys_write32(0, reg_base + DMACR_OFFSET);
+
+        sys_set_bits(reg_base + MDR_OFFSET, RM_BIT);
 
         cfg->irq_connect(dev);
 
