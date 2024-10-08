@@ -448,7 +448,6 @@ static int i2c_tms570_transfer(const struct device *dev, struct i2c_msg *msgs, u
         for (uint8_t i = 0; i < count; i++) {
                 status = xfer_msg(dev, &msgs[i], addr, i == 0 || (msgs[i].flags & I2C_MSG_RESTART));
                 if (status != 0) {
-                        LOG_ERR("xfer failed with status %i", status);
                         break;
                 }
         }
