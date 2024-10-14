@@ -94,6 +94,7 @@ struct i2c_tms570_data {
         DEVICE_MMIO_RAM;
 
         struct k_mutex lock;
+        uint32_t cur_cfg;
 
 #if defined(CONFIG_I2C_TARGET)
         struct i2c_target_config *target_cfg;
@@ -542,6 +543,8 @@ static int i2c_tms570_configure(const struct device *dev, uint32_t config)
         sys_write32(ckl, reg_base + CKL_OFFSET);
         sys_write32(ckh, reg_base + CKH_OFFSET);
 
+        data->cur_cfg = config;
+
 exit:
         /* Go out of reset */
         sys_set_bits(reg_base + MDR_OFFSET, IRS_BIT);
@@ -549,6 +552,23 @@ exit:
         (void)k_mutex_unlock(&data->lock);
 
         return status;
+}
+
+static int i2c_tms570_get_config(const struct device *dev, uint32_t *cfg)
+{
+        int status;
+        struct i2c_tms570_data *data = dev->data;
+
+        status = k_mutex_lock(&data->lock, K_FOREVER);
+        if (status != 0) {
+                return status;
+        }
+
+        *cfg = data->cur_cfg;
+
+        (void)k_mutex_unlock(&data->lock);
+
+        return 0;
 }
 
 static int i2c_tms570_init(const struct device *dev)
@@ -720,6 +740,7 @@ static int i2c_tms570_target_unregister(const struct device *dev, struct i2c_tar
 static const struct i2c_driver_api i2c_tms570_driver_api = {
         .transfer = i2c_tms570_transfer,
         .configure = i2c_tms570_configure,
+        .get_config = i2c_tms570_get_config,
         .recover_bus = i2c_tms570_recover_bus,
 
 #if defined(CONFIG_I2C_TARGET)
