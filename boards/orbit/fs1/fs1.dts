@@ -2,6 +2,7 @@
 
 #include <arm/armv7-r.dtsi>
 #include <mem.h>
+#include <zephyr/dt-bindings/i2c/i2c.h>
 #include <orbit/dt-bindings/interrupt_controller/tms570-intc.h>
 #include <orbit/dt-bindings/pinctrl/tms570-pinctrl.h>
 #include <orbit/dt-bindings/clock_control/clock_control_tms570.h>
@@ -61,6 +62,7 @@
         reg = <0xfff7d400 256>;
         module-clock-frequency = <8000000>;
         interrupts = <66 IRQ_DEFAULT_PRIORITY>;
+        clock-frequency = <I2C_BITRATE_STANDARD>;
         status = "okay";
         #address-cells = <1>;
         #size-cells = <0>;
