@@ -75,7 +75,7 @@ LOG_MODULE_REGISTER(i2c_tms570);
 #define MOD_CLK_MIN (6700000)
 #define MOD_CLK_MAX (13300000)
 
-#define TIMEOUT_MSEC   (K_MSEC(100))
+#define TIMEOUT_MSEC   (K_MSEC(10))
 #define RETRY_ATTEMPTS (10)
 
 struct i2c_tms570_cfg {
@@ -219,9 +219,9 @@ static int xfer_start(uintptr_t reg_base, bool restart)
         unsigned int i;
         k_timepoint_t timeout;
 
-        timeout = sys_timepoint_calc(TIMEOUT_MSEC);
-
         for (i = 0; i < RETRY_ATTEMPTS; i++) {
+                timeout = sys_timepoint_calc(TIMEOUT_MSEC);
+
                 if (!restart) {
                         while (is_bus_busy(reg_base)) {
                                 if (sys_timepoint_expired(timeout)) {
@@ -352,6 +352,7 @@ static int rx_msg(const struct device *dev, struct i2c_msg *msg)
                 }
 
                 msg->buf[i] = (uint8_t)sys_read32(reg_base + DRR_OFFSET);
+                timeout = sys_timepoint_calc(TIMEOUT_MSEC);
         }
 
         return 0;
@@ -375,6 +376,7 @@ static int tx_msg(const struct device *dev, struct i2c_msg *msg)
                 }
 
                 sys_write32(msg->buf[i], reg_base + DXR_OFFSET);
+                timeout = sys_timepoint_calc(TIMEOUT_MSEC);
         }
 
         return 0;
