@@ -654,11 +654,6 @@ static void i2c_tms570_isr(const struct device *dev)
                          * we can safely assume that we are then target receiever.
                          */
                         status = callbacks->write_requested(data->target_cfg);
-                        byte = sys_read32(reg_base + DRR_OFFSET);
-
-                        if (status == 0) {
-                                status = callbacks->write_received(data->target_cfg, byte);
-                        }
                 }
                 break;
         case SCD_IRQ:
