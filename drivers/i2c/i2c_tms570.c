@@ -244,7 +244,9 @@ static int xfer_start(uintptr_t reg_base, bool restart)
                 if (is_nack(reg_base)) {
                         return -EIO;
                 } else if (!is_arb_lost(reg_base)) {
-                        /* Successfully taken control of bus */
+                        /* Successfully taken control of bus. Disable
+                         * interrupts */
+                        (void)intr_disable(reg_base);
                         return 0;
                 }
 
@@ -435,7 +437,6 @@ static int i2c_tms570_transfer(const struct device *dev, struct i2c_msg *msgs, u
 {
         int status;
         uintptr_t reg_base;
-        uint32_t irq_mask;
         struct i2c_tms570_data *data;
 
         reg_base = DEVICE_MMIO_GET(dev);
@@ -446,8 +447,6 @@ static int i2c_tms570_transfer(const struct device *dev, struct i2c_msg *msgs, u
                 return status;
         }
 
-        irq_mask = intr_disable(reg_base);
-
         for (uint8_t i = 0; i < count; i++) {
                 status = xfer_msg(dev, &msgs[i], addr, i == 0 || (msgs[i].flags & I2C_MSG_RESTART));
                 if (status != 0) {
@@ -455,8 +454,7 @@ static int i2c_tms570_transfer(const struct device *dev, struct i2c_msg *msgs, u
                 }
         }
 
-        intr_enable(reg_base, irq_mask);
-
+        intr_enable(reg_base, IRQ_EN_MASK);
         (void)k_mutex_unlock(&data->lock);
 
         return status;
