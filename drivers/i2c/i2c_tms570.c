@@ -273,8 +273,6 @@ static int xfer_end(uintptr_t reg_base)
 {
         k_timepoint_t timeout = sys_timepoint_calc(TIMEOUT_MSEC);
 
-        sys_set_bits(reg_base + MDR_OFFSET, STP_BIT);
-
         while (!is_stop(reg_base) || is_bus_busy(reg_base) || is_controller(reg_base)) {
                 if (sys_timepoint_expired(timeout)) {
                         return -ETIMEDOUT;
@@ -345,6 +343,10 @@ static int rx_msg(const struct device *dev, struct i2c_msg *msg)
         timeout = sys_timepoint_calc(TIMEOUT_MSEC);
 
         for (uint32_t i = 0; i < msg->len; i++) {
+                if (i == msg->len - 1 && msg->flags & I2C_MSG_STOP) {
+                        sys_set_bits(reg_base + MDR_OFFSET, STP_BIT);
+                }
+
                 while (!(sys_read32(reg_base + STR_OFFSET) & RXRDY_BIT)) {
                         if (is_nack(reg_base)) {
                                 return -EIO;
@@ -379,6 +381,10 @@ static int tx_msg(const struct device *dev, struct i2c_msg *msg)
 
                 sys_write32(msg->buf[i], reg_base + DXR_OFFSET);
                 timeout = sys_timepoint_calc(TIMEOUT_MSEC);
+        }
+
+        if (msg->flags & I2C_MSG_STOP) {
+                sys_set_bits(reg_base + MDR_OFFSET, STP_BIT);
         }
 
         return 0;
