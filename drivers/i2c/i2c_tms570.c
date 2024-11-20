@@ -38,7 +38,7 @@ LOG_MODULE_REGISTER(i2c_tms570);
 #define SCD_EN_BIT   (1 << 5)
 #define TXRDY_EN_BIT (1 << 4)
 #define RXRDY_EN_BIT (1 << 3)
-#define IRQ_EN_MASK  (AAS_EN_BIT | SCD_EN_BIT | TXRDY_EN_BIT | RXRDY_EN_BIT)
+#define IRQ_EN_MASK  (AAS_EN_BIT | SCD_EN_BIT | RXRDY_EN_BIT)
 
 /* Interrupt values (IVR) */
 #define AAS_IRQ   (0x7)
