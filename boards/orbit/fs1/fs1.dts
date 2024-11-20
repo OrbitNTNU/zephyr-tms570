@@ -62,7 +62,7 @@
         reg = <0xfff7d400 256>;
         module-clock-frequency = <8000000>;
         interrupts = <66 IRQ_DEFAULT_PRIORITY>;
-        clock-frequency = <I2C_BITRATE_STANDARD>;
+        clock-frequency = <I2C_BITRATE_FAST>;
         status = "okay";
         #address-cells = <1>;
         #size-cells = <0>;
