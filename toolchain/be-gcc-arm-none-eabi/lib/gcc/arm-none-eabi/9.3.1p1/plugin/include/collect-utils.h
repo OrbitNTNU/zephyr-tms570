@@ -21,18 +21,15 @@ along with GCC; see the file COPYING3.  If not see
 #define GCC_COLLECT_UTILS_H
 
 /* Provided in collect-utils.c.  */
-extern void notice (const char *, ...)
-  __attribute__ ((format (printf, 1, 2)));
-extern void fatal_signal (int);
+extern void notice(const char *, ...) __attribute__((format(printf, 1, 2)));
+extern void fatal_signal(int);
 
-extern struct pex_obj *collect_execute (const char *, char **,
-					const char *, const char *,
-					int, bool);
-extern int collect_wait (const char *, struct pex_obj *);
-extern void do_wait (const char *, struct pex_obj *);
-extern void fork_execute (const char *, char **, bool);
-extern void utils_cleanup (bool);
-
+extern struct pex_obj *collect_execute(const char *, char **, const char *, const char *, int,
+                                       bool);
+extern int collect_wait(const char *, struct pex_obj *);
+extern void do_wait(const char *, struct pex_obj *);
+extern void fork_execute(const char *, char **, bool);
+extern void utils_cleanup(bool);
 
 extern bool debug;
 extern bool verbose;
@@ -43,7 +40,7 @@ extern bool save_temps;
 /* The name of the tool, printed in error messages.  */
 extern const char tool_name[];
 /* Called by utils_cleanup.  */
-extern void tool_cleanup (bool);
-extern void maybe_unlink (const char *);
+extern void tool_cleanup(bool);
+extern void maybe_unlink(const char *);
 
 #endif /* GCC_COLLECT_UTILS_H */

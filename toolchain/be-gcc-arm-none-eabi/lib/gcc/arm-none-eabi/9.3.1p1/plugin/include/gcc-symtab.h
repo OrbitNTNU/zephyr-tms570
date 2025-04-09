@@ -23,6 +23,6 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef GCC_SYMTAB_H
 #define GCC_SYMTAB_H
 
-extern void change_decl_assembler_name (tree, tree);
+extern void change_decl_assembler_name(tree, tree);
 
-#endif  // GCC_SYMTAB_H
+#endif // GCC_SYMTAB_H

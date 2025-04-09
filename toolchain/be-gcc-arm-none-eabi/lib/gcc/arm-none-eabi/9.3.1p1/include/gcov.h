@@ -27,15 +27,15 @@
 
 /* Set all counters to zero.  */
 
-extern void __gcov_reset (void);
+extern void __gcov_reset(void);
 
 /* Write profile information to a file.  */
 
-extern void __gcov_dump (void);
+extern void __gcov_dump(void);
 
 /* Write profile information to a file and reset counters to zero.
    The function does operations under a mutex.  */
 
-extern void __gcov_flush (void);
+extern void __gcov_flush(void);
 
 #endif /* GCC_GCOV_H */

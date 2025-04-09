@@ -39,117 +39,122 @@
 
 namespace __gnu_profile
 {
-  typedef void* __instruction_address_t;
-  typedef std::_GLIBCXX_STD_C::vector<__instruction_address_t> __stack_npt;
-  typedef __stack_npt* __stack_t;
+typedef void *__instruction_address_t;
+typedef std::_GLIBCXX_STD_C::vector<__instruction_address_t> __stack_npt;
+typedef __stack_npt *__stack_t;
 
-  std::size_t __stack_max_depth();
+std::size_t __stack_max_depth();
 
-  inline __stack_t
-  __get_stack()
-  {
+inline __stack_t __get_stack()
+{
 #if defined _GLIBCXX_HAVE_EXECINFO_H
-    __try
-      {
-	std::size_t __max_depth = __stack_max_depth();
-	if (__max_depth == 0)
-	  return 0;
-	__stack_npt __buffer(__max_depth);
-	int __depth = backtrace(&__buffer[0], __max_depth);
-	return new(std::nothrow) __stack_npt(__buffer.begin(),
-					     __buffer.begin() + __depth);
-      }
-    __catch(...)
-      {
-	return 0;
-      }
+        __try {
+                std::size_t __max_depth = __stack_max_depth();
+                if (__max_depth == 0) {
+                        return 0;
+                }
+                __stack_npt __buffer(__max_depth);
+                int __depth = backtrace(&__buffer[0], __max_depth);
+                return new (std::nothrow) __stack_npt(__buffer.begin(), __buffer.begin() + __depth);
+        }
+        __catch(...)
+        {
+                return 0;
+        }
 #else
-    return 0;
+        return 0;
 #endif
-  }
+}
 
-  inline std::size_t
-  __size(__stack_t __stack)
-  {
-    if (!__stack)
-      return 0;
-    else
-      return __stack->size();
-  }
+inline std::size_t __size(__stack_t __stack)
+{
+        if (!__stack) {
+                return 0;
+        } else {
+                return __stack->size();
+        }
+}
 
-  // XXX
-  inline void
-  __write(FILE* __f, __stack_t __stack)
-  {
-    if (!__stack)
-      return;
-  
-    __stack_npt::const_iterator __it;
-    for (__it = __stack->begin(); __it != __stack->end(); ++__it)
-      std::fprintf(__f, "%p ", *__it);
-  }
+// XXX
+inline void __write(FILE *__f, __stack_t __stack)
+{
+        if (!__stack) {
+                return;
+        }
 
-  /** @brief Hash function for summary trace using call stack as index.  */
-  class __stack_hash 
-  {
-  public:
-    std::size_t
-    operator()(__stack_t __s) const
-    {
-      if (!__s) 
-	return 0;
+        __stack_npt::const_iterator __it;
+        for (__it = __stack->begin(); __it != __stack->end(); ++__it) {
+                std::fprintf(__f, "%p ", *__it);
+        }
+}
 
-      std::size_t __index = 0;
-      __stack_npt::const_iterator __it;
-      for (__it = __s->begin(); __it != __s->end(); ++__it)
-	__index += reinterpret_cast<std::size_t>(*__it);
-      return __index;
-    }
+/** @brief Hash function for summary trace using call stack as index.  */
+class __stack_hash
+{
+      public:
+        std::size_t operator()(__stack_t __s) const
+        {
+                if (!__s) {
+                        return 0;
+                }
 
-    bool operator() (__stack_t __stack1, __stack_t __stack2) const
-    {
-      if (!__stack1 && !__stack2)
-	return true;
-      if (!__stack1 || !__stack2)
-	return false;
-      if (__stack1->size() != __stack2->size())
-	return false;
+                std::size_t __index = 0;
+                __stack_npt::const_iterator __it;
+                for (__it = __s->begin(); __it != __s->end(); ++__it) {
+                        __index += reinterpret_cast<std::size_t>(*__it);
+                }
+                return __index;
+        }
 
-      std::size_t __byte_size
-	= __stack1->size() * sizeof(__stack_npt::value_type);
-      return __builtin_memcmp(&(*__stack1)[0], &(*__stack2)[0],
-			      __byte_size) == 0;
-    }
-  };
+        bool operator()(__stack_t __stack1, __stack_t __stack2) const
+        {
+                if (!__stack1 && !__stack2) {
+                        return true;
+                }
+                if (!__stack1 || !__stack2) {
+                        return false;
+                }
+                if (__stack1->size() != __stack2->size()) {
+                        return false;
+                }
 
+                std::size_t __byte_size = __stack1->size() * sizeof(__stack_npt::value_type);
+                return __builtin_memcmp(&(*__stack1)[0], &(*__stack2)[0], __byte_size) == 0;
+        }
+};
 
-  /** @brief Base class for a line in the object table.  */
-  class __object_info_base
-  {
-  public:
-    __object_info_base(__stack_t __stack)
-    : _M_stack(__stack), _M_valid(true) { }
+/** @brief Base class for a line in the object table.  */
+class __object_info_base
+{
+      public:
+        __object_info_base(__stack_t __stack) : _M_stack(__stack), _M_valid(true)
+        {
+        }
 
-    bool
-    __is_valid() const 
-    { return _M_valid; }
-    
-    void
-    __set_invalid()
-    { _M_valid = false; }
+        bool __is_valid() const
+        {
+                return _M_valid;
+        }
 
-    void
-    __merge(const __object_info_base& __o)
-    { _M_valid &= __o._M_valid; }
+        void __set_invalid()
+        {
+                _M_valid = false;
+        }
 
-    __stack_t
-    __stack() const
-    { return _M_stack; }
-    
-  protected:
-    __stack_t _M_stack;
-    bool _M_valid;
-  };
+        void __merge(const __object_info_base &__o)
+        {
+                _M_valid &= __o._M_valid;
+        }
+
+        __stack_t __stack() const
+        {
+                return _M_stack;
+        }
+
+      protected:
+        __stack_t _M_stack;
+        bool _M_valid;
+};
 
 } // namespace __gnu_profile
 #endif /* _GLIBCXX_PROFILE_PROFILER_NODE_H */

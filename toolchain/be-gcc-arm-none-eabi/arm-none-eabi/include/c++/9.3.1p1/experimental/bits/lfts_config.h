@@ -39,19 +39,32 @@ namespace chrono
 {
 namespace experimental
 {
-inline namespace fundamentals_v1 { }
-inline namespace fundamentals_v2 { }
+inline namespace fundamentals_v1
+{
+}
+inline namespace fundamentals_v2
+{
+}
 } // namespace experimental
 } // namespace chrono
 
 namespace experimental
 {
-inline namespace fundamentals_v1 { }
-inline namespace fundamentals_v2 { }
-inline namespace literals { inline namespace string_view_literals { } }
+inline namespace fundamentals_v1
+{
+}
+inline namespace fundamentals_v2
+{
+}
+inline namespace literals
+{
+inline namespace string_view_literals
+{
+}
+} // namespace literals
 } // namespace experimental
 
 _GLIBCXX_END_NAMESPACE_VERSION
-} // namespace std
+} // namespace std _GLIBCXX_VISIBILITY(default)
 #endif
 #endif

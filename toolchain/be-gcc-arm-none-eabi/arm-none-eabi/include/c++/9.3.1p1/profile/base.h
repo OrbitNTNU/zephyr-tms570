@@ -41,8 +41,10 @@
  */
 namespace std _GLIBCXX_VISIBILITY(default)
 {
-  namespace __profile { }
+namespace __profile
+{
 }
+} // namespace std _GLIBCXX_VISIBILITY(default)
 
 /**
  * @namespace __gnu_profile
@@ -50,9 +52,8 @@ namespace std _GLIBCXX_VISIBILITY(default)
  */
 namespace __gnu_profile
 {
-  // Import all the profile versions of components in namespace std.
-  using namespace std::__profile;
-}
-
+// Import all the profile versions of components in namespace std.
+using namespace std::__profile;
+} // namespace __gnu_profile
 
 #endif /* _GLIBCXX_PROFILE_BASE_H */

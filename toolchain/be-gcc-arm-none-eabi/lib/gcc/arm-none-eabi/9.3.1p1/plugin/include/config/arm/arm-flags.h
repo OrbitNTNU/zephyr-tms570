@@ -24,12 +24,12 @@
 
 /* Flags used to identify a few tuning properties.  These are for legacy
    purposes only.  Do not add any more of these: use the main tuning tables.  */
-#define TF_LDSCHED	(1U << 0)
-#define TF_WBUF		(1U << 1)
-#define TF_CO_PROC	(1U << 2)
-#define TF_SMALLMUL	(1U << 3)
-#define TF_STRONG	(1U << 4)
-#define TF_XSCALE	(1U << 5)
-#define TF_NO_MODE32	(1U << 6)
+#define TF_LDSCHED   (1U << 0)
+#define TF_WBUF      (1U << 1)
+#define TF_CO_PROC   (1U << 2)
+#define TF_SMALLMUL  (1U << 3)
+#define TF_STRONG    (1U << 4)
+#define TF_XSCALE    (1U << 5)
+#define TF_NO_MODE32 (1U << 6)
 
 #endif /* GCC_ARM_FLAGS_H */

@@ -41,27 +41,30 @@ class edited_file;
 
 class edit_context
 {
- public:
-  edit_context ();
+      public:
+        edit_context();
 
-  bool valid_p () const { return m_valid; }
+        bool valid_p() const
+        {
+                return m_valid;
+        }
 
-  void add_fixits (rich_location *richloc);
+        void add_fixits(rich_location *richloc);
 
-  char *get_content (const char *filename);
+        char *get_content(const char *filename);
 
-  int get_effective_column (const char *filename, int line, int column);
+        int get_effective_column(const char *filename, int line, int column);
 
-  char *generate_diff (bool show_filenames);
-  void print_diff (pretty_printer *pp, bool show_filenames);
+        char *generate_diff(bool show_filenames);
+        void print_diff(pretty_printer *pp, bool show_filenames);
 
- private:
-  bool apply_fixit (const fixit_hint *hint);
-  edited_file *get_file (const char *filename);
-  edited_file &get_or_insert_file (const char *filename);
+      private:
+        bool apply_fixit(const fixit_hint *hint);
+        edited_file *get_file(const char *filename);
+        edited_file &get_or_insert_file(const char *filename);
 
-  bool m_valid;
-  typed_splay_tree<const char *, edited_file *> m_files;
+        bool m_valid;
+        typed_splay_tree<const char *, edited_file *> m_files;
 };
 
 #endif /* GCC_EDIT_CONTEXT_H.  */

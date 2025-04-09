@@ -17,11 +17,9 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-#define DEFPARAM(enumerator, option, nocmsgid, default, min, max) \
-  option=default,min,max
-#define DEFPARAMENUM5(enumerator, option, nocmsgid, default, \
-		      v0, v1, v2, v3, v4) \
-  option=v0,v1,v2,v3,v4
+#define DEFPARAM(enumerator, option, nocmsgid, default, min, max) option = default, min, max
+#define DEFPARAMENUM5(enumerator, option, nocmsgid, default, v0, v1, v2, v3, v4)                   \
+        option = v0, v1, v2, v3, v4
 #include "params.def"
 #undef DEFPARAM
 #undef DEFPARAMENUM5

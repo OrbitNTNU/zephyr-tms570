@@ -21,8 +21,8 @@
 #ifndef GCC_TREE_SSA_STRLEN_H
 #define GCC_TREE_SSA_STRLEN_H
 
-extern bool is_strlen_related_p (tree, tree);
-extern bool maybe_diag_stxncpy_trunc (gimple_stmt_iterator, tree, tree);
-extern tree set_strlen_range (tree, wide_int, tree = NULL_TREE);
+extern bool is_strlen_related_p(tree, tree);
+extern bool maybe_diag_stxncpy_trunc(gimple_stmt_iterator, tree, tree);
+extern tree set_strlen_range(tree, wide_int, tree = NULL_TREE);
 
-#endif   // GCC_TREE_SSA_STRLEN_H
+#endif // GCC_TREE_SSA_STRLEN_H

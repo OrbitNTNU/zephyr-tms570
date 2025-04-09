@@ -44,154 +44,172 @@ namespace __gnu_cxx _GLIBCXX_VISIBILITY(default)
 {
 _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
-  /**
-   * @brief An example allocator which uses a non-standard pointer type.
-   * @ingroup allocators
-   *
-   * This allocator specifies that containers use a 'relative pointer' as it's
-   * pointer type.  (See ext/pointer.h)  Memory allocation in this example
-   * is still performed using std::allocator.
-   */
-  template<typename _Tp>
-    class _ExtPtr_allocator
-    {
-    public:
-      typedef std::size_t     size_type;
-      typedef std::ptrdiff_t  difference_type;
+/**
+ * @brief An example allocator which uses a non-standard pointer type.
+ * @ingroup allocators
+ *
+ * This allocator specifies that containers use a 'relative pointer' as it's
+ * pointer type.  (See ext/pointer.h)  Memory allocation in this example
+ * is still performed using std::allocator.
+ */
+template <typename _Tp> class _ExtPtr_allocator
+{
+      public:
+        typedef std::size_t size_type;
+        typedef std::ptrdiff_t difference_type;
 
-      // Note the non-standard pointer types.
-      typedef _Pointer_adapter<_Relative_pointer_impl<_Tp> >       pointer;
-      typedef _Pointer_adapter<_Relative_pointer_impl<const _Tp> > 
-                                                             const_pointer;
+        // Note the non-standard pointer types.
+        typedef _Pointer_adapter<_Relative_pointer_impl<_Tp>> pointer;
+        typedef _Pointer_adapter<_Relative_pointer_impl<const _Tp>> const_pointer;
 
-      typedef _Tp&       reference;
-      typedef const _Tp& const_reference;
-      typedef _Tp        value_type;
+        typedef _Tp &reference;
+        typedef const _Tp &const_reference;
+        typedef _Tp value_type;
 
-      template<typename _Up>
-        struct rebind
-        { typedef _ExtPtr_allocator<_Up> other; };
+        template <typename _Up> struct rebind {
+                typedef _ExtPtr_allocator<_Up> other;
+        };
 
-      _ExtPtr_allocator() _GLIBCXX_USE_NOEXCEPT 
-      : _M_real_alloc() { }
+        _ExtPtr_allocator() _GLIBCXX_USE_NOEXCEPT : _M_real_alloc()
+        {
+        }
 
-      _ExtPtr_allocator(const _ExtPtr_allocator& __rarg) _GLIBCXX_USE_NOEXCEPT
-      : _M_real_alloc(__rarg._M_real_alloc) { }
+        _ExtPtr_allocator(const _ExtPtr_allocator &__rarg) _GLIBCXX_USE_NOEXCEPT
+                : _M_real_alloc(__rarg._M_real_alloc)
+        {
+        }
 
-      template<typename _Up>
-        _ExtPtr_allocator(const _ExtPtr_allocator<_Up>& __rarg)
-	_GLIBCXX_USE_NOEXCEPT
-        : _M_real_alloc(__rarg._M_getUnderlyingImp()) { }
+        template <typename _Up>
+        _ExtPtr_allocator(const _ExtPtr_allocator<_Up> &__rarg) _GLIBCXX_USE_NOEXCEPT
+                : _M_real_alloc(__rarg._M_getUnderlyingImp())
+        {
+        }
 
-      ~_ExtPtr_allocator() _GLIBCXX_USE_NOEXCEPT
-      { }
+        ~_ExtPtr_allocator() _GLIBCXX_USE_NOEXCEPT
+        {
+        }
 
-      pointer address(reference __x) const _GLIBCXX_NOEXCEPT
-      { return std::__addressof(__x); }
+        pointer address(reference __x) const _GLIBCXX_NOEXCEPT
+        {
+                return std::__addressof(__x);
+        }
 
-      const_pointer address(const_reference __x) const _GLIBCXX_NOEXCEPT
-      { return std::__addressof(__x); }
+        const_pointer address(const_reference __x) const _GLIBCXX_NOEXCEPT
+        {
+                return std::__addressof(__x);
+        }
 
-      _GLIBCXX_NODISCARD pointer allocate(size_type __n, void* __hint = 0)
-      { return _M_real_alloc.allocate(__n,__hint); }
+        _GLIBCXX_NODISCARD pointer allocate(size_type __n, void *__hint = 0)
+        {
+                return _M_real_alloc.allocate(__n, __hint);
+        }
 
-      void deallocate(pointer __p, size_type __n)
-      { _M_real_alloc.deallocate(__p.get(), __n); }
+        void deallocate(pointer __p, size_type __n)
+        {
+                _M_real_alloc.deallocate(__p.get(), __n);
+        }
 
-      size_type max_size() const _GLIBCXX_USE_NOEXCEPT
-      { return __numeric_traits<size_type>::__max / sizeof(_Tp); }
+        size_type max_size() const _GLIBCXX_USE_NOEXCEPT
+        {
+                return __numeric_traits<size_type>::__max / sizeof(_Tp);
+        }
 
 #if __cplusplus >= 201103L
-      template<typename _Up, typename... _Args>
-        void
-        construct(_Up* __p, _Args&&... __args)
-	{ ::new((void *)__p) _Up(std::forward<_Args>(__args)...); }
+        template <typename _Up, typename... _Args> void construct(_Up *__p, _Args &&...__args)
+        {
+                ::new ((void *)__p) _Up(std::forward<_Args>(__args)...);
+        }
 
-      template<typename... _Args>
-        void
-        construct(pointer __p, _Args&&... __args)
-	{ construct(__p.get(), std::forward<_Args>(__args)...); }
+        template <typename... _Args> void construct(pointer __p, _Args &&...__args)
+        {
+                construct(__p.get(), std::forward<_Args>(__args)...);
+        }
 
-      template<typename _Up>
-        void 
-        destroy(_Up* __p)
-        { __p->~_Up(); }
+        template <typename _Up> void destroy(_Up *__p)
+        {
+                __p->~_Up();
+        }
 
-      void destroy(pointer __p)
-      { destroy(__p.get()); }
+        void destroy(pointer __p)
+        {
+                destroy(__p.get());
+        }
 
 #else
 
-      void construct(pointer __p, const _Tp& __val)
-      { ::new(__p.get()) _Tp(__val); }
+        void construct(pointer __p, const _Tp &__val)
+        {
+                ::new (__p.get()) _Tp(__val);
+        }
 
-      void destroy(pointer __p)
-      { __p->~_Tp(); }
+        void destroy(pointer __p)
+        {
+                __p->~_Tp();
+        }
 #endif
 
-      template<typename _Up>
-        inline bool
-        operator==(const _ExtPtr_allocator<_Up>& __rarg)
-        { return _M_real_alloc == __rarg._M_getUnderlyingImp(); }
+        template <typename _Up> inline bool operator==(const _ExtPtr_allocator<_Up> &__rarg)
+        {
+                return _M_real_alloc == __rarg._M_getUnderlyingImp();
+        }
 
-      inline bool
-      operator==(const _ExtPtr_allocator& __rarg)
-      { return _M_real_alloc == __rarg._M_real_alloc; }
+        inline bool operator==(const _ExtPtr_allocator &__rarg)
+        {
+                return _M_real_alloc == __rarg._M_real_alloc;
+        }
 
-      template<typename _Up>
-        inline bool
-        operator!=(const _ExtPtr_allocator<_Up>& __rarg)
-        { return _M_real_alloc != __rarg._M_getUnderlyingImp(); }
+        template <typename _Up> inline bool operator!=(const _ExtPtr_allocator<_Up> &__rarg)
+        {
+                return _M_real_alloc != __rarg._M_getUnderlyingImp();
+        }
 
-      inline bool
-      operator!=(const _ExtPtr_allocator& __rarg)
-      { return _M_real_alloc != __rarg._M_real_alloc; }
+        inline bool operator!=(const _ExtPtr_allocator &__rarg)
+        {
+                return _M_real_alloc != __rarg._M_real_alloc;
+        }
 
-      template<typename _Up>
-        inline friend void
-        swap(_ExtPtr_allocator<_Up>&, _ExtPtr_allocator<_Up>&);
+        template <typename _Up>
+        inline friend void swap(_ExtPtr_allocator<_Up> &, _ExtPtr_allocator<_Up> &);
 
-      // A method specific to this implementation.
-      const std::allocator<_Tp>&
-      _M_getUnderlyingImp() const
-      { return _M_real_alloc; }
+        // A method specific to this implementation.
+        const std::allocator<_Tp> &_M_getUnderlyingImp() const
+        {
+                return _M_real_alloc;
+        }
 
-    private:
-      std::allocator<_Tp>  _M_real_alloc;
-    };
+      private:
+        std::allocator<_Tp> _M_real_alloc;
+};
 
-  // _ExtPtr_allocator<void> specialization.
-  template<>
-    class _ExtPtr_allocator<void>
-    {
-    public:
-      typedef std::size_t      size_type;
-      typedef std::ptrdiff_t   difference_type;
-      typedef void             value_type;
+// _ExtPtr_allocator<void> specialization.
+template <> class _ExtPtr_allocator<void>
+{
+      public:
+        typedef std::size_t size_type;
+        typedef std::ptrdiff_t difference_type;
+        typedef void value_type;
 
-      // Note the non-standard pointer types
-      typedef _Pointer_adapter<_Relative_pointer_impl<void> >       pointer;
-      typedef _Pointer_adapter<_Relative_pointer_impl<const void> >
-                                                              const_pointer;
+        // Note the non-standard pointer types
+        typedef _Pointer_adapter<_Relative_pointer_impl<void>> pointer;
+        typedef _Pointer_adapter<_Relative_pointer_impl<const void>> const_pointer;
 
-      template<typename _Up>
-        struct rebind
-        { typedef _ExtPtr_allocator<_Up> other; };
+        template <typename _Up> struct rebind {
+                typedef _ExtPtr_allocator<_Up> other;
+        };
 
-    private:
-      std::allocator<void>  _M_real_alloc;
-    };
+      private:
+        std::allocator<void> _M_real_alloc;
+};
 
-  template<typename _Tp>
-    inline void
-    swap(_ExtPtr_allocator<_Tp>& __larg, _ExtPtr_allocator<_Tp>& __rarg)
-    {
-      std::allocator<_Tp> __tmp( __rarg._M_real_alloc );
-      __rarg._M_real_alloc = __larg._M_real_alloc;
-      __larg._M_real_alloc = __tmp;
-    }
+template <typename _Tp>
+inline void swap(_ExtPtr_allocator<_Tp> &__larg, _ExtPtr_allocator<_Tp> &__rarg)
+{
+        std::allocator<_Tp> __tmp(__rarg._M_real_alloc);
+        __rarg._M_real_alloc = __larg._M_real_alloc;
+        __larg._M_real_alloc = __tmp;
+}
 
 _GLIBCXX_END_NAMESPACE_VERSION
-} // namespace
+} // namespace __gnu_cxx _GLIBCXX_VISIBILITY(default)
 
 #endif /* _EXTPTR_ALLOCATOR_H */

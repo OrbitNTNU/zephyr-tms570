@@ -38,62 +38,64 @@
 
 namespace __gnu_profile
 {
-  /** @brief Hashtable size instrumentation trace producer.  */
-  class __trace_hashtable_size
-  : public __trace_container_size
-  {
-  public:
-    __trace_hashtable_size()
-    : __trace_container_size()
-    { __id = "hashtable-size"; }
-  };
+/** @brief Hashtable size instrumentation trace producer.  */
+class __trace_hashtable_size : public __trace_container_size
+{
+      public:
+        __trace_hashtable_size() : __trace_container_size()
+        {
+                __id = "hashtable-size";
+        }
+};
 
-  inline void
-  __trace_hashtable_size_init()
-  { _GLIBCXX_PROFILE_DATA(_S_hashtable_size) = new __trace_hashtable_size(); }
+inline void __trace_hashtable_size_init()
+{
+        _GLIBCXX_PROFILE_DATA(_S_hashtable_size) = new __trace_hashtable_size();
+}
 
-  inline void
-  __trace_hashtable_size_free()
-  { delete _GLIBCXX_PROFILE_DATA(_S_hashtable_size); }
+inline void __trace_hashtable_size_free()
+{
+        delete _GLIBCXX_PROFILE_DATA(_S_hashtable_size);
+}
 
-  inline void
-  __trace_hashtable_size_report(FILE* __f, __warning_vector_t& __warnings)
-  { __trace_report(_GLIBCXX_PROFILE_DATA(_S_hashtable_size), __f, __warnings); }
+inline void __trace_hashtable_size_report(FILE *__f, __warning_vector_t &__warnings)
+{
+        __trace_report(_GLIBCXX_PROFILE_DATA(_S_hashtable_size), __f, __warnings);
+}
 
-  inline __container_size_info*
-  __trace_hashtable_size_construct(std::size_t __num)
-  {
-    if (!__profcxx_init())
-      return 0;
-  
-    if (!__reentrance_guard::__get_in())
-      return 0;
+inline __container_size_info *__trace_hashtable_size_construct(std::size_t __num)
+{
+        if (!__profcxx_init()) {
+                return 0;
+        }
 
-    __reentrance_guard __get_out;
-    return _GLIBCXX_PROFILE_DATA(_S_hashtable_size)->
-      __insert(__get_stack(), __num);
-  }
+        if (!__reentrance_guard::__get_in()) {
+                return 0;
+        }
 
-  inline void
-  __trace_hashtable_size_resize(__container_size_info* __obj_info,
-				std::size_t __from, std::size_t __to)
-  {
-    if (!__obj_info)
-      return;
+        __reentrance_guard __get_out;
+        return _GLIBCXX_PROFILE_DATA(_S_hashtable_size)->__insert(__get_stack(), __num);
+}
 
-    __obj_info->__resize(__from, __to);
-  }
+inline void __trace_hashtable_size_resize(__container_size_info *__obj_info, std::size_t __from,
+                                          std::size_t __to)
+{
+        if (!__obj_info) {
+                return;
+        }
 
-  inline void
-  __trace_hashtable_size_destruct(__container_size_info* __obj_info,
-				  std::size_t __num, std::size_t __inum)
-  {
-    if (!__obj_info)
-      return;
+        __obj_info->__resize(__from, __to);
+}
 
-    _GLIBCXX_PROFILE_DATA(_S_hashtable_size)->
-      __destruct(__obj_info, __num, __inum);
-  }
+inline void __trace_hashtable_size_destruct(__container_size_info *__obj_info, std::size_t __num,
+                                            std::size_t __inum)
+{
+        if (!__obj_info) {
+                return;
+        }
+
+        _GLIBCXX_PROFILE_DATA(_S_hashtable_size)->__destruct(__obj_info, __num, __inum);
+}
 
 } // namespace __gnu_profile
 

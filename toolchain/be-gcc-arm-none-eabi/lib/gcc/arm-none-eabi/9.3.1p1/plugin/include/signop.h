@@ -26,8 +26,8 @@ along with GCC; see the file COPYING3.  If not see
    using the TYPE_SIGN macro.  */
 
 enum signop {
-  SIGNED,
-  UNSIGNED
+        SIGNED,
+        UNSIGNED
 };
 
 #endif

@@ -25,10 +25,9 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-streamer.h"
 
 /* In gimple-streamer-in.c  */
-void input_bb (struct lto_input_block *, enum LTO_tags, struct data_in *,
-	       struct function *, int);
+void input_bb(struct lto_input_block *, enum LTO_tags, struct data_in *, struct function *, int);
 
 /* In gimple-streamer-out.c  */
-void output_bb (struct output_block *, basic_block, struct function *);
+void output_bb(struct output_block *, basic_block, struct function *);
 
-#endif  /* GCC_GIMPLE_STREAMER_H  */
+#endif /* GCC_GIMPLE_STREAMER_H  */

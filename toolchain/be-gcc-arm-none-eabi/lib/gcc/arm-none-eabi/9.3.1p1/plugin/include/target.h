@@ -19,7 +19,6 @@
    You are forbidden to forbid anyone else to use, share and improve
    what you give them.   Help stamp out software-hoarding!  */
 
-
 /* This file contains a data structure that describes a GCC target.
    At present it is incomplete, but in future it should grow to
    contain most or all target machine and target O/S specific
@@ -54,7 +53,10 @@
 
 #if CHECKING_P
 
-struct cumulative_args_t { void *magic; void *p; };
+struct cumulative_args_t {
+        void *magic;
+        void *p;
+};
 
 #else /* !CHECKING_P */
 
@@ -64,52 +66,50 @@ struct cumulative_args_t { void *magic; void *p; };
    efficient way of argument passing otherwise.  However, that would come
    at the cost of less type-safe !CHECKING_P compilation.  */
 
-union cumulative_args_t { void *p; };
+union cumulative_args_t {
+        void *p;
+};
 
 #endif /* !CHECKING_P */
 
 /* Types used by the record_gcc_switches() target function.  */
-enum print_switch_type
-{
-  SWITCH_TYPE_PASSED,		/* A switch passed on the command line.  */
-  SWITCH_TYPE_ENABLED,		/* An option that is currently enabled.  */
-  SWITCH_TYPE_DESCRIPTIVE,	/* Descriptive text, not a switch or option.  */
-  SWITCH_TYPE_LINE_START,	/* Please emit any necessary text at the start of a line.  */
-  SWITCH_TYPE_LINE_END		/* Please emit a line terminator.  */
+enum print_switch_type {
+        SWITCH_TYPE_PASSED,      /* A switch passed on the command line.  */
+        SWITCH_TYPE_ENABLED,     /* An option that is currently enabled.  */
+        SWITCH_TYPE_DESCRIPTIVE, /* Descriptive text, not a switch or option.  */
+        SWITCH_TYPE_LINE_START,  /* Please emit any necessary text at the start of a line.  */
+        SWITCH_TYPE_LINE_END     /* Please emit a line terminator.  */
 };
 
 /* Types of memory operation understood by the "by_pieces" infrastructure.
    Used by the TARGET_USE_BY_PIECES_INFRASTRUCTURE_P target hook and
    internally by the functions in expr.c.  */
 
-enum by_pieces_operation
-{
-  CLEAR_BY_PIECES,
-  MOVE_BY_PIECES,
-  SET_BY_PIECES,
-  STORE_BY_PIECES,
-  COMPARE_BY_PIECES
+enum by_pieces_operation {
+        CLEAR_BY_PIECES,
+        MOVE_BY_PIECES,
+        SET_BY_PIECES,
+        STORE_BY_PIECES,
+        COMPARE_BY_PIECES
 };
 
-extern unsigned HOST_WIDE_INT by_pieces_ninsns (unsigned HOST_WIDE_INT,
-						unsigned int,
-						unsigned int,
-						by_pieces_operation);
+extern unsigned HOST_WIDE_INT by_pieces_ninsns(unsigned HOST_WIDE_INT, unsigned int, unsigned int,
+                                               by_pieces_operation);
 
-typedef int (* print_switch_fn_type) (print_switch_type, const char *);
+typedef int (*print_switch_fn_type)(print_switch_type, const char *);
 
 /* An example implementation for ELF targets.  Defined in varasm.c  */
-extern int elf_record_gcc_switches (print_switch_type type, const char *);
+extern int elf_record_gcc_switches(print_switch_type type, const char *);
 
 /* Some places still assume that all pointer or address modes are the
    standard Pmode and ptr_mode.  These optimizations become invalid if
    the target actually supports multiple different modes.  For now,
    we disable such optimizations on such targets, using this function.  */
-extern bool target_default_pointer_address_modes_p (void);
+extern bool target_default_pointer_address_modes_p(void);
 
 /* For hooks which use the MOVE_RATIO macro, this gives the legacy default
    behavior.  */
-extern unsigned int get_move_ratio (bool);
+extern unsigned int get_move_ratio(bool);
 
 struct stdarg_info;
 struct spec_info_def;
@@ -118,17 +118,16 @@ struct cgraph_node;
 struct cgraph_simd_clone;
 
 /* The struct used by the secondary_reload target hook.  */
-struct secondary_reload_info
-{
-  /* icode is actually an enum insn_code, but we don't want to force every
-     file that includes target.h to include optabs.h .  */
-  int icode;
-  int extra_cost; /* Cost for using (a) scratch register(s) to be taken
-		     into account by copy_cost.  */
-  /* The next two members are for the use of the backward
-     compatibility hook.  */
-  struct secondary_reload_info *prev_sri;
-  int t_icode; /* Actually an enum insn_code - see above.  */
+struct secondary_reload_info {
+        /* icode is actually an enum insn_code, but we don't want to force every
+           file that includes target.h to include optabs.h .  */
+        int icode;
+        int extra_cost; /* Cost for using (a) scratch register(s) to be taken
+                           into account by copy_cost.  */
+        /* The next two members are for the use of the backward
+           compatibility hook.  */
+        struct secondary_reload_info *prev_sri;
+        int t_icode; /* Actually an enum insn_code - see above.  */
 };
 
 /* This is defined in sched-int.h .  */
@@ -150,50 +149,48 @@ struct ao_ref;
 struct _stmt_vec_info;
 
 /* These are defined in tree-vect-stmts.c.  */
-extern tree stmt_vectype (struct _stmt_vec_info *);
-extern bool stmt_in_inner_loop_p (struct _stmt_vec_info *);
+extern tree stmt_vectype(struct _stmt_vec_info *);
+extern bool stmt_in_inner_loop_p(struct _stmt_vec_info *);
 
 /* Assembler instructions for creating various kinds of integer object.  */
 
-struct asm_int_op
-{
-  const char *hi;
-  const char *psi;
-  const char *si;
-  const char *pdi;
-  const char *di;
-  const char *pti;
-  const char *ti;
+struct asm_int_op {
+        const char *hi;
+        const char *psi;
+        const char *si;
+        const char *pdi;
+        const char *di;
+        const char *pti;
+        const char *ti;
 };
 
 /* Types of costs for vectorizer cost model.  */
-enum vect_cost_for_stmt
-{
-  scalar_stmt,
-  scalar_load,
-  scalar_store,
-  vector_stmt,
-  vector_load,
-  vector_gather_load,
-  unaligned_load,
-  unaligned_store,
-  vector_store,
-  vector_scatter_store,
-  vec_to_scalar,
-  scalar_to_vec,
-  cond_branch_not_taken,
-  cond_branch_taken,
-  vec_perm,
-  vec_promote_demote,
-  vec_construct
+enum vect_cost_for_stmt {
+        scalar_stmt,
+        scalar_load,
+        scalar_store,
+        vector_stmt,
+        vector_load,
+        vector_gather_load,
+        unaligned_load,
+        unaligned_store,
+        vector_store,
+        vector_scatter_store,
+        vec_to_scalar,
+        scalar_to_vec,
+        cond_branch_not_taken,
+        cond_branch_taken,
+        vec_perm,
+        vec_promote_demote,
+        vec_construct
 };
 
 /* Separate locations for which the vectorizer cost model should
    track costs.  */
 enum vect_cost_model_location {
-  vect_prologue = 0,
-  vect_body = 1,
-  vect_epilogue = 2
+        vect_prologue = 0,
+        vect_body = 1,
+        vect_epilogue = 2
 };
 
 class vec_perm_indices;
@@ -206,10 +203,10 @@ typedef vec<poly_uint64> vector_sizes;
 typedef auto_vec<poly_uint64, 8> auto_vector_sizes;
 
 /* The target structure.  This holds all the backend hooks.  */
-#define DEFHOOKPOD(NAME, DOC, TYPE, INIT) TYPE NAME;
-#define DEFHOOK(NAME, DOC, TYPE, PARAMS, INIT) TYPE (* NAME) PARAMS;
-#define DEFHOOK_UNDOC DEFHOOK
-#define HOOKSTRUCT(FRAGMENT) FRAGMENT
+#define DEFHOOKPOD(NAME, DOC, TYPE, INIT)      TYPE NAME;
+#define DEFHOOK(NAME, DOC, TYPE, PARAMS, INIT) TYPE(*NAME) PARAMS;
+#define DEFHOOK_UNDOC                          DEFHOOK
+#define HOOKSTRUCT(FRAGMENT)                   FRAGMENT
 
 #include "target.def"
 
@@ -221,40 +218,38 @@ extern struct gcc_target targetm;
    runtime value is needed for correctness, since the function only
    provides a rough guess.  */
 
-static inline HOST_WIDE_INT
-estimated_poly_value (poly_int64 x)
+static inline HOST_WIDE_INT estimated_poly_value(poly_int64 x)
 {
-  if (NUM_POLY_INT_COEFFS == 1)
-    return x.coeffs[0];
-  else
-    return targetm.estimated_poly_value (x);
+        if (NUM_POLY_INT_COEFFS == 1) {
+                return x.coeffs[0];
+        } else {
+                return targetm.estimated_poly_value(x);
+        }
 }
 
 #ifdef GCC_TM_H
 
 #ifndef CUMULATIVE_ARGS_MAGIC
-#define CUMULATIVE_ARGS_MAGIC ((void *) &targetm.calls)
+#define CUMULATIVE_ARGS_MAGIC ((void *)&targetm.calls)
 #endif
 
-static inline CUMULATIVE_ARGS *
-get_cumulative_args (cumulative_args_t arg)
+static inline CUMULATIVE_ARGS *get_cumulative_args(cumulative_args_t arg)
 {
 #if CHECKING_P
-  gcc_assert (arg.magic == CUMULATIVE_ARGS_MAGIC);
+        gcc_assert(arg.magic == CUMULATIVE_ARGS_MAGIC);
 #endif /* CHECKING_P */
-  return (CUMULATIVE_ARGS *) arg.p;
+        return (CUMULATIVE_ARGS *)arg.p;
 }
 
-static inline cumulative_args_t
-pack_cumulative_args (CUMULATIVE_ARGS *arg)
+static inline cumulative_args_t pack_cumulative_args(CUMULATIVE_ARGS *arg)
 {
-  cumulative_args_t ret;
+        cumulative_args_t ret;
 
 #if CHECKING_P
-  ret.magic = CUMULATIVE_ARGS_MAGIC;
+        ret.magic = CUMULATIVE_ARGS_MAGIC;
 #endif /* CHECKING_P */
-  ret.p = (void *) arg;
-  return ret;
+        ret.p = (void *)arg;
+        return ret;
 }
 #endif /* GCC_TM_H */
 

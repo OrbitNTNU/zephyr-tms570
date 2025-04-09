@@ -20,27 +20,26 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef GCC_PRINT_TREE_H
 #define GCC_PRINT_TREE_H
 
-extern void debug_tree (tree);
-extern void debug_raw (const tree_node &ref);
-extern void debug_raw (const tree_node *ptr);
-extern void debug (const tree_node &ref);
-extern void debug (const tree_node *ptr);
-extern void debug_verbose (const tree_node &ref);
-extern void debug_verbose (const tree_node *ptr);
-extern void debug_head (const tree_node &ref);
-extern void debug_head (const tree_node *ptr);
-extern void debug_body (const tree_node &ref);
-extern void debug_body (const tree_node *ptr);
-extern void debug (vec<tree, va_gc> &ref);
-extern void debug (vec<tree, va_gc> *ptr);
-extern void debug_raw (vec<tree, va_gc> &ref);
-extern void debug_raw (vec<tree, va_gc> *ptr);
+extern void debug_tree(tree);
+extern void debug_raw(const tree_node &ref);
+extern void debug_raw(const tree_node *ptr);
+extern void debug(const tree_node &ref);
+extern void debug(const tree_node *ptr);
+extern void debug_verbose(const tree_node &ref);
+extern void debug_verbose(const tree_node *ptr);
+extern void debug_head(const tree_node &ref);
+extern void debug_head(const tree_node *ptr);
+extern void debug_body(const tree_node &ref);
+extern void debug_body(const tree_node *ptr);
+extern void debug(vec<tree, va_gc> &ref);
+extern void debug(vec<tree, va_gc> *ptr);
+extern void debug_raw(vec<tree, va_gc> &ref);
+extern void debug_raw(vec<tree, va_gc> *ptr);
 #ifdef BUFSIZ
-extern void dump_addr (FILE*, const char *, const void *);
-extern void print_node (FILE *, const char *, tree, int,
-			bool brief_for_visited = true);
-extern void print_node_brief (FILE *, const char *, const_tree, int);
-extern void indent_to (FILE *, int);
+extern void dump_addr(FILE *, const char *, const void *);
+extern void print_node(FILE *, const char *, tree, int, bool brief_for_visited = true);
+extern void print_node_brief(FILE *, const char *, const_tree, int);
+extern void indent_to(FILE *, int);
 #endif
 
-#endif  // GCC_PRINT_TREE_H
+#endif // GCC_PRINT_TREE_H

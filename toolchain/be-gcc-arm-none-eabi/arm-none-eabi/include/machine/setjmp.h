@@ -5,7 +5,7 @@ _BEGIN_STD_C
 /*
  * r1, r2, r9, r14, r16 .. r30, SR.
  */
-#define _JBLEN 13
+#define _JBLEN  13
 #define _JBTYPE unsigned long
 #endif
 
@@ -18,7 +18,7 @@ _BEGIN_STD_C
 #endif
 
 #if defined(__aarch64__)
-#define _JBLEN 22
+#define _JBLEN  22
 #define _JBTYPE long long
 #endif
 
@@ -31,17 +31,17 @@ _BEGIN_STD_C
  * onsstack,sigmask,sp,pc,npc,psr,g1,o0,wbcnt (sigcontext).
  * All else recovered by under/over(flow) handling.
  */
-#define	_JBLEN	13
+#define _JBLEN 13
 #endif
 
 #ifdef __BFIN__
-#define _JBLEN  40
+#define _JBLEN 40
 #endif
 
 #ifdef __epiphany__
 /* All callee preserved registers: r4-r10,fp, sp, lr,r15, r32-r39  */
 #define _JBTYPE long long
-#define _JBLEN 10
+#define _JBLEN  10
 #endif
 
 /* necv70 was 9 as well. */
@@ -52,7 +52,7 @@ _BEGIN_STD_C
  * fp2-fp7	for 68881.
  * All else recovered by under/over(flow) handling.
  */
-#define	_JBLEN	34
+#define _JBLEN 34
 #endif
 
 #if defined(__mc68hc11__) || defined(__mc68hc12__) || defined(__mc68hc1x__)
@@ -60,7 +60,7 @@ _BEGIN_STD_C
  * D, X, Y are not saved.
  * Only take into account the pseudo soft registers (max 32).
  */
-#define _JBLEN  32
+#define _JBLEN 32
 #endif
 
 #ifdef __nds32__
@@ -71,7 +71,7 @@ _BEGIN_STD_C
    double-word-aligned.
    Check libc/machine/nds32/setjmp.S for more information.  */
 #if __NDS32_EXT_FPU_SP__ || __NDS32_EXT_FPU_DP__
-#define	_JBLEN 50
+#define _JBLEN 50
 #else
 #define _JBLEN 18
 #endif
@@ -87,30 +87,30 @@ _BEGIN_STD_C
  * onsstack,sigmask,sp,pc,npc,psr,g1,o0,wbcnt (sigcontext).
  * All else recovered by under/over(flow) handling.
  */
-#define	_JBLEN	9
+#define _JBLEN 9
 #endif
 
 #ifdef __i386__
-# if defined(__CYGWIN__) && !defined (_JBLEN)
-#  define _JBLEN (13 * 4)
-# elif defined(__unix__) || defined(__rtems__)
-#  define _JBLEN	9
-# elif defined(__iamcu__)
+#if defined(__CYGWIN__) && !defined(_JBLEN)
+#define _JBLEN (13 * 4)
+#elif defined(__unix__) || defined(__rtems__)
+#define _JBLEN 9
+#elif defined(__iamcu__)
 /* Intel MCU jmp_buf only covers callee-saved registers. */
-#  define _JBLEN	6
-# else
-#  include "setjmp-dj.h"
-# endif
+#define _JBLEN 6
+#else
+#include "setjmp-dj.h"
+#endif
 #endif
 
 #ifdef __x86_64__
-# ifdef __CYGWIN__
-#  define _JBTYPE long
-#  define _JBLEN  32
-# else
-#  define _JBTYPE long long
-#  define _JBLEN  8
-# endif
+#ifdef __CYGWIN__
+#define _JBTYPE long
+#define _JBLEN  32
+#else
+#define _JBTYPE long long
+#define _JBLEN  8
+#endif
 #endif
 
 #ifdef __i960__
@@ -124,14 +124,14 @@ _BEGIN_STD_C
 #endif
 
 #ifdef __mips__
-# if defined(__mips64)
-#  define _JBTYPE long long
-# endif
-# ifdef __mips_soft_float
-#  define _JBLEN 11
-# else
-#  define _JBLEN 23
-# endif
+#if defined(__mips64)
+#define _JBTYPE long long
+#endif
+#ifdef __mips_soft_float
+#define _JBLEN 11
+#else
+#define _JBLEN 23
+#endif
 #endif
 
 #ifdef __m88000__
@@ -139,19 +139,19 @@ _BEGIN_STD_C
 #endif
 
 #ifdef __H8300__
-#define _JBLEN 5
+#define _JBLEN  5
 #define _JBTYPE int
 #endif
 
 #ifdef __H8300H__
 /* same as H8/300 but registers are twice as big */
-#define _JBLEN 5
+#define _JBLEN  5
 #define _JBTYPE long
 #endif
 
-#if defined (__H8300S__) || defined (__H8300SX__)
+#if defined(__H8300S__) || defined(__H8300SX__)
 /* same as H8/300 but registers are twice as big */
-#define _JBLEN 5
+#define _JBLEN  5
 #define _JBTYPE long
 #endif
 
@@ -159,16 +159,16 @@ _BEGIN_STD_C
 #define _JBLEN 4
 #endif
 
-#ifdef  __sh__
+#ifdef __sh__
 #if __SH5__
-#define _JBLEN 50
+#define _JBLEN  50
 #define _JBTYPE long long
 #else
 #define _JBLEN 20
 #endif /* __SH5__ */
 #endif
 
-#ifdef  __v800
+#ifdef __v800
 #define _JBLEN 28
 #endif
 
@@ -228,12 +228,12 @@ _BEGIN_STD_C
 #endif
 
 #ifdef __D30V__
-#define _JBLEN ((64 /* GPR */ + (2*2) /* ACs */ + 18 /* CRs */) / 2)
+#define _JBLEN  ((64 /* GPR */ + (2 * 2) /* ACs */ + 18 /* CRs */) / 2)
 #define _JBTYPE double
 #endif
 
 #ifdef __frv__
-#define _JBLEN (68/2)  /* room for 68 32-bit regs */
+#define _JBLEN  (68 / 2) /* room for 68 32-bit regs */
 #define _JBTYPE double
 #endif
 
@@ -245,10 +245,10 @@ _BEGIN_STD_C
 #define _JBLEN 9
 #endif
 
-#if (defined(__CR16__) || defined(__CR16C__) ||defined(__CR16CP__))
-/* r6, r7, r8, r9, r10, r11, r12 (r12L, r12H), 
+#if (defined(__CR16__) || defined(__CR16C__) || defined(__CR16CP__))
+/* r6, r7, r8, r9, r10, r11, r12 (r12L, r12H),
  * r13 (r13L, r13H), ra(raL, raH), sp(spL, spH) */
-#define _JBLEN 14
+#define _JBLEN  14
 #define _JBTYPE unsigned short
 #endif
 
@@ -256,7 +256,7 @@ _BEGIN_STD_C
 #define _JBLEN 10
 #endif
 
-#ifdef  __FT32__
+#ifdef __FT32__
 #define _JBLEN 27
 #endif
 
@@ -274,7 +274,7 @@ _BEGIN_STD_C
 
 #ifdef __MMIX__
 /* Using a layout compatible with GCC's built-in.  */
-#define _JBLEN 5
+#define _JBLEN  5
 #define _JBTYPE unsigned long
 #endif
 
@@ -283,7 +283,7 @@ _BEGIN_STD_C
 #endif
 
 #ifdef __SPU__
-#define _JBLEN 50 
+#define _JBLEN  50
 #define _JBTYPE __vector signed int
 #endif
 
@@ -311,9 +311,9 @@ _BEGIN_STD_C
 
 #ifdef __m32c__
 #if defined(__r8c_cpu__) || defined(__m16c_cpu__)
-#define _JBLEN (22/2)
+#define _JBLEN (22 / 2)
 #else
-#define _JBLEN (34/2)
+#define _JBLEN (34 / 2)
 #endif
 #define _JBTYPE unsigned short
 #endif /* __m32c__ */
@@ -330,7 +330,7 @@ _BEGIN_STD_C
 
 #ifdef __RL78__
 /* Three banks of registers, SP, CS, ES, PC */
-#define _JBLEN (8*3+8)
+#define _JBLEN  (8 * 3 + 8)
 #define _JBTYPE unsigned char
 #endif
 
@@ -340,7 +340,7 @@ _BEGIN_STD_C
  *   2) Function-call versions.
  *
  * The built-in versions are used most of the time.  When used, gcc replaces
- * calls to setjmp()/longjmp() with inline assembly code.  The built-in 
+ * calls to setjmp()/longjmp() with inline assembly code.  The built-in
  * versions save/restore a variable number of registers.
 
  * _JBLEN is set to 40 to be ultra-safe with the built-in versions.
@@ -348,12 +348,12 @@ _BEGIN_STD_C
  * but this data structure is used by both versions.
  */
 #ifdef __NIOS2__
-#define _JBLEN 40
+#define _JBLEN  40
 #define _JBTYPE unsigned long
 #endif
 
 #ifdef __PRU__
-#define _JBLEN 48
+#define _JBLEN  48
 #define _JBTYPE unsigned int
 #endif
 
@@ -371,17 +371,17 @@ _BEGIN_STD_C
    otherwise in rv32imafd, store/restore FPR may mis-align.  */
 #define _JBTYPE long long
 #ifdef __riscv_32e
-#define _JBLEN ((4*sizeof(long))/sizeof(long))
+#define _JBLEN ((4 * sizeof(long)) / sizeof(long))
 #else
-#define _JBLEN ((14*sizeof(long) + 12*sizeof(double))/sizeof(long))
+#define _JBLEN ((14 * sizeof(long) + 12 * sizeof(double)) / sizeof(long))
 #endif
 #endif
 
 #ifdef _JBLEN
 #ifdef _JBTYPE
-typedef	_JBTYPE jmp_buf[_JBLEN];
+typedef _JBTYPE jmp_buf[_JBLEN];
 #else
-typedef	int jmp_buf[_JBLEN];
+typedef int jmp_buf[_JBLEN];
 #endif
 #endif
 
@@ -396,17 +396,17 @@ extern "C" {
 
 /* POSIX sigsetjmp/siglongjmp macros */
 #ifdef _JBTYPE
-typedef _JBTYPE sigjmp_buf[_JBLEN+1+((sizeof (_JBTYPE) + sizeof (sigset_t) - 1)
-				     /sizeof (_JBTYPE))];
+typedef _JBTYPE
+        sigjmp_buf[_JBLEN + 1 + ((sizeof(_JBTYPE) + sizeof(sigset_t) - 1) / sizeof(_JBTYPE))];
 #else
-typedef int sigjmp_buf[_JBLEN+1+(sizeof (sigset_t)/sizeof (int))];
+typedef int sigjmp_buf[_JBLEN + 1 + (sizeof(sigset_t) / sizeof(int))];
 #endif
 
-#define _SAVEMASK	_JBLEN
-#define _SIGMASK	(_JBLEN+1)
+#define _SAVEMASK _JBLEN
+#define _SIGMASK  (_JBLEN + 1)
 
 #ifdef __CYGWIN__
-# define _CYGWIN_WORKING_SIGSETJMP
+#define _CYGWIN_WORKING_SIGSETJMP
 #endif
 
 #ifdef _POSIX_THREADS
@@ -418,40 +418,39 @@ typedef int sigjmp_buf[_JBLEN+1+(sizeof (sigset_t)/sizeof (int))];
 #ifdef __CYGWIN__
 /* Per POSIX, siglongjmp has to be implemented as function.  Cygwin
    provides functions for both, siglongjmp and sigsetjmp since 2.2.0. */
-extern void siglongjmp (sigjmp_buf, int) __attribute__ ((__noreturn__));
-extern int sigsetjmp (sigjmp_buf, int);
+extern void siglongjmp(sigjmp_buf, int) __attribute__((__noreturn__));
+extern int sigsetjmp(sigjmp_buf, int);
 #endif
 
 #if defined(__GNUC__)
 
-#define sigsetjmp(env, savemask) \
-            __extension__ \
-            ({ \
-              sigjmp_buf *_sjbuf = &(env); \
-              ((*_sjbuf)[_SAVEMASK] = savemask,\
-              __SIGMASK_FUNC (SIG_SETMASK, 0, (sigset_t *)((*_sjbuf) + _SIGMASK)),\
-              setjmp (*_sjbuf)); \
-            })
+#define sigsetjmp(env, savemask)                                                                   \
+        __extension__({                                                                            \
+                sigjmp_buf *_sjbuf = &(env);                                                       \
+                ((*_sjbuf)[_SAVEMASK] = savemask,                                                  \
+                 __SIGMASK_FUNC(SIG_SETMASK, 0, (sigset_t *)((*_sjbuf) + _SIGMASK)),               \
+                 setjmp(*_sjbuf));                                                                 \
+        })
 
-#define siglongjmp(env, val) \
-            __extension__ \
-            ({ \
-              sigjmp_buf *_sjbuf = &(env); \
-              ((((*_sjbuf)[_SAVEMASK]) ? \
-               __SIGMASK_FUNC (SIG_SETMASK, (sigset_t *)((*_sjbuf) + _SIGMASK), 0)\
-               : 0), \
-               longjmp (*_sjbuf, val)); \
-            })
+#define siglongjmp(env, val)                                                                       \
+        __extension__({                                                                            \
+                sigjmp_buf *_sjbuf = &(env);                                                       \
+                ((((*_sjbuf)[_SAVEMASK])                                                           \
+                          ? __SIGMASK_FUNC(SIG_SETMASK, (sigset_t *)((*_sjbuf) + _SIGMASK), 0)     \
+                          : 0),                                                                    \
+                 longjmp(*_sjbuf, val));                                                           \
+        })
 
 #else /* !__GNUC__ */
 
-#define sigsetjmp(env, savemask) ((env)[_SAVEMASK] = savemask,\
-               __SIGMASK_FUNC (SIG_SETMASK, 0, (sigset_t *) ((env) + _SIGMASK)),\
-               setjmp (env))
+#define sigsetjmp(env, savemask)                                                                   \
+        ((env)[_SAVEMASK] = savemask,                                                              \
+         __SIGMASK_FUNC(SIG_SETMASK, 0, (sigset_t *)((env) + _SIGMASK)), setjmp(env))
 
-#define siglongjmp(env, val) ((((env)[_SAVEMASK])?\
-               __SIGMASK_FUNC (SIG_SETMASK, (sigset_t *) ((env) + _SIGMASK), 0):0),\
-               longjmp (env, val))
+#define siglongjmp(env, val)                                                                       \
+        ((((env)[_SAVEMASK]) ? __SIGMASK_FUNC(SIG_SETMASK, (sigset_t *)((env) + _SIGMASK), 0)      \
+                             : 0),                                                                 \
+         longjmp(env, val))
 
 #endif
 
@@ -459,11 +458,11 @@ extern int sigsetjmp (sigjmp_buf, int);
    are equivalent to sigsetjmp/siglongjmp when not saving the signal mask.
    New applications should use sigsetjmp/siglongjmp instead. */
 #ifdef __CYGWIN__
-extern void _longjmp (jmp_buf, int) __attribute__ ((__noreturn__));
-extern int _setjmp (jmp_buf);
+extern void _longjmp(jmp_buf, int) __attribute__((__noreturn__));
+extern int _setjmp(jmp_buf);
 #else
-#define _setjmp(env)		sigsetjmp ((env), 0)
-#define _longjmp(env, val)	siglongjmp ((env), (val))
+#define _setjmp(env)       sigsetjmp((env), 0)
+#define _longjmp(env, val) siglongjmp((env), (val))
 #endif
 
 #ifdef __cplusplus

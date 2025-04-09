@@ -21,7 +21,7 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef GCC_OMP_GRID_H
 #define GCC_OMP_GRID_H
 
-extern tree omp_grid_lastprivate_predicate (struct omp_for_data *fd);
-extern void omp_grid_gridify_all_targets (gimple_seq *body_p);
+extern tree omp_grid_lastprivate_predicate(struct omp_for_data *fd);
+extern void omp_grid_gridify_all_targets(gimple_seq *body_p);
 
 #endif /* GCC_OMP_GRID_H */

@@ -32,38 +32,45 @@
 
 namespace __gnu_profile
 {
-  enum __state_type { __ON, __OFF, __INVALID };
+enum __state_type {
+        __ON,
+        __OFF,
+        __INVALID
+};
 
-  _GLIBCXX_PROFILE_DEFINE_DATA(__state_type, __state, __INVALID);
+_GLIBCXX_PROFILE_DEFINE_DATA(__state_type, __state, __INVALID);
 
-  inline bool
-  __turn(__state_type __s)
-  { 
-    __state_type inv(__INVALID);
-    return __atomic_compare_exchange_n(&_GLIBCXX_PROFILE_DATA(__state),
-				       &inv, __s, false, __ATOMIC_ACQ_REL, 
-				       __ATOMIC_RELAXED);
-  }
+inline bool __turn(__state_type __s)
+{
+        __state_type inv(__INVALID);
+        return __atomic_compare_exchange_n(&_GLIBCXX_PROFILE_DATA(__state), &inv, __s, false,
+                                           __ATOMIC_ACQ_REL, __ATOMIC_RELAXED);
+}
 
-  inline bool
-  __turn_on()
-  { return __turn(__ON); }
+inline bool __turn_on()
+{
+        return __turn(__ON);
+}
 
-  inline bool
-  __turn_off()
-  { return __turn(__OFF); }
+inline bool __turn_off()
+{
+        return __turn(__OFF);
+}
 
-  inline bool
-  __is_on()
-  { return _GLIBCXX_PROFILE_DATA(__state) == __ON; }
+inline bool __is_on()
+{
+        return _GLIBCXX_PROFILE_DATA(__state) == __ON;
+}
 
-  inline bool
-  __is_off()
-  { return _GLIBCXX_PROFILE_DATA(__state) == __OFF; }
+inline bool __is_off()
+{
+        return _GLIBCXX_PROFILE_DATA(__state) == __OFF;
+}
 
-  inline bool
-  __is_invalid()
-  { return _GLIBCXX_PROFILE_DATA(__state) == __INVALID; }
+inline bool __is_invalid()
+{
+        return _GLIBCXX_PROFILE_DATA(__state) == __INVALID;
+}
 
 } // end namespace __gnu_profile
 #endif /* _GLIBCXX_PROFILE_PROFILER_STATE_H */

@@ -21,6 +21,6 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef TREE_TSAN
 #define TREE_TSAN
 
-extern void tsan_finish_file (void);
+extern void tsan_finish_file(void);
 
 #endif /* TREE_TSAN */

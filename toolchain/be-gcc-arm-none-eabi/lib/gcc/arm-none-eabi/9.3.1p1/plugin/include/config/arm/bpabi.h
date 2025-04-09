@@ -1,6 +1,6 @@
 /* Configuration file for ARM BPABI targets.
    Copyright (C) 2004-2019 Free Software Foundation, Inc.
-   Contributed by CodeSourcery, LLC   
+   Contributed by CodeSourcery, LLC
 
    This file is part of GCC.
 
@@ -42,7 +42,7 @@
 #endif
 
 /* EABI targets should enable interworking by default.  */
-#undef  TARGET_DEFAULT
+#undef TARGET_DEFAULT
 #define TARGET_DEFAULT (MASK_INTERWORK | TARGET_ENDIAN_DEFAULT)
 
 /* The ARM BPABI functions return a boolean; they use no special
@@ -52,35 +52,35 @@
 /* The BPABI integer comparison routines return { -1, 0, 1 }.  */
 #define TARGET_LIB_INT_CMP_BIASED !TARGET_BPABI
 
-#define TARGET_FIX_V4BX_SPEC " %{mcpu=arm8|mcpu=arm810|mcpu=strongarm*"\
-  "|march=armv4|mcpu=fa526|mcpu=fa626:--fix-v4bx}"
+#define TARGET_FIX_V4BX_SPEC                                                                       \
+        " %{mcpu=arm8|mcpu=arm810|mcpu=strongarm*"                                                 \
+        "|march=armv4|mcpu=fa526|mcpu=fa626:--fix-v4bx}"
 
-#define BE8_LINK_SPEC							\
-  "%{!r:%{!mbe32:%:be8_linkopt(%{mlittle-endian:little}"		\
-  "			       %{mbig-endian:big}"			\
-  "			       %{mbe8:be8}"				\
-  "			       %{march=*:arch %*})}}"
+#define BE8_LINK_SPEC                                                                              \
+        "%{!r:%{!mbe32:%:be8_linkopt(%{mlittle-endian:little}"                                     \
+        "			       %{mbig-endian:big}"                                                             \
+        "			       %{mbe8:be8}"                                                                    \
+        "			       %{march=*:arch %*})}}"
 
 /* Tell the assembler to build BPABI binaries.  */
-#undef  SUBTARGET_EXTRA_ASM_SPEC
-#define SUBTARGET_EXTRA_ASM_SPEC \
-  "%{mabi=apcs-gnu|mabi=atpcs:-meabi=gnu;:-meabi=5}" TARGET_FIX_V4BX_SPEC
+#undef SUBTARGET_EXTRA_ASM_SPEC
+#define SUBTARGET_EXTRA_ASM_SPEC                                                                   \
+        "%{mabi=apcs-gnu|mabi=atpcs:-meabi=gnu;:-meabi=5}" TARGET_FIX_V4BX_SPEC
 
 #ifndef SUBTARGET_EXTRA_LINK_SPEC
 #define SUBTARGET_EXTRA_LINK_SPEC ""
 #endif
 
 /* Split out the EABI common values so other targets can use it.  */
-#define EABI_LINK_SPEC \
-  TARGET_FIX_V4BX_SPEC BE8_LINK_SPEC
+#define EABI_LINK_SPEC TARGET_FIX_V4BX_SPEC BE8_LINK_SPEC
 
 /* The generic link spec in elf.h does not support shared libraries.  */
-#define BPABI_LINK_SPEC \
-  "%{mbig-endian:-EB} %{mlittle-endian:-EL} "		\
-  "%{static:-Bstatic} %{shared:-shared} %{symbolic:-Bsymbolic} "	\
-  "-X" SUBTARGET_EXTRA_LINK_SPEC EABI_LINK_SPEC
+#define BPABI_LINK_SPEC                                                                            \
+        "%{mbig-endian:-EB} %{mlittle-endian:-EL} "                                                \
+        "%{static:-Bstatic} %{shared:-shared} %{symbolic:-Bsymbolic} "                             \
+        "-X" SUBTARGET_EXTRA_LINK_SPEC EABI_LINK_SPEC
 
-#undef  LINK_SPEC
+#undef LINK_SPEC
 #define LINK_SPEC BPABI_LINK_SPEC
 
 /* The BPABI requires that we always use an out-of-line implementation
@@ -90,16 +90,13 @@
    broken out separately so that it can be used within
    TARGET_OS_CPP_BUILTINS in configuration files for systems based on
    the BPABI.  */
-#define TARGET_BPABI_CPP_BUILTINS()			\
-  do							\
-    {							\
-      builtin_define ("__GXX_TYPEINFO_EQUALITY_INLINE=0");	\
-    }							\
-  while (false)
+#define TARGET_BPABI_CPP_BUILTINS()                                                                \
+        do {                                                                                       \
+                builtin_define("__GXX_TYPEINFO_EQUALITY_INLINE=0");                                \
+        } while (false)
 
 #undef TARGET_OS_CPP_BUILTINS
-#define TARGET_OS_CPP_BUILTINS() \
-  TARGET_BPABI_CPP_BUILTINS()
+#define TARGET_OS_CPP_BUILTINS() TARGET_BPABI_CPP_BUILTINS()
 
 /* The BPABI specifies the use of .{init,fini}_array.  Therefore, we
    do not want GCC to put anything into the .{init,fini} sections.  */
@@ -115,14 +112,14 @@
     Note that __gnu_mcount_nc will be entered with a misaligned stack.
     This is OK because it uses a special calling convention anyway.  */
 
-#undef  NO_PROFILE_COUNTERS
+#undef NO_PROFILE_COUNTERS
 #define NO_PROFILE_COUNTERS 1
-#undef  ARM_FUNCTION_PROFILER
-#define ARM_FUNCTION_PROFILER(STREAM, LABELNO)  			\
-{									\
-  fprintf (STREAM, "\tpush\t{lr}\n");					\
-  fprintf (STREAM, "\tbl\t__gnu_mcount_nc\n");				\
-}
+#undef ARM_FUNCTION_PROFILER
+#define ARM_FUNCTION_PROFILER(STREAM, LABELNO)                                                     \
+        {                                                                                          \
+                fprintf(STREAM, "\tpush\t{lr}\n");                                                 \
+                fprintf(STREAM, "\tbl\t__gnu_mcount_nc\n");                                        \
+        }
 
 #undef SUBTARGET_FRAME_POINTER_REQUIRED
 #define SUBTARGET_FRAME_POINTER_REQUIRED 0

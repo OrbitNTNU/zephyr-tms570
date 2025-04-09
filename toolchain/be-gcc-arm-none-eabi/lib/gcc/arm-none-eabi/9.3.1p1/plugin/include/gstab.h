@@ -19,12 +19,11 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef GCC_GSTAB_H
 #define GCC_GSTAB_H
 
-#define __define_stab(NAME, CODE, STRING) NAME=CODE,
+#define __define_stab(NAME, CODE, STRING) NAME = CODE,
 
-enum
-{
+enum {
 #include "stab.def"
-LAST_UNUSED_STAB_CODE
+        LAST_UNUSED_STAB_CODE
 };
 
 /* stabs debug codes really are integers with expressive names.  */

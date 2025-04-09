@@ -37,7 +37,7 @@
 #include <parallel/types.h>
 #include <parallel/base.h>
 
-#if !defined(_WIN32) || defined (__CYGWIN__)
+#if !defined(_WIN32) || defined(__CYGWIN__)
 #include <sched.h>
 #endif
 
@@ -45,87 +45,79 @@
 // Including <windows.h> will drag in all the windows32 names.  Since
 // that can cause user code portability problems, we just declare the
 // one needed function here.
-extern "C"
-__attribute((dllimport)) void __attribute__((stdcall)) Sleep (unsigned long);
+extern "C" __attribute((dllimport)) void __attribute__((stdcall)) Sleep(unsigned long);
 #endif
 
 namespace __gnu_parallel
 {
-  template<typename _Tp>
-    inline _Tp
-    __add_omp(volatile _Tp* __ptr, _Tp __addend)
-    {
-      int64_t __res;
+template <typename _Tp> inline _Tp __add_omp(volatile _Tp *__ptr, _Tp __addend)
+{
+        int64_t __res;
 #pragma omp critical
-      {
-	__res = *__ptr;
-	*(__ptr) += __addend;
-      }
-      return __res;
-    }
+        {
+                __res = *__ptr;
+                *(__ptr) += __addend;
+        }
+        return __res;
+}
 
-  /** @brief Add a value to a variable, atomically.
-   *
-   *  @param __ptr Pointer to a signed integer.
-   *  @param __addend Value to add.
-   */
-  template<typename _Tp>
-    inline _Tp
-    __fetch_and_add(volatile _Tp* __ptr, _Tp __addend)
-    {
-      if (__atomic_always_lock_free(sizeof(_Tp), __ptr))
-	return __atomic_fetch_add(__ptr, __addend, __ATOMIC_ACQ_REL);
-      return __add_omp(__ptr, __addend);
-    }
+/** @brief Add a value to a variable, atomically.
+ *
+ *  @param __ptr Pointer to a signed integer.
+ *  @param __addend Value to add.
+ */
+template <typename _Tp> inline _Tp __fetch_and_add(volatile _Tp *__ptr, _Tp __addend)
+{
+        if (__atomic_always_lock_free(sizeof(_Tp), __ptr)) {
+                return __atomic_fetch_add(__ptr, __addend, __ATOMIC_ACQ_REL);
+        }
+        return __add_omp(__ptr, __addend);
+}
 
-  template<typename _Tp>
-    inline bool
-    __cas_omp(volatile _Tp* __ptr, _Tp __comparand, _Tp __replacement)
-    {
-      bool __res = false;
+template <typename _Tp>
+inline bool __cas_omp(volatile _Tp *__ptr, _Tp __comparand, _Tp __replacement)
+{
+        bool __res = false;
 #pragma omp critical
-      {
-	if (*__ptr == __comparand)
-	  {
-	    *__ptr = __replacement;
-	    __res = true;
-	  }
-      }
-      return __res;
-    }
+        {
+                if (*__ptr == __comparand) {
+                        *__ptr = __replacement;
+                        __res = true;
+                }
+        }
+        return __res;
+}
 
-  /** @brief Compare-and-swap
-   *
-   * Compare @c *__ptr and @c __comparand. If equal, let @c
-   * *__ptr=__replacement and return @c true, return @c false otherwise.
-   *
-   *  @param __ptr Pointer to signed integer.
-   *  @param __comparand Compare value.
-   *  @param __replacement Replacement value.
-   */
-  template<typename _Tp>
-    inline bool
-    __compare_and_swap(volatile _Tp* __ptr, _Tp __comparand, _Tp __replacement)
-    {
-      if (__atomic_always_lock_free(sizeof(_Tp), __ptr))
-	return __atomic_compare_exchange_n(__ptr, &__comparand, __replacement,
-					   false, __ATOMIC_ACQ_REL,
-					   __ATOMIC_RELAXED);
-      return __cas_omp(__ptr, __comparand, __replacement);
-    }
+/** @brief Compare-and-swap
+ *
+ * Compare @c *__ptr and @c __comparand. If equal, let @c
+ * *__ptr=__replacement and return @c true, return @c false otherwise.
+ *
+ *  @param __ptr Pointer to signed integer.
+ *  @param __comparand Compare value.
+ *  @param __replacement Replacement value.
+ */
+template <typename _Tp>
+inline bool __compare_and_swap(volatile _Tp *__ptr, _Tp __comparand, _Tp __replacement)
+{
+        if (__atomic_always_lock_free(sizeof(_Tp), __ptr)) {
+                return __atomic_compare_exchange_n(__ptr, &__comparand, __replacement, false,
+                                                   __ATOMIC_ACQ_REL, __ATOMIC_RELAXED);
+        }
+        return __cas_omp(__ptr, __comparand, __replacement);
+}
 
-  /** @brief Yield control to another thread, without waiting for
-   *  the end of the time slice.
-   */
-  inline void
-  __yield()
-  {
-#if defined (_WIN32) && !defined (__CYGWIN__)
-    Sleep(0);
+/** @brief Yield control to another thread, without waiting for
+ *  the end of the time slice.
+ */
+inline void __yield()
+{
+#if defined(_WIN32) && !defined(__CYGWIN__)
+        Sleep(0);
 #else
-    sched_yield();
+        sched_yield();
 #endif
-  }
-} // end namespace
+}
+} // namespace __gnu_parallel
 
 #endif /* _GLIBCXX_PARALLEL_COMPATIBILITY_H */

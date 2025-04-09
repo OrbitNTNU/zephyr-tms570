@@ -49,54 +49,66 @@ typedef int_vector_builder<poly_int64> vec_perm_builder;
    different numbers of elements.  */
 class vec_perm_indices
 {
-  typedef poly_int64 element_type;
+        typedef poly_int64 element_type;
 
-public:
-  vec_perm_indices ();
-  vec_perm_indices (const vec_perm_builder &, unsigned int, poly_uint64);
+      public:
+        vec_perm_indices();
+        vec_perm_indices(const vec_perm_builder &, unsigned int, poly_uint64);
 
-  void new_vector (const vec_perm_builder &, unsigned int, poly_uint64);
-  void new_expanded_vector (const vec_perm_indices &, unsigned int);
-  void rotate_inputs (int delta);
+        void new_vector(const vec_perm_builder &, unsigned int, poly_uint64);
+        void new_expanded_vector(const vec_perm_indices &, unsigned int);
+        void rotate_inputs(int delta);
 
-  /* Return the underlying vector encoding.  */
-  const vec_perm_builder &encoding () const { return m_encoding; }
+        /* Return the underlying vector encoding.  */
+        const vec_perm_builder &encoding() const
+        {
+                return m_encoding;
+        }
 
-  /* Return the number of output elements.  This is called length ()
-     so that we present a more vec-like interface.  */
-  poly_uint64 length () const { return m_encoding.full_nelts (); }
+        /* Return the number of output elements.  This is called length ()
+           so that we present a more vec-like interface.  */
+        poly_uint64 length() const
+        {
+                return m_encoding.full_nelts();
+        }
 
-  /* Return the number of input vectors being permuted.  */
-  unsigned int ninputs () const { return m_ninputs; }
+        /* Return the number of input vectors being permuted.  */
+        unsigned int ninputs() const
+        {
+                return m_ninputs;
+        }
 
-  /* Return the number of elements in each input vector.  */
-  poly_uint64 nelts_per_input () const { return m_nelts_per_input; }
+        /* Return the number of elements in each input vector.  */
+        poly_uint64 nelts_per_input() const
+        {
+                return m_nelts_per_input;
+        }
 
-  /* Return the total number of input elements.  */
-  poly_uint64 input_nelts () const { return m_ninputs * m_nelts_per_input; }
+        /* Return the total number of input elements.  */
+        poly_uint64 input_nelts() const
+        {
+                return m_ninputs * m_nelts_per_input;
+        }
 
-  element_type clamp (element_type) const;
-  element_type operator[] (unsigned int i) const;
-  bool series_p (unsigned int, unsigned int, element_type, element_type) const;
-  bool all_in_range_p (element_type, element_type) const;
-  bool all_from_input_p (unsigned int) const;
+        element_type clamp(element_type) const;
+        element_type operator[](unsigned int i) const;
+        bool series_p(unsigned int, unsigned int, element_type, element_type) const;
+        bool all_in_range_p(element_type, element_type) const;
+        bool all_from_input_p(unsigned int) const;
 
-private:
-  vec_perm_indices (const vec_perm_indices &);
+      private:
+        vec_perm_indices(const vec_perm_indices &);
 
-  vec_perm_builder m_encoding;
-  unsigned int m_ninputs;
-  poly_uint64 m_nelts_per_input;
+        vec_perm_builder m_encoding;
+        unsigned int m_ninputs;
+        poly_uint64 m_nelts_per_input;
 };
 
-bool tree_to_vec_perm_builder (vec_perm_builder *, tree);
-tree vec_perm_indices_to_tree (tree, const vec_perm_indices &);
-rtx vec_perm_indices_to_rtx (machine_mode, const vec_perm_indices &);
+bool tree_to_vec_perm_builder(vec_perm_builder *, tree);
+tree vec_perm_indices_to_tree(tree, const vec_perm_indices &);
+rtx vec_perm_indices_to_rtx(machine_mode, const vec_perm_indices &);
 
-inline
-vec_perm_indices::vec_perm_indices ()
-  : m_ninputs (0),
-    m_nelts_per_input (0)
+inline vec_perm_indices::vec_perm_indices() : m_ninputs(0), m_nelts_per_input(0)
 {
 }
 
@@ -104,49 +116,46 @@ vec_perm_indices::vec_perm_indices ()
    inputs that have NELTS_PER_INPUT elements each.  Take the elements of
    the new vector from ELEMENTS, clamping each one to be in range.  */
 
-inline
-vec_perm_indices::vec_perm_indices (const vec_perm_builder &elements,
-				    unsigned int ninputs,
-				    poly_uint64 nelts_per_input)
+inline vec_perm_indices::vec_perm_indices(const vec_perm_builder &elements, unsigned int ninputs,
+                                          poly_uint64 nelts_per_input)
 {
-  new_vector (elements, ninputs, nelts_per_input);
+        new_vector(elements, ninputs, nelts_per_input);
 }
 
 /* Return the canonical value for permutation vector element ELT,
    taking into account the current number of input elements.  */
 
-inline vec_perm_indices::element_type
-vec_perm_indices::clamp (element_type elt) const
+inline vec_perm_indices::element_type vec_perm_indices::clamp(element_type elt) const
 {
-  element_type limit = input_nelts (), elem_within_input;
-  HOST_WIDE_INT input;
-  if (!can_div_trunc_p (elt, limit, &input, &elem_within_input))
-    return elt;
+        element_type limit = input_nelts(), elem_within_input;
+        HOST_WIDE_INT input;
+        if (!can_div_trunc_p(elt, limit, &input, &elem_within_input)) {
+                return elt;
+        }
 
-  /* Treat negative elements as counting from the end.  This only matters
-     if the vector size is not a power of 2.  */
-  if (known_lt (elem_within_input, 0))
-    return elem_within_input + limit;
+        /* Treat negative elements as counting from the end.  This only matters
+           if the vector size is not a power of 2.  */
+        if (known_lt(elem_within_input, 0)) {
+                return elem_within_input + limit;
+        }
 
-  return elem_within_input;
+        return elem_within_input;
 }
 
 /* Return the value of vector element I, which might or might not be
    explicitly encoded.  */
 
-inline vec_perm_indices::element_type
-vec_perm_indices::operator[] (unsigned int i) const
+inline vec_perm_indices::element_type vec_perm_indices::operator[](unsigned int i) const
 {
-  return clamp (m_encoding.elt (i));
+        return clamp(m_encoding.elt(i));
 }
 
 /* Return true if the permutation vector only selects elements from
    input I.  */
 
-inline bool
-vec_perm_indices::all_from_input_p (unsigned int i) const
+inline bool vec_perm_indices::all_from_input_p(unsigned int i) const
 {
-  return all_in_range_p (i * m_nelts_per_input, m_nelts_per_input);
+        return all_in_range_p(i * m_nelts_per_input, m_nelts_per_input);
 }
 
 #endif

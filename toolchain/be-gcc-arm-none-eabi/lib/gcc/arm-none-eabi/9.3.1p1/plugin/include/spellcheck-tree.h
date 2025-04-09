@@ -24,28 +24,24 @@ along with GCC; see the file COPYING3.  If not see
 
 /* spellcheck-tree.c  */
 
-extern edit_distance_t
-get_edit_distance (tree ident_s, tree ident_t);
+extern edit_distance_t get_edit_distance(tree ident_s, tree ident_t);
 
-extern tree
-find_closest_identifier (tree target, const auto_vec<tree> *candidates);
+extern tree find_closest_identifier(tree target, const auto_vec<tree> *candidates);
 
 /* Specialization of edit_distance_traits for identifiers.  */
 
-template <>
-struct edit_distance_traits<tree>
-{
-  static size_t get_length (tree id)
-  {
-    gcc_assert (TREE_CODE (id) == IDENTIFIER_NODE);
-    return IDENTIFIER_LENGTH (id);
-  }
+template <> struct edit_distance_traits<tree> {
+        static size_t get_length(tree id)
+        {
+                gcc_assert(TREE_CODE(id) == IDENTIFIER_NODE);
+                return IDENTIFIER_LENGTH(id);
+        }
 
-  static const char *get_string (tree id)
-  {
-    gcc_assert (TREE_CODE (id) == IDENTIFIER_NODE);
-    return IDENTIFIER_POINTER (id);
-  }
+        static const char *get_string(tree id)
+        {
+                gcc_assert(TREE_CODE(id) == IDENTIFIER_NODE);
+                return IDENTIFIER_POINTER(id);
+        }
 };
 
-#endif  /* GCC_SPELLCHECK_TREE_H  */
+#endif /* GCC_SPELLCHECK_TREE_H  */

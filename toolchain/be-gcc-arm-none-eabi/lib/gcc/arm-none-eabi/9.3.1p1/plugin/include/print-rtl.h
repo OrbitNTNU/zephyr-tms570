@@ -30,65 +30,64 @@ class rtx_reuse_manager;
 
 class rtx_writer
 {
- public:
-  rtx_writer (FILE *outfile, int ind, bool simple, bool compact,
-	      rtx_reuse_manager *reuse_manager);
+      public:
+        rtx_writer(FILE *outfile, int ind, bool simple, bool compact,
+                   rtx_reuse_manager *reuse_manager);
 
-  void print_rtx (const_rtx in_rtx);
-  void print_rtl (const_rtx rtx_first);
-  int print_rtl_single_with_indent (const_rtx x, int ind);
+        void print_rtx(const_rtx in_rtx);
+        void print_rtl(const_rtx rtx_first);
+        int print_rtl_single_with_indent(const_rtx x, int ind);
 
-  void finish_directive ();
+        void finish_directive();
 
- private:
-  void print_rtx_operand_code_0 (const_rtx in_rtx, int idx);
-  void print_rtx_operand_code_e (const_rtx in_rtx, int idx);
-  void print_rtx_operand_codes_E_and_V (const_rtx in_rtx, int idx);
-  void print_rtx_operand_code_i (const_rtx in_rtx, int idx);
-  void print_rtx_operand_code_r (const_rtx in_rtx);
-  void print_rtx_operand_code_u (const_rtx in_rtx, int idx);
-  void print_rtx_operand (const_rtx in_rtx, int idx);
-  bool operand_has_default_value_p (const_rtx in_rtx, int idx);
+      private:
+        void print_rtx_operand_code_0(const_rtx in_rtx, int idx);
+        void print_rtx_operand_code_e(const_rtx in_rtx, int idx);
+        void print_rtx_operand_codes_E_and_V(const_rtx in_rtx, int idx);
+        void print_rtx_operand_code_i(const_rtx in_rtx, int idx);
+        void print_rtx_operand_code_r(const_rtx in_rtx);
+        void print_rtx_operand_code_u(const_rtx in_rtx, int idx);
+        void print_rtx_operand(const_rtx in_rtx, int idx);
+        bool operand_has_default_value_p(const_rtx in_rtx, int idx);
 
- private:
-  FILE *m_outfile;
-  int m_sawclose;
-  int m_indent;
-  bool m_in_call_function_usage;
+      private:
+        FILE *m_outfile;
+        int m_sawclose;
+        int m_indent;
+        bool m_in_call_function_usage;
 
-  /* True means use simplified format without flags, modes, etc.  */
-  bool m_simple;
+        /* True means use simplified format without flags, modes, etc.  */
+        bool m_simple;
 
-  /* If true, use compact dump format:
-     - PREV/NEXT_INSN UIDs are omitted
-     - INSN_CODEs are omitted,
-     - register numbers are omitted for hard and virtual regs, and
-       non-virtual pseudos are offset relative to the first such reg, and
-       printed with a '%' sigil e.g. "%0" for (LAST_VIRTUAL_REGISTER + 1),
-     - insn names are prefixed with "c" (e.g. "cinsn", "cnote", etc).  */
-  bool m_compact;
+        /* If true, use compact dump format:
+           - PREV/NEXT_INSN UIDs are omitted
+           - INSN_CODEs are omitted,
+           - register numbers are omitted for hard and virtual regs, and
+             non-virtual pseudos are offset relative to the first such reg, and
+             printed with a '%' sigil e.g. "%0" for (LAST_VIRTUAL_REGISTER + 1),
+           - insn names are prefixed with "c" (e.g. "cinsn", "cnote", etc).  */
+        bool m_compact;
 
-  /* An optional instance of rtx_reuse_manager.  */
-  rtx_reuse_manager *m_rtx_reuse_manager;
+        /* An optional instance of rtx_reuse_manager.  */
+        rtx_reuse_manager *m_rtx_reuse_manager;
 };
 
 #ifdef BUFSIZ
-extern void print_rtl (FILE *, const_rtx);
+extern void print_rtl(FILE *, const_rtx);
 #endif
-extern void print_rtx_insn_vec (FILE *file, const vec<rtx_insn *> &vec);
+extern void print_rtx_insn_vec(FILE *file, const vec<rtx_insn *> &vec);
 
-extern void dump_value_slim (FILE *, const_rtx, int);
-extern void dump_insn_slim (FILE *, const rtx_insn *);
-extern void dump_rtl_slim (FILE *, const rtx_insn *, const rtx_insn *,
-			   int, int);
-extern void print_value (pretty_printer *, const_rtx, int);
-extern void print_pattern (pretty_printer *, const_rtx, int);
-extern void print_insn (pretty_printer *pp, const rtx_insn *x, int verbose);
+extern void dump_value_slim(FILE *, const_rtx, int);
+extern void dump_insn_slim(FILE *, const rtx_insn *);
+extern void dump_rtl_slim(FILE *, const rtx_insn *, const rtx_insn *, int, int);
+extern void print_value(pretty_printer *, const_rtx, int);
+extern void print_pattern(pretty_printer *, const_rtx, int);
+extern void print_insn(pretty_printer *pp, const rtx_insn *x, int verbose);
 
-extern void rtl_dump_bb_for_graph (pretty_printer *, basic_block);
-extern const char *str_pattern_slim (const_rtx);
+extern void rtl_dump_bb_for_graph(pretty_printer *, basic_block);
+extern const char *str_pattern_slim(const_rtx);
 
-extern void print_rtx_function (FILE *file, function *fn, bool compact);
+extern void print_rtx_function(FILE *file, function *fn, bool compact);
 
 #ifndef GENERATOR_FILE
 
@@ -139,24 +138,24 @@ extern void print_rtx_function (FILE *file, function *fn, bool compact);
 
 class rtx_reuse_manager
 {
- public:
-  rtx_reuse_manager ();
+      public:
+        rtx_reuse_manager();
 
-  /* The first pass.  */
-  void preprocess (const_rtx x);
+        /* The first pass.  */
+        void preprocess(const_rtx x);
 
-  /* The second pass (within print_rtx).  */
-  bool has_reuse_id (const_rtx x, int *out);
-  bool seen_def_p (int reuse_id);
-  void set_seen_def (int reuse_id);
+        /* The second pass (within print_rtx).  */
+        bool has_reuse_id(const_rtx x, int *out);
+        bool seen_def_p(int reuse_id);
+        void set_seen_def(int reuse_id);
 
- private:
-  hash_map<const_rtx, int> m_rtx_occurrence_count;
-  hash_map<const_rtx, int> m_rtx_reuse_ids;
-  auto_bitmap m_defs_seen;
-  int m_next_id;
+      private:
+        hash_map<const_rtx, int> m_rtx_occurrence_count;
+        hash_map<const_rtx, int> m_rtx_reuse_ids;
+        auto_bitmap m_defs_seen;
+        int m_next_id;
 };
 
 #endif /* #ifndef GENERATOR_FILE */
 
-#endif  // GCC_PRINT_RTL_H
+#endif // GCC_PRINT_RTL_H

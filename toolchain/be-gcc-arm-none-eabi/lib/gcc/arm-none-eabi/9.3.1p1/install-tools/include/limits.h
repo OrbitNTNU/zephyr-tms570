@@ -26,7 +26,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 
 /* We use _GCC_LIMITS_H_ because we want this not to match
    any macros that the system's limits.h uses for its own purposes.  */
-#ifndef _GCC_LIMITS_H_  /* Terminated in limity.h.  */
+#ifndef _GCC_LIMITS_H_ /* Terminated in limity.h.  */
 #define _GCC_LIMITS_H_
 
 #ifndef _LIBC_LIMITS_H_
@@ -77,26 +77,26 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 /* Maximum value an `unsigned char' can hold.  (Minimum is 0).  */
 #undef UCHAR_MAX
 #if __SCHAR_MAX__ == __INT_MAX__
-# define UCHAR_MAX (SCHAR_MAX * 2U + 1U)
+#define UCHAR_MAX (SCHAR_MAX * 2U + 1U)
 #else
-# define UCHAR_MAX (SCHAR_MAX * 2 + 1)
+#define UCHAR_MAX (SCHAR_MAX * 2 + 1)
 #endif
 
 /* Minimum and maximum values a `char' can hold.  */
 #ifdef __CHAR_UNSIGNED__
-# undef CHAR_MIN
-# if __SCHAR_MAX__ == __INT_MAX__
-#  define CHAR_MIN 0U
-# else
-#  define CHAR_MIN 0
-# endif
-# undef CHAR_MAX
-# define CHAR_MAX UCHAR_MAX
+#undef CHAR_MIN
+#if __SCHAR_MAX__ == __INT_MAX__
+#define CHAR_MIN 0U
 #else
-# undef CHAR_MIN
-# define CHAR_MIN SCHAR_MIN
-# undef CHAR_MAX
-# define CHAR_MAX SCHAR_MAX
+#define CHAR_MIN 0
+#endif
+#undef CHAR_MAX
+#define CHAR_MAX UCHAR_MAX
+#else
+#undef CHAR_MIN
+#define CHAR_MIN SCHAR_MIN
+#undef CHAR_MAX
+#define CHAR_MAX SCHAR_MAX
 #endif
 
 /* Minimum and maximum values a `signed short int' can hold.  */
@@ -108,9 +108,9 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 /* Maximum value an `unsigned short int' can hold.  (Minimum is 0).  */
 #undef USHRT_MAX
 #if __SHRT_MAX__ == __INT_MAX__
-# define USHRT_MAX (SHRT_MAX * 2U + 1U)
+#define USHRT_MAX (SHRT_MAX * 2U + 1U)
 #else
-# define USHRT_MAX (SHRT_MAX * 2 + 1)
+#define USHRT_MAX (SHRT_MAX * 2 + 1)
 #endif
 
 /* Minimum and maximum values a `signed int' can hold.  */
@@ -134,54 +134,54 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #undef ULONG_MAX
 #define ULONG_MAX (LONG_MAX * 2UL + 1UL)
 
-#if defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
 /* Minimum and maximum values a `signed long long int' can hold.  */
-# undef LLONG_MIN
-# define LLONG_MIN (-LLONG_MAX - 1LL)
-# undef LLONG_MAX
-# define LLONG_MAX __LONG_LONG_MAX__
+#undef LLONG_MIN
+#define LLONG_MIN (-LLONG_MAX - 1LL)
+#undef LLONG_MAX
+#define LLONG_MAX __LONG_LONG_MAX__
 
 /* Maximum value an `unsigned long long int' can hold.  (Minimum is 0).  */
-# undef ULLONG_MAX
-# define ULLONG_MAX (LLONG_MAX * 2ULL + 1ULL)
+#undef ULLONG_MAX
+#define ULLONG_MAX (LLONG_MAX * 2ULL + 1ULL)
 #endif
 
-#if defined (__GNU_LIBRARY__) ? defined (__USE_GNU) : !defined (__STRICT_ANSI__)
+#if defined(__GNU_LIBRARY__) ? defined(__USE_GNU) : !defined(__STRICT_ANSI__)
 /* Minimum and maximum values a `signed long long int' can hold.  */
-# undef LONG_LONG_MIN
-# define LONG_LONG_MIN (-LONG_LONG_MAX - 1LL)
-# undef LONG_LONG_MAX
-# define LONG_LONG_MAX __LONG_LONG_MAX__
+#undef LONG_LONG_MIN
+#define LONG_LONG_MIN (-LONG_LONG_MAX - 1LL)
+#undef LONG_LONG_MAX
+#define LONG_LONG_MAX __LONG_LONG_MAX__
 
 /* Maximum value an `unsigned long long int' can hold.  (Minimum is 0).  */
-# undef ULONG_LONG_MAX
-# define ULONG_LONG_MAX (LONG_LONG_MAX * 2ULL + 1ULL)
+#undef ULONG_LONG_MAX
+#define ULONG_LONG_MAX (LONG_LONG_MAX * 2ULL + 1ULL)
 #endif
 
 #ifdef __STDC_WANT_IEC_60559_BFP_EXT__
 /* TS 18661-1 widths of integer types.  */
-# undef CHAR_WIDTH
-# define CHAR_WIDTH __SCHAR_WIDTH__
-# undef SCHAR_WIDTH
-# define SCHAR_WIDTH __SCHAR_WIDTH__
-# undef UCHAR_WIDTH
-# define UCHAR_WIDTH __SCHAR_WIDTH__
-# undef SHRT_WIDTH
-# define SHRT_WIDTH __SHRT_WIDTH__
-# undef USHRT_WIDTH
-# define USHRT_WIDTH __SHRT_WIDTH__
-# undef INT_WIDTH
-# define INT_WIDTH __INT_WIDTH__
-# undef UINT_WIDTH
-# define UINT_WIDTH __INT_WIDTH__
-# undef LONG_WIDTH
-# define LONG_WIDTH __LONG_WIDTH__
-# undef ULONG_WIDTH
-# define ULONG_WIDTH __LONG_WIDTH__
-# undef LLONG_WIDTH
-# define LLONG_WIDTH __LONG_LONG_WIDTH__
-# undef ULLONG_WIDTH
-# define ULLONG_WIDTH __LONG_LONG_WIDTH__
+#undef CHAR_WIDTH
+#define CHAR_WIDTH __SCHAR_WIDTH__
+#undef SCHAR_WIDTH
+#define SCHAR_WIDTH __SCHAR_WIDTH__
+#undef UCHAR_WIDTH
+#define UCHAR_WIDTH __SCHAR_WIDTH__
+#undef SHRT_WIDTH
+#define SHRT_WIDTH __SHRT_WIDTH__
+#undef USHRT_WIDTH
+#define USHRT_WIDTH __SHRT_WIDTH__
+#undef INT_WIDTH
+#define INT_WIDTH __INT_WIDTH__
+#undef UINT_WIDTH
+#define UINT_WIDTH __INT_WIDTH__
+#undef LONG_WIDTH
+#define LONG_WIDTH __LONG_WIDTH__
+#undef ULONG_WIDTH
+#define ULONG_WIDTH __LONG_WIDTH__
+#undef LLONG_WIDTH
+#define LLONG_WIDTH __LONG_LONG_WIDTH__
+#undef ULLONG_WIDTH
+#define ULLONG_WIDTH __LONG_LONG_WIDTH__
 #endif
 
 #endif /* _LIMITS_H___ */
@@ -191,7 +191,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #else /* not _GCC_LIMITS_H_ */
 
 #ifdef _GCC_NEXT_LIMITS_H
-#include_next <limits.h>		/* recurse down to the real one */
+#include_next <limits.h> /* recurse down to the real one */
 #endif
 
 #endif /* not _GCC_LIMITS_H_ */

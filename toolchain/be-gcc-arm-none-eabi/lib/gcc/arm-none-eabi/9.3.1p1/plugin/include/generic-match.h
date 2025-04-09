@@ -26,8 +26,8 @@ along with GCC; see the file COPYING3.  If not see
    fold_unary_loc, fold_binary_loc and fold_ternary_loc respectively.
    They are not considered a public API.  */
 
-tree generic_simplify (location_t, enum tree_code, tree, tree);
-tree generic_simplify (location_t, enum tree_code, tree, tree, tree);
-tree generic_simplify (location_t, enum tree_code, tree, tree, tree, tree);
+tree generic_simplify(location_t, enum tree_code, tree, tree);
+tree generic_simplify(location_t, enum tree_code, tree, tree, tree);
+tree generic_simplify(location_t, enum tree_code, tree, tree, tree, tree);
 
-#endif  /* GCC_GENERIC_MATCH_H */
+#endif /* GCC_GENERIC_MATCH_H */

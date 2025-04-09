@@ -25,9 +25,9 @@ along with GCC; see the file COPYING3.  If not see
 #define HIGHLEV_PLUGIN_COMMON_H
 
 /* Return codes for invoke_plugin_callbacks / call_plugin_event .  */
-#define PLUGEVT_SUCCESS         0
-#define PLUGEVT_NO_EVENTS       1
-#define PLUGEVT_NO_SUCH_EVENT   2
-#define PLUGEVT_NO_CALLBACK     3
+#define PLUGEVT_SUCCESS       0
+#define PLUGEVT_NO_EVENTS     1
+#define PLUGEVT_NO_SUCH_EVENT 2
+#define PLUGEVT_NO_CALLBACK   3
 
 #endif /* HIGHLEV_PLUGIN_COMMON_H */

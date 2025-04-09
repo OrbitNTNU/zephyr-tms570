@@ -20,14 +20,12 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef GCC_LIBFUNCS_H
 #define GCC_LIBFUNCS_H
 
-
 /* Enumeration of indexes into libfunc_table.  */
-enum libfunc_index
-{
-  LTI_unwind_sjlj_register,
-  LTI_unwind_sjlj_unregister,
-  LTI_synchronize,
-  LTI_MAX
+enum libfunc_index {
+        LTI_unwind_sjlj_register,
+        LTI_unwind_sjlj_unregister,
+        LTI_synchronize,
+        LTI_MAX
 };
 
 /* Information about an optab-related libfunc.  The op field is logically
@@ -39,26 +37,25 @@ enum libfunc_index
    the first case mode2 is forced to VOIDmode.  */
 
 struct GTY((for_user)) libfunc_entry {
-  int op, mode1, mode2;
-  rtx libfunc;
+        int op, mode1, mode2;
+        rtx libfunc;
 };
 
 /* Descriptor for libfunc_entry.  */
 
-struct libfunc_hasher : ggc_ptr_hash<libfunc_entry>
-{
-  static hashval_t hash (libfunc_entry *);
-  static bool equal (libfunc_entry *, libfunc_entry *);
+struct libfunc_hasher : ggc_ptr_hash<libfunc_entry> {
+        static hashval_t hash(libfunc_entry *);
+        static bool equal(libfunc_entry *, libfunc_entry *);
 };
 
 /* Target-dependent globals.  */
 struct GTY(()) target_libfuncs {
-  /* SYMBOL_REF rtx's for the library functions that are called
-     implicitly and not via optabs.  */
-  rtx x_libfunc_table[LTI_MAX];
+        /* SYMBOL_REF rtx's for the library functions that are called
+           implicitly and not via optabs.  */
+        rtx x_libfunc_table[LTI_MAX];
 
-  /* Hash table used to convert declarations into nodes.  */
-  hash_table<libfunc_hasher> *GTY(()) x_libfunc_hash;
+        /* Hash table used to convert declarations into nodes.  */
+        hash_table<libfunc_hasher> *GTY(()) x_libfunc_hash;
 };
 
 extern GTY(()) struct target_libfuncs default_target_libfuncs;
@@ -68,17 +65,15 @@ extern struct target_libfuncs *this_target_libfuncs;
 #define this_target_libfuncs (&default_target_libfuncs)
 #endif
 
-#define libfunc_table \
-  (this_target_libfuncs->x_libfunc_table)
+#define libfunc_table (this_target_libfuncs->x_libfunc_table)
 
 /* Accessor macros for libfunc_table.  */
 
-#define unwind_sjlj_register_libfunc (libfunc_table[LTI_unwind_sjlj_register])
-#define unwind_sjlj_unregister_libfunc \
-  (libfunc_table[LTI_unwind_sjlj_unregister])
-#define synchronize_libfunc	(libfunc_table[LTI_synchronize])
+#define unwind_sjlj_register_libfunc   (libfunc_table[LTI_unwind_sjlj_register])
+#define unwind_sjlj_unregister_libfunc (libfunc_table[LTI_unwind_sjlj_unregister])
+#define synchronize_libfunc            (libfunc_table[LTI_synchronize])
 
 /* In explow.c */
-extern void set_stack_check_libfunc (const char *);
+extern void set_stack_check_libfunc(const char *);
 
 #endif /* GCC_LIBFUNCS_H */

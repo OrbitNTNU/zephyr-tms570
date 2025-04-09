@@ -20,6 +20,6 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef GCC_TREE_PARLOOPS_H
 #define GCC_TREE_PARLOOPS_H
 
-extern bool parallelized_function_p (tree);
+extern bool parallelized_function_p(tree);
 
 #endif /* GCC_TREE_PARLOOPS_H */

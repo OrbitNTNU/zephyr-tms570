@@ -22,12 +22,10 @@ along with GCC; see the file COPYING3.  If not see
 
 /* Parse a BASEVER version string of the format "major.minor.patchlevel"
    or "major.minor" to extract its components.  */
-extern void parse_basever (int *, int *, int *);
+extern void parse_basever(int *, int *, int *);
 
 /* Define macros builtins common to all language performing CPP
    preprocessing.  */
-extern void define_language_independent_builtin_macros (cpp_reader *);
-
+extern void define_language_independent_builtin_macros(cpp_reader *);
 
 #endif /* ! GCC_CPPBUILTIN_H */
-

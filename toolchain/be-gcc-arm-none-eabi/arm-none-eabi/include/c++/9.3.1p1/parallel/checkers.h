@@ -38,36 +38,34 @@
 
 namespace __gnu_parallel
 {
-  /**
-   * @brief Check whether @c [__begin, @c __end) is sorted according
-   * to @c __comp.
-   * @param __begin Begin iterator of sequence.
-   * @param __end End iterator of sequence.
-   * @param __comp Comparator.
-   * @return @c true if sorted, @c false otherwise.
-   */
-  template<typename _IIter, typename _Compare>
-    bool
-    __is_sorted(_IIter __begin, _IIter __end, _Compare __comp)
-    {
-      if (__begin == __end)
-        return true;
-
-      _IIter __current(__begin), __recent(__begin);
-
-      unsigned long long __position = 1;
-      for (__current++; __current != __end; __current++)
-        {
-          if (__comp(*__current, *__recent))
-            {
-              return false;
-            }
-          __recent = __current;
-          __position++;
+/**
+ * @brief Check whether @c [__begin, @c __end) is sorted according
+ * to @c __comp.
+ * @param __begin Begin iterator of sequence.
+ * @param __end End iterator of sequence.
+ * @param __comp Comparator.
+ * @return @c true if sorted, @c false otherwise.
+ */
+template <typename _IIter, typename _Compare>
+bool __is_sorted(_IIter __begin, _IIter __end, _Compare __comp)
+{
+        if (__begin == __end) {
+                return true;
         }
 
-      return true;
-    }
+        _IIter __current(__begin), __recent(__begin);
+
+        unsigned long long __position = 1;
+        for (__current++; __current != __end; __current++) {
+                if (__comp(*__current, *__recent)) {
+                        return false;
+                }
+                __recent = __current;
+                __position++;
+        }
+
+        return true;
 }
+} // namespace __gnu_parallel
 
 #endif /* _GLIBCXX_PARALLEL_CHECKERS_H */

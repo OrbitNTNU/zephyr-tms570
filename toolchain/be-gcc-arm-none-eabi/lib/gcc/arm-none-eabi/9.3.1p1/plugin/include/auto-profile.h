@@ -22,10 +22,10 @@ along with GCC; see the file COPYING3.  If not see
 #define AUTO_PROFILE_H
 
 /* Read, process, finalize AutoFDO data structures.  */
-extern void read_autofdo_file (void);
-extern void end_auto_profile (void);
+extern void read_autofdo_file(void);
+extern void end_auto_profile(void);
 
 /* Returns TRUE if EDGE is hot enough to be inlined early.  */
-extern bool afdo_callsite_hot_enough_for_early_inline (struct cgraph_edge *);
+extern bool afdo_callsite_hot_enough_for_early_inline(struct cgraph_edge *);
 
 #endif /* AUTO_PROFILE_H */

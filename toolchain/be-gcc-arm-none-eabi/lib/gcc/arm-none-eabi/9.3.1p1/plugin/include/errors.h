@@ -28,11 +28,11 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef GCC_ERRORS_H
 #define GCC_ERRORS_H
 
-extern void warning (const char *, ...) ATTRIBUTE_PRINTF_1 ATTRIBUTE_COLD;
-extern void error (const char *, ...) ATTRIBUTE_PRINTF_1 ATTRIBUTE_COLD;
-extern void fatal (const char *, ...) ATTRIBUTE_NORETURN ATTRIBUTE_PRINTF_1 ATTRIBUTE_COLD;
-extern void internal_error (const char *, ...) ATTRIBUTE_NORETURN ATTRIBUTE_PRINTF_1 ATTRIBUTE_COLD;
-extern const char *trim_filename (const char *);
+extern void warning(const char *, ...) ATTRIBUTE_PRINTF_1 ATTRIBUTE_COLD;
+extern void error(const char *, ...) ATTRIBUTE_PRINTF_1 ATTRIBUTE_COLD;
+extern void fatal(const char *, ...) ATTRIBUTE_NORETURN ATTRIBUTE_PRINTF_1 ATTRIBUTE_COLD;
+extern void internal_error(const char *, ...) ATTRIBUTE_NORETURN ATTRIBUTE_PRINTF_1 ATTRIBUTE_COLD;
+extern const char *trim_filename(const char *);
 
 extern int have_error;
 extern const char *progname;

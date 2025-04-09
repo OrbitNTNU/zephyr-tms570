@@ -24,81 +24,77 @@ along with GCC; see the file COPYING3.  If not see
    helper methods for working with gcc's types.  */
 class gcc_rich_location : public rich_location
 {
- public:
-  /* Constructors.  */
+      public:
+        /* Constructors.  */
 
-  /* Constructing from a location.  */
-  gcc_rich_location (location_t loc, const range_label *label = NULL)
-  : rich_location (line_table, loc, label)
-  {
-  }
+        /* Constructing from a location.  */
+        gcc_rich_location(location_t loc, const range_label *label = NULL)
+                : rich_location(line_table, loc, label)
+        {
+        }
 
-  /* Methods for adding ranges via gcc entities.  */
-  void
-  add_expr (tree expr, range_label *label);
+        /* Methods for adding ranges via gcc entities.  */
+        void add_expr(tree expr, range_label *label);
 
-  void
-  maybe_add_expr (tree t, range_label *label);
+        void maybe_add_expr(tree t, range_label *label);
 
-  void add_fixit_misspelled_id (location_t misspelled_token_loc,
-				tree hint_id);
+        void add_fixit_misspelled_id(location_t misspelled_token_loc, tree hint_id);
 
-  /* If LOC is within the spans of lines that will already be printed for
-     this gcc_rich_location, then add it as a secondary location
-     and return true.
+        /* If LOC is within the spans of lines that will already be printed for
+           this gcc_rich_location, then add it as a secondary location
+           and return true.
 
-     Otherwise return false.
+           Otherwise return false.
 
-     This allows for a diagnostic to compactly print secondary locations
-     in one diagnostic when these are near enough the primary locations for
-     diagnostics-show-locus.c to cope with them, and to fall back to
-     printing them via a note otherwise e.g.:
+           This allows for a diagnostic to compactly print secondary locations
+           in one diagnostic when these are near enough the primary locations for
+           diagnostics-show-locus.c to cope with them, and to fall back to
+           printing them via a note otherwise e.g.:
 
-	gcc_rich_location richloc (primary_loc);
-	bool added secondary = richloc.add_location_if_nearby (secondary_loc);
-	error_at (&richloc, "main message");
-	if (!added secondary)
-	  inform (secondary_loc, "message for secondary");
+              gcc_rich_location richloc (primary_loc);
+              bool added secondary = richloc.add_location_if_nearby (secondary_loc);
+              error_at (&richloc, "main message");
+              if (!added secondary)
+                inform (secondary_loc, "message for secondary");
 
-     Implemented in diagnostic-show-locus.c.  */
+           Implemented in diagnostic-show-locus.c.  */
 
-  bool add_location_if_nearby (location_t loc);
+        bool add_location_if_nearby(location_t loc);
 
-  /* Add a fix-it hint suggesting the insertion of CONTENT before
-     INSERTION_POINT.
+        /* Add a fix-it hint suggesting the insertion of CONTENT before
+           INSERTION_POINT.
 
-     Attempt to handle formatting: if INSERTION_POINT is the first thing on
-     its line, and INDENT is sufficiently sane, then add CONTENT on its own
-     line, using the indentation of INDENT.
-     Otherwise, add CONTENT directly before INSERTION_POINT.
+           Attempt to handle formatting: if INSERTION_POINT is the first thing on
+           its line, and INDENT is sufficiently sane, then add CONTENT on its own
+           line, using the indentation of INDENT.
+           Otherwise, add CONTENT directly before INSERTION_POINT.
 
-     For example, adding "CONTENT;" with the closing brace as the insertion
-     point and using "INDENT;" for indentation:
+           For example, adding "CONTENT;" with the closing brace as the insertion
+           point and using "INDENT;" for indentation:
 
-       if ()
-         {
-           INDENT;
-         }
+             if ()
+               {
+                 INDENT;
+               }
 
-     would lead to:
+           would lead to:
 
-       if ()
-         {
-           INDENT;
-           CONTENT;
-         }
+             if ()
+               {
+                 INDENT;
+                 CONTENT;
+               }
 
-     but adding it to:
+           but adding it to:
 
-       if () {INDENT;}
+             if () {INDENT;}
 
-     would lead to:
+           would lead to:
 
-       if () {INDENT;CONTENT;}
-  */
-  void add_fixit_insert_formatted (const char *content,
-				   location_t insertion_point,
-				   location_t indent);
+             if () {INDENT;CONTENT;}
+        */
+        void add_fixit_insert_formatted(const char *content, location_t insertion_point,
+                                        location_t indent);
 };
 
 /* Concrete subclass of libcpp's range_label.
@@ -106,16 +102,18 @@ class gcc_rich_location : public rich_location
 
 class text_range_label : public range_label
 {
- public:
-  text_range_label (const char *text) : m_text (text) {}
+      public:
+        text_range_label(const char *text) : m_text(text)
+        {
+        }
 
-  label_text get_text (unsigned /*range_idx*/) const FINAL OVERRIDE
-  {
-    return label_text (const_cast <char *> (m_text), false);
-  }
+        label_text get_text(unsigned /*range_idx*/) const FINAL OVERRIDE
+        {
+                return label_text(const_cast<char *>(m_text), false);
+        }
 
- private:
-  const char *m_text;
+      private:
+        const char *m_text;
 };
 
 /* Concrete subclass of libcpp's range_label for use in
@@ -149,17 +147,17 @@ class text_range_label : public range_label
 
 class range_label_for_type_mismatch : public range_label
 {
- public:
-  range_label_for_type_mismatch (tree labelled_type, tree other_type)
-  : m_labelled_type (labelled_type), m_other_type (other_type)
-  {
-  }
+      public:
+        range_label_for_type_mismatch(tree labelled_type, tree other_type)
+                : m_labelled_type(labelled_type), m_other_type(other_type)
+        {
+        }
 
-  label_text get_text (unsigned range_idx) const OVERRIDE;
+        label_text get_text(unsigned range_idx) const OVERRIDE;
 
- protected:
-  tree m_labelled_type;
-  tree m_other_type;
+      protected:
+        tree m_labelled_type;
+        tree m_other_type;
 };
 
 /* Subclass of range_label for labelling the type of EXPR when reporting
@@ -168,17 +166,17 @@ class range_label_for_type_mismatch : public range_label
 
 class maybe_range_label_for_tree_type_mismatch : public range_label
 {
- public:
-  maybe_range_label_for_tree_type_mismatch (tree expr, tree other_expr)
-  : m_expr (expr), m_other_expr (other_expr)
-  {
-  }
+      public:
+        maybe_range_label_for_tree_type_mismatch(tree expr, tree other_expr)
+                : m_expr(expr), m_other_expr(other_expr)
+        {
+        }
 
-  label_text get_text (unsigned range_idx) const FINAL OVERRIDE;
+        label_text get_text(unsigned range_idx) const FINAL OVERRIDE;
 
- private:
-  tree m_expr;
-  tree m_other_expr;
+      private:
+        tree m_expr;
+        tree m_other_expr;
 };
 
 struct op_location_t;
@@ -206,17 +204,14 @@ struct op_location_t;
 
 class binary_op_rich_location : public gcc_rich_location
 {
- public:
-  binary_op_rich_location (const op_location_t &loc,
-			   tree arg0, tree arg1,
-			   bool show_types);
+      public:
+        binary_op_rich_location(const op_location_t &loc, tree arg0, tree arg1, bool show_types);
 
- private:
-  static bool use_operator_loc_p (const op_location_t &loc,
-				  tree arg0, tree arg1);
+      private:
+        static bool use_operator_loc_p(const op_location_t &loc, tree arg0, tree arg1);
 
-  maybe_range_label_for_tree_type_mismatch m_label_for_arg0;
-  maybe_range_label_for_tree_type_mismatch m_label_for_arg1;
+        maybe_range_label_for_tree_type_mismatch m_label_for_arg0;
+        maybe_range_label_for_tree_type_mismatch m_label_for_arg1;
 };
 
 #endif /* GCC_RICH_LOCATION_H */

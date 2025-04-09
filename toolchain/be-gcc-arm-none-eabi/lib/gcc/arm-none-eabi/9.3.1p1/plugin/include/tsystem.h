@@ -47,31 +47,31 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #ifdef inhibit_libc
 
 #ifndef malloc
-extern void *malloc (size_t);
+extern void *malloc(size_t);
 #endif
 
 #ifndef free
-extern void free (void *);
+extern void free(void *);
 #endif
 
 #ifndef atexit
-extern int atexit (void (*)(void));
+extern int atexit(void (*)(void));
 #endif
 
 #ifndef abort
-extern void abort (void) __attribute__ ((__noreturn__));
+extern void abort(void) __attribute__((__noreturn__));
 #endif
 
 #ifndef strlen
-extern size_t strlen (const char *);
+extern size_t strlen(const char *);
 #endif
 
 #ifndef memcpy
-extern void *memcpy (void *, const void *, size_t);
+extern void *memcpy(void *, const void *, size_t);
 #endif
 
 #ifndef memset
-extern void *memset (void *, int, size_t);
+extern void *memset(void *, int, size_t);
 #endif
 
 #else /* ! inhibit_libc */
@@ -119,17 +119,22 @@ extern int errno;
 #define alloca(x) __builtin_alloca(x)
 
 #ifdef ENABLE_RUNTIME_CHECKING
-#define gcc_assert(EXPR) ((void)(!(EXPR) ? abort (), 0 : 0))
+#define gcc_assert(EXPR) ((void)(!(EXPR) ? abort(), 0 : 0))
 #else
 /* Include EXPR, so that unused variable warnings do not occur.  */
 #define gcc_assert(EXPR) ((void)(0 && (EXPR)))
 #endif
 /* Use gcc_unreachable() to mark unreachable locations (like an
    unreachable default case of a switch.  Do not use gcc_assert(0).  */
-#define gcc_unreachable() (abort ())
+#define gcc_unreachable() (abort())
 
-#define CONST_CAST2(TOTYPE,FROMTYPE,X) ((__extension__(union {FROMTYPE _q; TOTYPE _nq;})(X))._nq)
-#define CONST_CAST(TYPE,X) CONST_CAST2 (TYPE, const TYPE, (X))
+#define CONST_CAST2(TOTYPE, FROMTYPE, X)                                                           \
+        ((__extension__(union {                                                                    \
+                 FROMTYPE _q;                                                                      \
+                 TOTYPE _nq;                                                                       \
+         })(X))                                                                                    \
+                 ._nq)
+#define CONST_CAST(TYPE, X) CONST_CAST2(TYPE, const TYPE, (X))
 
 /* Filename handling macros.  */
 #include "filenames.h"

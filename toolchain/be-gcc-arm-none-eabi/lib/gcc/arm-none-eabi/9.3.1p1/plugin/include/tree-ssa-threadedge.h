@@ -21,21 +21,17 @@ along with GCC; see the file COPYING3.  If not see
 #define GCC_TREE_SSA_THREADEDGE_H
 
 extern vec<tree> ssa_name_values;
-#define SSA_NAME_VALUE(x) \
-    (SSA_NAME_VERSION (x) < ssa_name_values.length () \
-     ? ssa_name_values[SSA_NAME_VERSION (x)] \
-     : NULL_TREE)
-extern void set_ssa_name_value (tree, tree);
-extern void threadedge_initialize_values (void);
-extern void threadedge_finalize_values (void);
-extern bool potentially_threadable_block (basic_block);
-extern void propagate_threaded_block_debug_into (basic_block, basic_block);
+#define SSA_NAME_VALUE(x)                                                                          \
+        (SSA_NAME_VERSION(x) < ssa_name_values.length() ? ssa_name_values[SSA_NAME_VERSION(x)]     \
+                                                        : NULL_TREE)
+extern void set_ssa_name_value(tree, tree);
+extern void threadedge_initialize_values(void);
+extern void threadedge_finalize_values(void);
+extern bool potentially_threadable_block(basic_block);
+extern void propagate_threaded_block_debug_into(basic_block, basic_block);
 class evrp_range_analyzer;
-extern void thread_outgoing_edges (basic_block, gcond *,
-				   const_and_copies *,
-				   avail_exprs_stack *,
-				   evrp_range_analyzer *,
-				   tree (*) (gimple *, gimple *,
-					     avail_exprs_stack *, basic_block));
+extern void thread_outgoing_edges(basic_block, gcond *, const_and_copies *, avail_exprs_stack *,
+                                  evrp_range_analyzer *,
+                                  tree (*)(gimple *, gimple *, avail_exprs_stack *, basic_block));
 
 #endif /* GCC_TREE_SSA_THREADEDGE_H */

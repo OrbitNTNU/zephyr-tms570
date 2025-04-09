@@ -5,6 +5,6 @@
 #endif
 #include "auto-host.h"
 #ifdef IN_GCC
-# include "ansidecl.h"
+#include "ansidecl.h"
 #endif
 #endif /* GCC_CONFIG_H */

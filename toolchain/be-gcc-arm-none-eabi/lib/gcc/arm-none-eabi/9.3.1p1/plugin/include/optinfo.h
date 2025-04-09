@@ -63,7 +63,6 @@ along with GCC; see the file COPYING3.  If not see
 
    which is off by default.  */
 
-
 /* Forward decls.  */
 struct opt_pass;
 class optinfo_item;
@@ -72,19 +71,18 @@ class optinfo_item;
    of inlining information.
    (if true, then the information is preserved).  */
 
-extern bool optinfo_wants_inlining_info_p ();
+extern bool optinfo_wants_inlining_info_p();
 
 /* The various kinds of optinfo.  */
 
-enum optinfo_kind
-{
-  OPTINFO_KIND_SUCCESS,
-  OPTINFO_KIND_FAILURE,
-  OPTINFO_KIND_NOTE,
-  OPTINFO_KIND_SCOPE
+enum optinfo_kind {
+        OPTINFO_KIND_SUCCESS,
+        OPTINFO_KIND_FAILURE,
+        OPTINFO_KIND_NOTE,
+        OPTINFO_KIND_SCOPE
 };
 
-extern const char *optinfo_kind_to_string (enum optinfo_kind kind);
+extern const char *optinfo_kind_to_string(enum optinfo_kind kind);
 
 class dump_context;
 
@@ -92,79 +90,109 @@ class dump_context;
 
 class optinfo
 {
-  friend class dump_context;
+        friend class dump_context;
 
- public:
-  optinfo (const dump_location_t &loc,
-	   enum optinfo_kind kind,
-	   opt_pass *pass)
-  : m_loc (loc), m_kind (kind), m_pass (pass), m_items ()
-  {}
-  ~optinfo ();
+      public:
+        optinfo(const dump_location_t &loc, enum optinfo_kind kind, opt_pass *pass)
+                : m_loc(loc), m_kind(kind), m_pass(pass), m_items()
+        {
+        }
+        ~optinfo();
 
-  const dump_location_t &
-  get_dump_location () const { return m_loc; }
+        const dump_location_t &get_dump_location() const
+        {
+                return m_loc;
+        }
 
-  const dump_user_location_t &
-  get_user_location () const { return m_loc.get_user_location (); }
+        const dump_user_location_t &get_user_location() const
+        {
+                return m_loc.get_user_location();
+        }
 
-  const dump_impl_location_t &
-  get_impl_location () const { return m_loc.get_impl_location (); }
+        const dump_impl_location_t &get_impl_location() const
+        {
+                return m_loc.get_impl_location();
+        }
 
-  enum optinfo_kind get_kind () const { return m_kind; }
-  opt_pass *get_pass () const { return m_pass; }
-  unsigned int num_items () const { return m_items.length (); }
-  const optinfo_item *get_item (unsigned int i) const { return m_items[i]; }
+        enum optinfo_kind get_kind() const
+        {
+                return m_kind;
+        }
+        opt_pass *get_pass() const
+        {
+                return m_pass;
+        }
+        unsigned int num_items() const
+        {
+                return m_items.length();
+        }
+        const optinfo_item *get_item(unsigned int i) const
+        {
+                return m_items[i];
+        }
 
-  location_t get_location_t () const { return m_loc.get_location_t (); }
-  profile_count get_count () const { return m_loc.get_count (); }
+        location_t get_location_t() const
+        {
+                return m_loc.get_location_t();
+        }
+        profile_count get_count() const
+        {
+                return m_loc.get_count();
+        }
 
-  void add_item (optinfo_item *item);
+        void add_item(optinfo_item *item);
 
-  void emit_for_opt_problem () const;
+        void emit_for_opt_problem() const;
 
- private:
-  /* Pre-canned ways of manipulating the optinfo, for use by friend class
-     dump_context.  */
-  void handle_dump_file_kind (dump_flags_t);
+      private:
+        /* Pre-canned ways of manipulating the optinfo, for use by friend class
+           dump_context.  */
+        void handle_dump_file_kind(dump_flags_t);
 
- private:
-  dump_location_t m_loc;
-  enum optinfo_kind m_kind;
-  opt_pass *m_pass;
-  auto_vec <optinfo_item *> m_items;
+      private:
+        dump_location_t m_loc;
+        enum optinfo_kind m_kind;
+        opt_pass *m_pass;
+        auto_vec<optinfo_item *> m_items;
 };
 
 /* An enum for discriminating between different kinds of optinfo_item.  */
 
-enum optinfo_item_kind
-{
-  OPTINFO_ITEM_KIND_TEXT,
-  OPTINFO_ITEM_KIND_TREE,
-  OPTINFO_ITEM_KIND_GIMPLE,
-  OPTINFO_ITEM_KIND_SYMTAB_NODE
+enum optinfo_item_kind {
+        OPTINFO_ITEM_KIND_TEXT,
+        OPTINFO_ITEM_KIND_TREE,
+        OPTINFO_ITEM_KIND_GIMPLE,
+        OPTINFO_ITEM_KIND_SYMTAB_NODE
 };
 
 /* An item within an optinfo.  */
 
 class optinfo_item
 {
- public:
-  optinfo_item (enum optinfo_item_kind kind, location_t location,
-		char *text);
-  ~optinfo_item ();
+      public:
+        optinfo_item(enum optinfo_item_kind kind, location_t location, char *text);
+        ~optinfo_item();
 
-  enum optinfo_item_kind get_kind () const { return m_kind; }
-  location_t get_location () const { return m_location; }
-  const char *get_text () const { return m_text; }
+        enum optinfo_item_kind get_kind() const
+        {
+                return m_kind;
+        }
+        location_t get_location() const
+        {
+                return m_location;
+        }
+        const char *get_text() const
+        {
+                return m_text;
+        }
 
- private:
-  /* Metadata (e.g. for optimization records).  */
-  enum optinfo_item_kind m_kind;
-  location_t m_location;
+      private:
+        /* Metadata (e.g. for optimization records).  */
+        enum optinfo_item_kind m_kind;
+        location_t m_location;
 
-  /* The textual form of the item, owned by the item.  */
-  char *m_text;
+        /* The textual form of the item, owned by the item.  */
+        char *m_text;
 };
 
 #endif /* #ifndef GCC_OPTINFO_H */

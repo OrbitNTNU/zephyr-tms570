@@ -45,82 +45,92 @@ along with GCC; see the file COPYING3.  If not see
 
 class substring_loc
 {
- public:
-  /* Constructor.  FMT_STRING_LOC is the location of the string as
-     a whole.  STRING_TYPE is the type of the string.  It should be an
-     ARRAY_TYPE of INTEGER_TYPE, or a POINTER_TYPE to such an ARRAY_TYPE.
-     CARET_IDX, START_IDX, and END_IDX are offsets from the start
-     of the string data.  */
-  substring_loc (location_t fmt_string_loc, tree string_type,
-		 int caret_idx, int start_idx, int end_idx)
-  : m_fmt_string_loc (fmt_string_loc), m_string_type (string_type),
-    m_caret_idx (caret_idx), m_start_idx (start_idx), m_end_idx (end_idx) {}
+      public:
+        /* Constructor.  FMT_STRING_LOC is the location of the string as
+           a whole.  STRING_TYPE is the type of the string.  It should be an
+           ARRAY_TYPE of INTEGER_TYPE, or a POINTER_TYPE to such an ARRAY_TYPE.
+           CARET_IDX, START_IDX, and END_IDX are offsets from the start
+           of the string data.  */
+        substring_loc(location_t fmt_string_loc, tree string_type, int caret_idx, int start_idx,
+                      int end_idx)
+                : m_fmt_string_loc(fmt_string_loc), m_string_type(string_type),
+                  m_caret_idx(caret_idx), m_start_idx(start_idx), m_end_idx(end_idx)
+        {
+        }
 
-  void set_caret_index (int caret_idx) { m_caret_idx = caret_idx; }
+        void set_caret_index(int caret_idx)
+        {
+                m_caret_idx = caret_idx;
+        }
 
-  const char *get_location (location_t *out_loc) const;
+        const char *get_location(location_t *out_loc) const;
 
-  location_t get_fmt_string_loc () const { return m_fmt_string_loc; }
-  tree get_string_type () const { return m_string_type; }
-  int get_caret_idx () const { return m_caret_idx; }
-  int get_start_idx () const { return m_start_idx; }
-  int get_end_idx () const { return m_end_idx; }
+        location_t get_fmt_string_loc() const
+        {
+                return m_fmt_string_loc;
+        }
+        tree get_string_type() const
+        {
+                return m_string_type;
+        }
+        int get_caret_idx() const
+        {
+                return m_caret_idx;
+        }
+        int get_start_idx() const
+        {
+                return m_start_idx;
+        }
+        int get_end_idx() const
+        {
+                return m_end_idx;
+        }
 
- private:
-  location_t m_fmt_string_loc;
-  tree m_string_type;
-  int m_caret_idx;
-  int m_start_idx;
-  int m_end_idx;
+      private:
+        location_t m_fmt_string_loc;
+        tree m_string_type;
+        int m_caret_idx;
+        int m_start_idx;
+        int m_end_idx;
 };
 
 /* A bundle of state for emitting a diagnostic relating to a format string.  */
 
 class format_string_diagnostic_t
 {
- public:
-  format_string_diagnostic_t (const substring_loc &fmt_loc,
-			      const range_label *fmt_label,
-			      location_t param_loc,
-			      const range_label *param_label,
-			      const char *corrected_substring);
+      public:
+        format_string_diagnostic_t(const substring_loc &fmt_loc, const range_label *fmt_label,
+                                   location_t param_loc, const range_label *param_label,
+                                   const char *corrected_substring);
 
-  /* Functions for emitting a warning about a format string.  */
+        /* Functions for emitting a warning about a format string.  */
 
-  bool emit_warning_va (int opt, const char *gmsgid, va_list *ap) const
-    ATTRIBUTE_GCC_DIAG (3, 0);
+        bool emit_warning_va(int opt, const char *gmsgid, va_list *ap) const
+                ATTRIBUTE_GCC_DIAG(3, 0);
 
-  bool emit_warning_n_va (int opt, unsigned HOST_WIDE_INT n,
-			  const char *singular_gmsgid,
-			  const char *plural_gmsgid, va_list *ap) const
-  ATTRIBUTE_GCC_DIAG (4, 0) ATTRIBUTE_GCC_DIAG (5, 0);
+        bool emit_warning_n_va(int opt, unsigned HOST_WIDE_INT n, const char *singular_gmsgid,
+                               const char *plural_gmsgid, va_list *ap) const
+                ATTRIBUTE_GCC_DIAG(4, 0) ATTRIBUTE_GCC_DIAG(5, 0);
 
-  bool emit_warning (int opt, const char *gmsgid, ...) const
-    ATTRIBUTE_GCC_DIAG (3, 4);
+        bool emit_warning(int opt, const char *gmsgid, ...) const ATTRIBUTE_GCC_DIAG(3, 4);
 
-  bool emit_warning_n (int opt, unsigned HOST_WIDE_INT n,
-		       const char *singular_gmsgid,
-		       const char *plural_gmsgid, ...) const
-  ATTRIBUTE_GCC_DIAG (4, 6) ATTRIBUTE_GCC_DIAG (5, 6);
+        bool emit_warning_n(int opt, unsigned HOST_WIDE_INT n, const char *singular_gmsgid,
+                            const char *plural_gmsgid, ...) const ATTRIBUTE_GCC_DIAG(4, 6)
+                ATTRIBUTE_GCC_DIAG(5, 6);
 
- private:
-  const substring_loc &m_fmt_loc;
-  const range_label *m_fmt_label;
-  location_t m_param_loc;
-  const range_label *m_param_label;
-  const char *m_corrected_substring;
+      private:
+        const substring_loc &m_fmt_loc;
+        const range_label *m_fmt_label;
+        location_t m_param_loc;
+        const range_label *m_param_label;
+        const char *m_corrected_substring;
 };
-
 
 /* Implementation detail, for use when implementing
    LANG_HOOKS_GET_SUBSTRING_LOCATION.  */
 
-extern const char *get_location_within_string (cpp_reader *pfile,
-					       string_concat_db *concats,
-					       location_t strloc,
-					       enum cpp_ttype type,
-					       int caret_idx,
-					       int start_idx, int end_idx,
-					       location_t *out_loc);
+extern const char *get_location_within_string(cpp_reader *pfile, string_concat_db *concats,
+                                              location_t strloc, enum cpp_ttype type, int caret_idx,
+                                              int start_idx, int end_idx, location_t *out_loc);
 
 #endif /* ! GCC_SUBSTRING_LOCATIONS_H */

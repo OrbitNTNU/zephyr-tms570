@@ -20,16 +20,16 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef GCC_COLLECT2_H
 #define GCC_COLLECT2_H
 
-extern void do_tlink (char **, char **);
+extern void do_tlink(char **, char **);
 
-extern struct pex_obj *collect_execute (const char *, char **, const char *,
-					const char *, int flags);
+extern struct pex_obj *collect_execute(const char *, char **, const char *, const char *,
+                                       int flags);
 
-extern int collect_wait (const char *, struct pex_obj *);
+extern int collect_wait(const char *, struct pex_obj *);
 
-extern void dump_ld_file (const char *, FILE *);
+extern void dump_ld_file(const char *, FILE *);
 
-extern int file_exists (const char *);
+extern int file_exists(const char *);
 
 extern const char *ldout;
 extern const char *lderrout;
@@ -38,8 +38,8 @@ extern struct obstack temporary_obstack;
 extern char *temporary_firstobj;
 extern bool may_unlink_output_file;
 
-extern void notice_translated (const char *, ...) ATTRIBUTE_PRINTF_1;
-extern void notice (const char *, ...) ATTRIBUTE_PRINTF_1;
+extern void notice_translated(const char *, ...) ATTRIBUTE_PRINTF_1;
+extern void notice(const char *, ...) ATTRIBUTE_PRINTF_1;
 
 extern bool at_file_supplied;
 #endif /* ! GCC_COLLECT2_H */

@@ -63,207 +63,194 @@ namespace std _GLIBCXX_VISIBILITY(default)
 {
 _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
-  /**
-   *  @brief Allocates a temporary buffer.
-   *  @param  __len  The number of objects of type Tp.
-   *  @return See full description.
-   *
-   *  Reinventing the wheel, but this time with prettier spokes!
-   *
-   *  This function tries to obtain storage for @c __len adjacent Tp
-   *  objects.  The objects themselves are not constructed, of course.
-   *  A pair<> is returned containing <em>the buffer s address and
-   *  capacity (in the units of sizeof(_Tp)), or a pair of 0 values if
-   *  no storage can be obtained.</em>  Note that the capacity obtained
-   *  may be less than that requested if the memory is unavailable;
-   *  you should compare len with the .second return value.
-   *
-   * Provides the nothrow exception guarantee.
-   */
-  template<typename _Tp>
-    pair<_Tp*, ptrdiff_t>
-    get_temporary_buffer(ptrdiff_t __len) _GLIBCXX_NOEXCEPT
-    {
-      const ptrdiff_t __max =
-	__gnu_cxx::__numeric_traits<ptrdiff_t>::__max / sizeof(_Tp);
-      if (__len > __max)
-	__len = __max;
+/**
+ *  @brief Allocates a temporary buffer.
+ *  @param  __len  The number of objects of type Tp.
+ *  @return See full description.
+ *
+ *  Reinventing the wheel, but this time with prettier spokes!
+ *
+ *  This function tries to obtain storage for @c __len adjacent Tp
+ *  objects.  The objects themselves are not constructed, of course.
+ *  A pair<> is returned containing <em>the buffer s address and
+ *  capacity (in the units of sizeof(_Tp)), or a pair of 0 values if
+ *  no storage can be obtained.</em>  Note that the capacity obtained
+ *  may be less than that requested if the memory is unavailable;
+ *  you should compare len with the .second return value.
+ *
+ * Provides the nothrow exception guarantee.
+ */
+template <typename _Tp>
+pair<_Tp *, ptrdiff_t> get_temporary_buffer(ptrdiff_t __len) _GLIBCXX_NOEXCEPT
+{
+        const ptrdiff_t __max = __gnu_cxx::__numeric_traits<ptrdiff_t>::__max / sizeof(_Tp);
+        if (__len > __max) {
+                __len = __max;
+        }
 
-      while (__len > 0)
-	{
-	  _Tp* __tmp = static_cast<_Tp*>(::operator new(__len * sizeof(_Tp),
-							std::nothrow));
-	  if (__tmp != 0)
-	    return std::pair<_Tp*, ptrdiff_t>(__tmp, __len);
-	  __len /= 2;
-	}
-      return std::pair<_Tp*, ptrdiff_t>(static_cast<_Tp*>(0), 0);
-    }
+        while (__len > 0) {
+                _Tp *__tmp = static_cast<_Tp *>(::operator new(__len * sizeof(_Tp), std::nothrow));
+                if (__tmp != 0) {
+                        return std::pair<_Tp *, ptrdiff_t>(__tmp, __len);
+                }
+                __len /= 2;
+        }
+        return std::pair<_Tp *, ptrdiff_t>(static_cast<_Tp *>(0), 0);
+}
 
-  /**
-   *  @brief The companion to get_temporary_buffer().
-   *  @param  __p  A buffer previously allocated by get_temporary_buffer.
-   *  @return   None.
-   *
-   *  Frees the memory pointed to by __p.
-   */
-  template<typename _Tp>
-    inline void
-    return_temporary_buffer(_Tp* __p)
-    { ::operator delete(__p); }
+/**
+ *  @brief The companion to get_temporary_buffer().
+ *  @param  __p  A buffer previously allocated by get_temporary_buffer.
+ *  @return   None.
+ *
+ *  Frees the memory pointed to by __p.
+ */
+template <typename _Tp> inline void return_temporary_buffer(_Tp *__p)
+{
+        ::operator delete(__p);
+}
 
+/**
+ *  This class is used in two places: stl_algo.h and ext/memory,
+ *  where it is wrapped as the temporary_buffer class.  See
+ *  temporary_buffer docs for more notes.
+ */
+template <typename _ForwardIterator, typename _Tp> class _Temporary_buffer
+{
+        // concept requirements
+        __glibcxx_class_requires(_ForwardIterator, _ForwardIteratorConcept)
 
-  /**
-   *  This class is used in two places: stl_algo.h and ext/memory,
-   *  where it is wrapped as the temporary_buffer class.  See
-   *  temporary_buffer docs for more notes.
-   */
-  template<typename _ForwardIterator, typename _Tp>
-    class _Temporary_buffer
-    {
-      // concept requirements
-      __glibcxx_class_requires(_ForwardIterator, _ForwardIteratorConcept)
+                public : typedef _Tp value_type;
+        typedef value_type *pointer;
+        typedef pointer iterator;
+        typedef ptrdiff_t size_type;
 
-    public:
-      typedef _Tp         value_type;
-      typedef value_type* pointer;
-      typedef pointer     iterator;
-      typedef ptrdiff_t   size_type;
+      protected:
+        size_type _M_original_len;
+        size_type _M_len;
+        pointer _M_buffer;
 
-    protected:
-      size_type  _M_original_len;
-      size_type  _M_len;
-      pointer    _M_buffer;
-
-    public:
-      /// As per Table mumble.
-      size_type
-      size() const
-      { return _M_len; }
-
-      /// Returns the size requested by the constructor; may be >size().
-      size_type
-      requested_size() const
-      { return _M_original_len; }
-
-      /// As per Table mumble.
-      iterator
-      begin()
-      { return _M_buffer; }
-
-      /// As per Table mumble.
-      iterator
-      end()
-      { return _M_buffer + _M_len; }
-
-      /**
-       * Constructs a temporary buffer of a size somewhere between
-       * zero and the given length.
-       */
-      _Temporary_buffer(_ForwardIterator __seed, size_type __original_len);
-
-      ~_Temporary_buffer()
-      {
-	std::_Destroy(_M_buffer, _M_buffer + _M_len);
-	std::return_temporary_buffer(_M_buffer);
-      }
-
-    private:
-      // Disable copy constructor and assignment operator.
-      _Temporary_buffer(const _Temporary_buffer&);
-
-      void
-      operator=(const _Temporary_buffer&);
-    };
-
-
-  template<bool>
-    struct __uninitialized_construct_buf_dispatch
-    {
-      template<typename _Pointer, typename _ForwardIterator>
-        static void
-        __ucr(_Pointer __first, _Pointer __last,
-	      _ForwardIterator __seed)
+      public:
+        /// As per Table mumble.
+        size_type size() const
         {
-	  if(__first == __last)
-	    return;
+                return _M_len;
+        }
 
-	  _Pointer __cur = __first;
-	  __try
-	    {
-	      std::_Construct(std::__addressof(*__first),
-			      _GLIBCXX_MOVE(*__seed));
-	      _Pointer __prev = __cur;
-	      ++__cur;
-	      for(; __cur != __last; ++__cur, ++__prev)
-		std::_Construct(std::__addressof(*__cur),
-				_GLIBCXX_MOVE(*__prev));
-	      *__seed = _GLIBCXX_MOVE(*__prev);
-	    }
-	  __catch(...)
-	    {
-	      std::_Destroy(__first, __cur);
-	      __throw_exception_again;
-	    }
-	}
-    };
+        /// Returns the size requested by the constructor; may be >size().
+        size_type requested_size() const
+        {
+                return _M_original_len;
+        }
 
-  template<>
-    struct __uninitialized_construct_buf_dispatch<true>
-    {
-      template<typename _Pointer, typename _ForwardIterator>
-        static void
-        __ucr(_Pointer, _Pointer, _ForwardIterator) { }
-    };
+        /// As per Table mumble.
+        iterator begin()
+        {
+                return _M_buffer;
+        }
 
-  // Constructs objects in the range [first, last).
-  // Note that while these new objects will take valid values,
-  // their exact value is not defined. In particular they may
-  // be 'moved from'.
-  //
-  // While *__seed may be altered during this algorithm, it will have
-  // the same value when the algorithm finishes, unless one of the
-  // constructions throws.
-  //
-  // Requirements: _Pointer::value_type(_Tp&&) is valid.
-  template<typename _Pointer, typename _ForwardIterator>
-    inline void
-    __uninitialized_construct_buf(_Pointer __first, _Pointer __last,
-				  _ForwardIterator __seed)
-    {
-      typedef typename std::iterator_traits<_Pointer>::value_type
-	_ValueType;
+        /// As per Table mumble.
+        iterator end()
+        {
+                return _M_buffer + _M_len;
+        }
 
-      std::__uninitialized_construct_buf_dispatch<
-        __has_trivial_constructor(_ValueType)>::
-	  __ucr(__first, __last, __seed);
-    }
+        /**
+         * Constructs a temporary buffer of a size somewhere between
+         * zero and the given length.
+         */
+        _Temporary_buffer(_ForwardIterator __seed, size_type __original_len);
 
-  template<typename _ForwardIterator, typename _Tp>
-    _Temporary_buffer<_ForwardIterator, _Tp>::
-    _Temporary_buffer(_ForwardIterator __seed, size_type __original_len)
-    : _M_original_len(__original_len), _M_len(0), _M_buffer(0)
-    {
-      __try
-	{
-	  std::pair<pointer, size_type> __p(std::get_temporary_buffer<
-					    value_type>(_M_original_len));
-	  _M_buffer = __p.first;
-	  _M_len = __p.second;
-	  if (_M_buffer)
-	    std::__uninitialized_construct_buf(_M_buffer, _M_buffer + _M_len,
-					       __seed);
-	}
-      __catch(...)
-	{
-	  std::return_temporary_buffer(_M_buffer);
-	  _M_buffer = 0;
-	  _M_len = 0;
-	  __throw_exception_again;
-	}
-    }
+        ~_Temporary_buffer()
+        {
+                std::_Destroy(_M_buffer, _M_buffer + _M_len);
+                std::return_temporary_buffer(_M_buffer);
+        }
+
+      private:
+        // Disable copy constructor and assignment operator.
+        _Temporary_buffer(const _Temporary_buffer &);
+
+        void operator=(const _Temporary_buffer &);
+};
+
+template <bool> struct __uninitialized_construct_buf_dispatch {
+        template <typename _Pointer, typename _ForwardIterator>
+        static void __ucr(_Pointer __first, _Pointer __last, _ForwardIterator __seed)
+        {
+                if (__first == __last) {
+                        return;
+                }
+
+                _Pointer __cur = __first;
+                __try {
+                        std::_Construct(std::__addressof(*__first), _GLIBCXX_MOVE(*__seed));
+                        _Pointer __prev = __cur;
+                        ++__cur;
+                        for (; __cur != __last; ++__cur, ++__prev) {
+                                std::_Construct(std::__addressof(*__cur), _GLIBCXX_MOVE(*__prev));
+                        }
+                        *__seed = _GLIBCXX_MOVE(*__prev);
+                }
+                __catch(...)
+                {
+                        std::_Destroy(__first, __cur);
+                        __throw_exception_again;
+                }
+        }
+};
+
+template <> struct __uninitialized_construct_buf_dispatch<true> {
+        template <typename _Pointer, typename _ForwardIterator>
+        static void __ucr(_Pointer, _Pointer, _ForwardIterator)
+        {
+        }
+};
+
+// Constructs objects in the range [first, last).
+// Note that while these new objects will take valid values,
+// their exact value is not defined. In particular they may
+// be 'moved from'.
+//
+// While *__seed may be altered during this algorithm, it will have
+// the same value when the algorithm finishes, unless one of the
+// constructions throws.
+//
+// Requirements: _Pointer::value_type(_Tp&&) is valid.
+template <typename _Pointer, typename _ForwardIterator>
+inline void __uninitialized_construct_buf(_Pointer __first, _Pointer __last,
+                                          _ForwardIterator __seed)
+{
+        typedef typename std::iterator_traits<_Pointer>::value_type _ValueType;
+
+        std::__uninitialized_construct_buf_dispatch<__has_trivial_constructor(_ValueType)>::__ucr(
+                __first, __last, __seed);
+}
+
+template <typename _ForwardIterator, typename _Tp>
+_Temporary_buffer<_ForwardIterator, _Tp>::_Temporary_buffer(_ForwardIterator __seed,
+                                                            size_type __original_len)
+        : _M_original_len(__original_len), _M_len(0), _M_buffer(0)
+{
+        __try {
+                std::pair<pointer, size_type> __p(
+                        std::get_temporary_buffer<value_type>(_M_original_len));
+                _M_buffer = __p.first;
+                _M_len = __p.second;
+                if (_M_buffer) {
+                        std::__uninitialized_construct_buf(_M_buffer, _M_buffer + _M_len, __seed);
+                }
+        }
+        __catch(...)
+        {
+                std::return_temporary_buffer(_M_buffer);
+                _M_buffer = 0;
+                _M_len = 0;
+                __throw_exception_again;
+        }
+}
 
 _GLIBCXX_END_NAMESPACE_VERSION
-} // namespace
+} // namespace std _GLIBCXX_VISIBILITY(default)
 
 #endif /* _STL_TEMPBUF_H */

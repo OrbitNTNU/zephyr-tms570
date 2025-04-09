@@ -27,7 +27,7 @@
  */
 
 #ifndef _GLIBCXX_ATOMICITY_H
-#define _GLIBCXX_ATOMICITY_H	1
+#define _GLIBCXX_ATOMICITY_H 1
 
 #pragma GCC system_header
 
@@ -39,79 +39,76 @@ namespace __gnu_cxx _GLIBCXX_VISIBILITY(default)
 {
 _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
-  // Functions for portable atomic access.
-  // To abstract locking primitives across all thread policies, use:
-  // __exchange_and_add_dispatch
-  // __atomic_add_dispatch
+// Functions for portable atomic access.
+// To abstract locking primitives across all thread policies, use:
+// __exchange_and_add_dispatch
+// __atomic_add_dispatch
 #ifdef _GLIBCXX_ATOMIC_BUILTINS
-  static inline _Atomic_word 
-  __exchange_and_add(volatile _Atomic_word* __mem, int __val)
-  { return __atomic_fetch_add(__mem, __val, __ATOMIC_ACQ_REL); }
+static inline _Atomic_word __exchange_and_add(volatile _Atomic_word *__mem, int __val)
+{
+        return __atomic_fetch_add(__mem, __val, __ATOMIC_ACQ_REL);
+}
 
-  static inline void
-  __atomic_add(volatile _Atomic_word* __mem, int __val)
-  { __atomic_fetch_add(__mem, __val, __ATOMIC_ACQ_REL); }
+static inline void __atomic_add(volatile _Atomic_word *__mem, int __val)
+{
+        __atomic_fetch_add(__mem, __val, __ATOMIC_ACQ_REL);
+}
 #else
-  _Atomic_word
-  __attribute__ ((__unused__))
-  __exchange_and_add(volatile _Atomic_word*, int) throw ();
+_Atomic_word __attribute__((__unused__)) __exchange_and_add(volatile _Atomic_word *, int) throw();
 
-  void
-  __attribute__ ((__unused__))
-  __atomic_add(volatile _Atomic_word*, int) throw ();
+void __attribute__((__unused__)) __atomic_add(volatile _Atomic_word *, int) throw();
 #endif
 
-  static inline _Atomic_word
-  __exchange_and_add_single(_Atomic_word* __mem, int __val)
-  {
-    _Atomic_word __result = *__mem;
-    *__mem += __val;
-    return __result;
-  }
+static inline _Atomic_word __exchange_and_add_single(_Atomic_word *__mem, int __val)
+{
+        _Atomic_word __result = *__mem;
+        *__mem += __val;
+        return __result;
+}
 
-  static inline void
-  __atomic_add_single(_Atomic_word* __mem, int __val)
-  { *__mem += __val; }
+static inline void __atomic_add_single(_Atomic_word *__mem, int __val)
+{
+        *__mem += __val;
+}
 
-  static inline _Atomic_word
-  __attribute__ ((__unused__))
-  __exchange_and_add_dispatch(_Atomic_word* __mem, int __val)
-  {
+static inline _Atomic_word __attribute__((__unused__))
+__exchange_and_add_dispatch(_Atomic_word *__mem, int __val)
+{
 #ifdef __GTHREADS
-    if (__gthread_active_p())
-      return __exchange_and_add(__mem, __val);
-    else
-      return __exchange_and_add_single(__mem, __val);
+        if (__gthread_active_p()) {
+                return __exchange_and_add(__mem, __val);
+        } else {
+                return __exchange_and_add_single(__mem, __val);
+        }
 #else
-    return __exchange_and_add_single(__mem, __val);
+        return __exchange_and_add_single(__mem, __val);
 #endif
-  }
+}
 
-  static inline void
-  __attribute__ ((__unused__))
-  __atomic_add_dispatch(_Atomic_word* __mem, int __val)
-  {
+static inline void __attribute__((__unused__)) __atomic_add_dispatch(_Atomic_word *__mem, int __val)
+{
 #ifdef __GTHREADS
-    if (__gthread_active_p())
-      __atomic_add(__mem, __val);
-    else
-      __atomic_add_single(__mem, __val);
+        if (__gthread_active_p()) {
+                __atomic_add(__mem, __val);
+        } else {
+                __atomic_add_single(__mem, __val);
+        }
 #else
-    __atomic_add_single(__mem, __val);
+        __atomic_add_single(__mem, __val);
 #endif
-  }
+}
 
 _GLIBCXX_END_NAMESPACE_VERSION
-} // namespace
+} // namespace __gnu_cxx _GLIBCXX_VISIBILITY(default)
 
 // Even if the CPU doesn't need a memory barrier, we need to ensure
 // that the compiler doesn't reorder memory accesses across the
 // barriers.
 #ifndef _GLIBCXX_READ_MEM_BARRIER
-#define _GLIBCXX_READ_MEM_BARRIER __atomic_thread_fence (__ATOMIC_ACQUIRE)
+#define _GLIBCXX_READ_MEM_BARRIER __atomic_thread_fence(__ATOMIC_ACQUIRE)
 #endif
 #ifndef _GLIBCXX_WRITE_MEM_BARRIER
-#define _GLIBCXX_WRITE_MEM_BARRIER __atomic_thread_fence (__ATOMIC_RELEASE)
+#define _GLIBCXX_WRITE_MEM_BARRIER __atomic_thread_fence(__ATOMIC_RELEASE)
 #endif
 
-#endif 
+#endif

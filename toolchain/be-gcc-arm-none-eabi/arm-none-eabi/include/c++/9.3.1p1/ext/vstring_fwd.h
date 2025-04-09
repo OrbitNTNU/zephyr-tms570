@@ -40,47 +40,43 @@ namespace __gnu_cxx _GLIBCXX_VISIBILITY(default)
 {
 _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
-  template<typename _CharT, typename _Traits, typename _Alloc>
-    class __sso_string_base;
+template <typename _CharT, typename _Traits, typename _Alloc> class __sso_string_base;
 
-  template<typename _CharT, typename _Traits, typename _Alloc>
-    class __rc_string_base;
+template <typename _CharT, typename _Traits, typename _Alloc> class __rc_string_base;
 
-  template<typename _CharT, typename _Traits = std::char_traits<_CharT>,
-           typename _Alloc = std::allocator<_CharT>,
-	   template
-	   <typename, typename, typename> class _Base = __sso_string_base>
-    class __versa_string;
+template <typename _CharT, typename _Traits = std::char_traits<_CharT>,
+          typename _Alloc = std::allocator<_CharT>,
+          template <typename, typename, typename> class _Base = __sso_string_base>
+class __versa_string;
 
-  typedef __versa_string<char>                              __vstring;
-  typedef __vstring                                         __sso_string;
-  typedef 
-  __versa_string<char, std::char_traits<char>,
-		 std::allocator<char>, __rc_string_base>    __rc_string;
+typedef __versa_string<char> __vstring;
+typedef __vstring __sso_string;
+typedef __versa_string<char, std::char_traits<char>, std::allocator<char>, __rc_string_base>
+        __rc_string;
 
 #ifdef _GLIBCXX_USE_WCHAR_T
-  typedef __versa_string<wchar_t>                           __wvstring;
-  typedef __wvstring                                        __wsso_string;
-  typedef
-  __versa_string<wchar_t, std::char_traits<wchar_t>,
-		 std::allocator<wchar_t>, __rc_string_base> __wrc_string;
-#endif  
+typedef __versa_string<wchar_t> __wvstring;
+typedef __wvstring __wsso_string;
+typedef __versa_string<wchar_t, std::char_traits<wchar_t>, std::allocator<wchar_t>,
+                       __rc_string_base>
+        __wrc_string;
+#endif
 
 #if __cplusplus >= 201103L
-  typedef __versa_string<char16_t>                          __u16vstring;
-  typedef __u16vstring                                      __u16sso_string;
-  typedef 
-  __versa_string<char16_t, std::char_traits<char16_t>,
-		 std::allocator<char16_t>, __rc_string_base> __u16rc_string;
+typedef __versa_string<char16_t> __u16vstring;
+typedef __u16vstring __u16sso_string;
+typedef __versa_string<char16_t, std::char_traits<char16_t>, std::allocator<char16_t>,
+                       __rc_string_base>
+        __u16rc_string;
 
-  typedef __versa_string<char32_t>                          __u32vstring;
-  typedef __u32vstring                                      __u32sso_string;
-  typedef 
-  __versa_string<char32_t, std::char_traits<char32_t>,
-		 std::allocator<char32_t>, __rc_string_base> __u32rc_string;
+typedef __versa_string<char32_t> __u32vstring;
+typedef __u32vstring __u32sso_string;
+typedef __versa_string<char32_t, std::char_traits<char32_t>, std::allocator<char32_t>,
+                       __rc_string_base>
+        __u32rc_string;
 #endif // C++11
 
 _GLIBCXX_END_NAMESPACE_VERSION
-} // namespace
+} // namespace __gnu_cxx _GLIBCXX_VISIBILITY(default)
 
 #endif /* _VSTRING_FWD_H */

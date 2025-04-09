@@ -41,42 +41,42 @@ extern "C++" {
 
 namespace std
 {
-  /**
-   * @defgroup exceptions Exceptions
-   * @ingroup diagnostics
-   *
-   * Classes and functions for reporting errors via exception classes.
-   * @{
-   */
+/**
+ * @defgroup exceptions Exceptions
+ * @ingroup diagnostics
+ *
+ * Classes and functions for reporting errors via exception classes.
+ * @{
+ */
 
-  /**
-   *  @brief Base class for all library exceptions.
-   *
-   *  This is the base class for all exceptions thrown by the standard
-   *  library, and by certain language expressions.  You are free to derive
-   *  your own %exception classes, or use a different hierarchy, or to
-   *  throw non-class data (e.g., fundamental types).
-   */
-  class exception
-  {
-  public:
-    exception() _GLIBCXX_NOTHROW { }
-    virtual ~exception() _GLIBCXX_TXN_SAFE_DYN _GLIBCXX_NOTHROW;
+/**
+ *  @brief Base class for all library exceptions.
+ *
+ *  This is the base class for all exceptions thrown by the standard
+ *  library, and by certain language expressions.  You are free to derive
+ *  your own %exception classes, or use a different hierarchy, or to
+ *  throw non-class data (e.g., fundamental types).
+ */
+class exception
+{
+      public:
+        exception() _GLIBCXX_NOTHROW
+        {
+        }
+        virtual ~exception() _GLIBCXX_TXN_SAFE_DYN _GLIBCXX_NOTHROW;
 #if __cplusplus >= 201103L
-    exception(const exception&) = default;
-    exception& operator=(const exception&) = default;
-    exception(exception&&) = default;
-    exception& operator=(exception&&) = default;
+        exception(const exception &) = default;
+        exception &operator=(const exception &) = default;
+        exception(exception &&) = default;
+        exception &operator=(exception &&) = default;
 #endif
 
-    /** Returns a C-style character string describing the general cause
-     *  of the current error.  */
-    virtual const char*
-    what() const _GLIBCXX_TXN_SAFE_DYN _GLIBCXX_NOTHROW;
-  };
+        /** Returns a C-style character string describing the general cause
+         *  of the current error.  */
+        virtual const char *what() const _GLIBCXX_TXN_SAFE_DYN _GLIBCXX_NOTHROW;
+};
 
 } // namespace std
-
 }
 
 #pragma GCC visibility pop

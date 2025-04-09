@@ -42,149 +42,160 @@ namespace __gnu_cxx _GLIBCXX_VISIBILITY(default)
 {
 _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
-  using std::size_t;
-  using std::ptrdiff_t;
+using std::ptrdiff_t;
+using std::size_t;
 
-  /**
-   *  @brief  An allocator that uses malloc.
-   *  @ingroup allocators
-   *
-   *  This is precisely the allocator defined in the C++ Standard. 
-   *    - all allocation calls malloc
-   *    - all deallocation calls free
-   */
-  template<typename _Tp>
-    class malloc_allocator
-    {
-    public:
-      typedef size_t     size_type;
-      typedef ptrdiff_t  difference_type;
-      typedef _Tp*       pointer;
-      typedef const _Tp* const_pointer;
-      typedef _Tp&       reference;
-      typedef const _Tp& const_reference;
-      typedef _Tp        value_type;
+/**
+ *  @brief  An allocator that uses malloc.
+ *  @ingroup allocators
+ *
+ *  This is precisely the allocator defined in the C++ Standard.
+ *    - all allocation calls malloc
+ *    - all deallocation calls free
+ */
+template <typename _Tp> class malloc_allocator
+{
+      public:
+        typedef size_t size_type;
+        typedef ptrdiff_t difference_type;
+        typedef _Tp *pointer;
+        typedef const _Tp *const_pointer;
+        typedef _Tp &reference;
+        typedef const _Tp &const_reference;
+        typedef _Tp value_type;
 
-      template<typename _Tp1>
-        struct rebind
-        { typedef malloc_allocator<_Tp1> other; };
+        template <typename _Tp1> struct rebind {
+                typedef malloc_allocator<_Tp1> other;
+        };
 
 #if __cplusplus >= 201103L
-      // _GLIBCXX_RESOLVE_LIB_DEFECTS
-      // 2103. propagate_on_container_move_assignment
-      typedef std::true_type propagate_on_container_move_assignment;
+        // _GLIBCXX_RESOLVE_LIB_DEFECTS
+        // 2103. propagate_on_container_move_assignment
+        typedef std::true_type propagate_on_container_move_assignment;
 #endif
 
-      _GLIBCXX20_CONSTEXPR
-      malloc_allocator() _GLIBCXX_USE_NOEXCEPT { }
+        _GLIBCXX20_CONSTEXPR
+        malloc_allocator() _GLIBCXX_USE_NOEXCEPT
+        {
+        }
 
-      _GLIBCXX20_CONSTEXPR
-      malloc_allocator(const malloc_allocator&) _GLIBCXX_USE_NOEXCEPT { }
+        _GLIBCXX20_CONSTEXPR
+        malloc_allocator(const malloc_allocator &) _GLIBCXX_USE_NOEXCEPT
+        {
+        }
 
-      template<typename _Tp1>
-	_GLIBCXX20_CONSTEXPR
-        malloc_allocator(const malloc_allocator<_Tp1>&)
-	_GLIBCXX_USE_NOEXCEPT { }
+        template <typename _Tp1>
+        _GLIBCXX20_CONSTEXPR malloc_allocator(const malloc_allocator<_Tp1> &) _GLIBCXX_USE_NOEXCEPT
+        {
+        }
 
-      ~malloc_allocator() _GLIBCXX_USE_NOEXCEPT { }
+        ~malloc_allocator() _GLIBCXX_USE_NOEXCEPT
+        {
+        }
 
-      pointer
-      address(reference __x) const _GLIBCXX_NOEXCEPT
-      { return std::__addressof(__x); }
+        pointer address(reference __x) const _GLIBCXX_NOEXCEPT
+        {
+                return std::__addressof(__x);
+        }
 
-      const_pointer
-      address(const_reference __x) const _GLIBCXX_NOEXCEPT
-      { return std::__addressof(__x); }
+        const_pointer address(const_reference __x) const _GLIBCXX_NOEXCEPT
+        {
+                return std::__addressof(__x);
+        }
 
-      // NB: __n is permitted to be 0.  The C++ standard says nothing
-      // about what the return value is when __n == 0.
-      pointer
-      allocate(size_type __n, const void* = 0)
-      {
-	if (__n > this->max_size())
-	  std::__throw_bad_alloc();
+        // NB: __n is permitted to be 0.  The C++ standard says nothing
+        // about what the return value is when __n == 0.
+        pointer allocate(size_type __n, const void * = 0)
+        {
+                if (__n > this->max_size()) {
+                        std::__throw_bad_alloc();
+                }
 
-	pointer __ret = 0;
+                pointer __ret = 0;
 #if __cpp_aligned_new
 #if __cplusplus > 201402L && _GLIBCXX_HAVE_ALIGNED_ALLOC
-	if (alignof(_Tp) > alignof(std::max_align_t))
-	  {
-	    __ret = static_cast<_Tp*>(::aligned_alloc(alignof(_Tp),
-						      __n * sizeof(_Tp)));
-	  }
+                if (alignof(_Tp) > alignof(std::max_align_t)) {
+                        __ret = static_cast<_Tp *>(
+                                ::aligned_alloc(alignof(_Tp), __n * sizeof(_Tp)));
+                }
 #else
-# define _GLIBCXX_CHECK_MALLOC_RESULT
+#define _GLIBCXX_CHECK_MALLOC_RESULT
 #endif
 #endif
-	if (!__ret)
-	  __ret = static_cast<_Tp*>(std::malloc(__n * sizeof(_Tp)));
-	if (!__ret)
-	  std::__throw_bad_alloc();
+                if (!__ret) {
+                        __ret = static_cast<_Tp *>(std::malloc(__n * sizeof(_Tp)));
+                }
+                if (!__ret) {
+                        std::__throw_bad_alloc();
+                }
 #ifdef _GLIBCXX_CHECK_MALLOC_RESULT
 #undef _GLIBCXX_CHECK_MALLOC_RESULT
-	  if (reinterpret_cast<std::size_t>(__ret) % alignof(_Tp))
-	    {
-	      // Memory returned by malloc is not suitably aligned for _Tp.
-	      deallocate(__ret, __n);
-	      std::__throw_bad_alloc();
-	    }
+                if (reinterpret_cast<std::size_t>(__ret) % alignof(_Tp)) {
+                        // Memory returned by malloc is not suitably aligned for _Tp.
+                        deallocate(__ret, __n);
+                        std::__throw_bad_alloc();
+                }
 #endif
-	return __ret;
-      }
+                return __ret;
+        }
 
-      // __p is not permitted to be a null pointer.
-      void
-      deallocate(pointer __p, size_type)
-      { std::free(static_cast<void*>(__p)); }
+        // __p is not permitted to be a null pointer.
+        void deallocate(pointer __p, size_type)
+        {
+                std::free(static_cast<void *>(__p));
+        }
 
-      size_type
-      max_size() const _GLIBCXX_USE_NOEXCEPT 
-      {
+        size_type max_size() const _GLIBCXX_USE_NOEXCEPT
+        {
 #if __PTRDIFF_MAX__ < __SIZE_MAX__
-	return size_t(__PTRDIFF_MAX__) / sizeof(_Tp);
+                return size_t(__PTRDIFF_MAX__) / sizeof(_Tp);
 #else
-	return size_t(-1) / sizeof(_Tp);
+                return size_t(-1) / sizeof(_Tp);
 #endif
-      }
+        }
 
 #if __cplusplus >= 201103L
-      template<typename _Up, typename... _Args>
-        void
-        construct(_Up* __p, _Args&&... __args)
-	noexcept(noexcept(::new((void *)__p)
-			  _Up(std::forward<_Args>(__args)...)))
-	{ ::new((void *)__p) _Up(std::forward<_Args>(__args)...); }
+        template <typename _Up, typename... _Args>
+        void construct(_Up *__p, _Args &&...__args) noexcept(
+                noexcept(::new((void *)__p) _Up(std::forward<_Args>(__args)...)))
+        {
+                ::new ((void *)__p) _Up(std::forward<_Args>(__args)...);
+        }
 
-      template<typename _Up>
-        void 
-        destroy(_Up* __p)
-	noexcept(noexcept(__p->~_Up()))
-	{ __p->~_Up(); }
+        template <typename _Up> void destroy(_Up *__p) noexcept(noexcept(__p->~_Up()))
+        {
+                __p->~_Up();
+        }
 #else
-      // _GLIBCXX_RESOLVE_LIB_DEFECTS
-      // 402. wrong new expression in [some_] allocator::construct
-      void 
-      construct(pointer __p, const _Tp& __val) 
-      { ::new((void *)__p) value_type(__val); }
+        // _GLIBCXX_RESOLVE_LIB_DEFECTS
+        // 402. wrong new expression in [some_] allocator::construct
+        void construct(pointer __p, const _Tp &__val)
+        {
+                ::new ((void *)__p) value_type(__val);
+        }
 
-      void 
-      destroy(pointer __p) { __p->~_Tp(); }
+        void destroy(pointer __p)
+        {
+                __p->~_Tp();
+        }
 #endif
 
-      template<typename _Up>
-	friend bool
-	operator==(const malloc_allocator&, const malloc_allocator<_Up>&)
-	_GLIBCXX_NOTHROW
-	{ return true; }
+        template <typename _Up>
+        friend bool operator==(const malloc_allocator &,
+                               const malloc_allocator<_Up> &) _GLIBCXX_NOTHROW
+        {
+                return true;
+        }
 
-      template<typename _Up>
-	friend bool
-	operator!=(const malloc_allocator&, const malloc_allocator<_Up>&)
-	_GLIBCXX_NOTHROW
-	{ return false; }
-    };
+        template <typename _Up>
+        friend bool operator!=(const malloc_allocator &,
+                               const malloc_allocator<_Up> &) _GLIBCXX_NOTHROW
+        {
+                return false;
+        }
+};
 
 _GLIBCXX_END_NAMESPACE_VERSION
-} // namespace
+} // namespace __gnu_cxx _GLIBCXX_VISIBILITY(default)
 
 #endif

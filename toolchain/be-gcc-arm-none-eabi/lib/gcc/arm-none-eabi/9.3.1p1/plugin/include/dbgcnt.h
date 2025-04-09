@@ -26,14 +26,14 @@ See dbgcnt.def for usage information.  */
 
 enum debug_counter {
 #include "dbgcnt.def"
-   debug_counter_number_of_counters
+        debug_counter_number_of_counters
 };
 
 #undef DEBUG_COUNTER
 
-extern bool dbg_cnt_is_enabled (enum debug_counter index);
-extern bool dbg_cnt (enum debug_counter index);
-extern void dbg_cnt_process_opt (const char *arg);
-extern void dbg_cnt_list_all_counters (void);
+extern bool dbg_cnt_is_enabled(enum debug_counter index);
+extern bool dbg_cnt(enum debug_counter index);
+extern void dbg_cnt_process_opt(const char *arg);
+extern void dbg_cnt_list_all_counters(void);
 
 #endif /* GCC_DBGCNT_H */

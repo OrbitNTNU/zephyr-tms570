@@ -17,7 +17,6 @@ You should have received a copy of the GNU Library General Public
 License along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-
 #ifndef GCC_PREFIX_H
 #define GCC_PREFIX_H
 
@@ -30,8 +29,8 @@ extern "C" {
 /* Update PATH using KEY if PATH starts with PREFIX.  The returned
    string is always malloc-ed, and the caller is responsible for
    freeing it.  */
-extern char *update_path (const char *path, const char *key);
-extern void set_std_prefix (const char *, int);
+extern char *update_path(const char *path, const char *key);
+extern void set_std_prefix(const char *, int);
 
 #ifdef __cplusplus
 }

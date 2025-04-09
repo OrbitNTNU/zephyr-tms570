@@ -33,99 +33,109 @@
 
 namespace __gnu_debug
 {
-  // Help Debug mode to see through reverse_iterator.
-  template<typename _Iterator>
-    inline bool
-    __valid_range(const std::reverse_iterator<_Iterator>& __first,
-		  const std::reverse_iterator<_Iterator>& __last,
-		  typename _Distance_traits<_Iterator>::__type& __dist)
-    { return __valid_range(__last.base(), __first.base(), __dist); }
+// Help Debug mode to see through reverse_iterator.
+template <typename _Iterator>
+inline bool __valid_range(const std::reverse_iterator<_Iterator> &__first,
+                          const std::reverse_iterator<_Iterator> &__last,
+                          typename _Distance_traits<_Iterator>::__type &__dist)
+{
+        return __valid_range(__last.base(), __first.base(), __dist);
+}
 
-  template<typename _Iterator>
-    inline typename _Distance_traits<_Iterator>::__type
-    __get_distance(const std::reverse_iterator<_Iterator>& __first,
-		   const std::reverse_iterator<_Iterator>& __last)
-    { return __get_distance(__last.base(), __first.base()); }
+template <typename _Iterator>
+inline typename _Distance_traits<_Iterator>::__type
+__get_distance(const std::reverse_iterator<_Iterator> &__first,
+               const std::reverse_iterator<_Iterator> &__last)
+{
+        return __get_distance(__last.base(), __first.base());
+}
 
-  template<typename _Iterator, typename _Size>
-    inline bool
-    __can_advance(const std::reverse_iterator<_Iterator>& __it, _Size __n)
-    { return __can_advance(__it.base(), -__n); }
+template <typename _Iterator, typename _Size>
+inline bool __can_advance(const std::reverse_iterator<_Iterator> &__it, _Size __n)
+{
+        return __can_advance(__it.base(), -__n);
+}
 
-  template<typename _Iterator, typename _Sequence>
-    inline std::reverse_iterator<_Iterator>
-    __base(const std::reverse_iterator<_Safe_iterator<
-	     _Iterator, _Sequence, std::random_access_iterator_tag> >& __it)
-    { return std::reverse_iterator<_Iterator>(__it.base().base()); }
+template <typename _Iterator, typename _Sequence>
+inline std::reverse_iterator<_Iterator>
+__base(const std::reverse_iterator<
+        _Safe_iterator<_Iterator, _Sequence, std::random_access_iterator_tag>> &__it)
+{
+        return std::reverse_iterator<_Iterator>(__it.base().base());
+}
 
 #if __cplusplus < 201103L
-  template<typename _Iterator>
-    struct _Unsafe_type<std::reverse_iterator<_Iterator> >
-    {
-      typedef typename _Unsafe_type<_Iterator>::_Type _UnsafeType;
-      typedef std::reverse_iterator<_UnsafeType> _Type;
-    };
+template <typename _Iterator> struct _Unsafe_type<std::reverse_iterator<_Iterator>> {
+        typedef typename _Unsafe_type<_Iterator>::_Type _UnsafeType;
+        typedef std::reverse_iterator<_UnsafeType> _Type;
+};
 
-  template<typename _Iterator>
-    inline std::reverse_iterator<typename _Unsafe_type<_Iterator>::_Type>
-    __unsafe(const std::reverse_iterator<_Iterator>& __it)
-    {
-      typedef typename _Unsafe_type<_Iterator>::_Type _UnsafeType;
-      return std::reverse_iterator<_UnsafeType>(__unsafe(__it.base()));
-    }
+template <typename _Iterator>
+inline std::reverse_iterator<typename _Unsafe_type<_Iterator>::_Type>
+__unsafe(const std::reverse_iterator<_Iterator> &__it)
+{
+        typedef typename _Unsafe_type<_Iterator>::_Type _UnsafeType;
+        return std::reverse_iterator<_UnsafeType>(__unsafe(__it.base()));
+}
 #else
-  template<typename _Iterator>
-    inline auto
-    __unsafe(const std::reverse_iterator<_Iterator>& __it)
-    -> decltype(std::__make_reverse_iterator(__unsafe(__it.base())))
-    { return std::__make_reverse_iterator(__unsafe(__it.base())); }
+template <typename _Iterator>
+inline auto __unsafe(const std::reverse_iterator<_Iterator> &__it)
+        -> decltype(std::__make_reverse_iterator(__unsafe(__it.base())))
+{
+        return std::__make_reverse_iterator(__unsafe(__it.base()));
+}
 #endif
 
 #if __cplusplus >= 201103L
-  // Help Debug mode to see through move_iterator.
-  template<typename _Iterator>
-    inline bool
-    __valid_range(const std::move_iterator<_Iterator>& __first,
-		  const std::move_iterator<_Iterator>& __last,
-		  typename _Distance_traits<_Iterator>::__type& __dist)
-    { return __valid_range(__first.base(), __last.base(), __dist); }
-
-  template<typename _Iterator>
-    inline typename _Distance_traits<_Iterator>::__type
-    __get_distance(const std::move_iterator<_Iterator>& __first,
-		   const std::move_iterator<_Iterator>& __last)
-    { return __get_distance(__first.base(), __last.base()); }
-
-  template<typename _Iterator, typename _Size>
-    inline bool
-    __can_advance(const std::move_iterator<_Iterator>& __it, _Size __n)
-    { return __can_advance(__it.base(), __n); }
-
-  template<typename _Iterator>
-    inline auto
-    __unsafe(const std::move_iterator<_Iterator>& __it)
-    -> decltype(std::make_move_iterator(__unsafe(__it.base())))
-    { return std::make_move_iterator(__unsafe(__it.base())); }
-
-  template<typename _Iterator>
-    inline auto
-    __base(const std::move_iterator<_Iterator>& __it)
-    -> decltype(std::make_move_iterator(__base(__it.base())))
-    { return std::make_move_iterator(__base(__it.base())); }
-#endif
+// Help Debug mode to see through move_iterator.
+template <typename _Iterator>
+inline bool __valid_range(const std::move_iterator<_Iterator> &__first,
+                          const std::move_iterator<_Iterator> &__last,
+                          typename _Distance_traits<_Iterator>::__type &__dist)
+{
+        return __valid_range(__first.base(), __last.base(), __dist);
 }
+
+template <typename _Iterator>
+inline typename _Distance_traits<_Iterator>::__type
+__get_distance(const std::move_iterator<_Iterator> &__first,
+               const std::move_iterator<_Iterator> &__last)
+{
+        return __get_distance(__first.base(), __last.base());
+}
+
+template <typename _Iterator, typename _Size>
+inline bool __can_advance(const std::move_iterator<_Iterator> &__it, _Size __n)
+{
+        return __can_advance(__it.base(), __n);
+}
+
+template <typename _Iterator>
+inline auto __unsafe(const std::move_iterator<_Iterator> &__it)
+        -> decltype(std::make_move_iterator(__unsafe(__it.base())))
+{
+        return std::make_move_iterator(__unsafe(__it.base()));
+}
+
+template <typename _Iterator>
+inline auto __base(const std::move_iterator<_Iterator> &__it)
+        -> decltype(std::make_move_iterator(__base(__it.base())))
+{
+        return std::make_move_iterator(__base(__it.base()));
+}
+#endif
+} // namespace __gnu_debug
 
 namespace std
 {
 _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
-  template<typename _Iterator, typename _Container, typename _Sequence>
-    _Iterator
-    __niter_base(const __gnu_debug::_Safe_iterator<
-		 __gnu_cxx::__normal_iterator<_Iterator, _Container>,
-		 _Sequence, std::random_access_iterator_tag>&);
+template <typename _Iterator, typename _Container, typename _Sequence>
+_Iterator
+__niter_base(const __gnu_debug::_Safe_iterator<__gnu_cxx::__normal_iterator<_Iterator, _Container>,
+                                               _Sequence, std::random_access_iterator_tag> &);
 
 _GLIBCXX_END_NAMESPACE_VERSION
-}
+} // namespace std
 
 #endif

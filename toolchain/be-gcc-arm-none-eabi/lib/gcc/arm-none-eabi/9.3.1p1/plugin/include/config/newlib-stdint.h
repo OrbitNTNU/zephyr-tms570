@@ -34,28 +34,66 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
    than equal to 64 for various 64-bit types.  */
 
 #define INT8_TYPE (CHAR_TYPE_SIZE == 8 ? "signed char" : 0)
-#define INT16_TYPE (SHORT_TYPE_SIZE == 16 ? "short int" : INT_TYPE_SIZE == 16 ? "int" : CHAR_TYPE_SIZE == 16 ? "signed char" : 0)
-#define INT32_TYPE (STDINT_LONG32 ? "long int" : INT_TYPE_SIZE == 32 ? "int" : SHORT_TYPE_SIZE == 32 ? "short int" : CHAR_TYPE_SIZE == 32 ? "signed char" : 0)
-#define INT64_TYPE (LONG_TYPE_SIZE == 64 ? "long int" : LONG_LONG_TYPE_SIZE == 64 ? "long long int" : INT_TYPE_SIZE == 64 ? "int" : 0)
+#define INT16_TYPE                                                                                 \
+        (SHORT_TYPE_SIZE == 16  ? "short int"                                                      \
+         : INT_TYPE_SIZE == 16  ? "int"                                                            \
+         : CHAR_TYPE_SIZE == 16 ? "signed char"                                                    \
+                                : 0)
+#define INT32_TYPE                                                                                 \
+        (STDINT_LONG32           ? "long int"                                                      \
+         : INT_TYPE_SIZE == 32   ? "int"                                                           \
+         : SHORT_TYPE_SIZE == 32 ? "short int"                                                     \
+         : CHAR_TYPE_SIZE == 32  ? "signed char"                                                   \
+                                 : 0)
+#define INT64_TYPE                                                                                 \
+        (LONG_TYPE_SIZE == 64        ? "long int"                                                  \
+         : LONG_LONG_TYPE_SIZE == 64 ? "long long int"                                             \
+         : INT_TYPE_SIZE == 64       ? "int"                                                       \
+                                     : 0)
 #define UINT8_TYPE (CHAR_TYPE_SIZE == 8 ? "unsigned char" : 0)
-#define UINT16_TYPE (SHORT_TYPE_SIZE == 16 ? "short unsigned int" : INT_TYPE_SIZE == 16 ? "unsigned int" : CHAR_TYPE_SIZE == 16 ? "unsigned char" : 0)
-#define UINT32_TYPE (STDINT_LONG32 ? "long unsigned int" : INT_TYPE_SIZE == 32 ? "unsigned int" : SHORT_TYPE_SIZE == 32 ? "short unsigned int" : CHAR_TYPE_SIZE == 32 ? "unsigned char" : 0)
-#define UINT64_TYPE (LONG_TYPE_SIZE == 64 ? "long unsigned int" : LONG_LONG_TYPE_SIZE == 64 ? "long long unsigned int" : INT_TYPE_SIZE == 64 ? "unsigned int" : 0)
+#define UINT16_TYPE                                                                                \
+        (SHORT_TYPE_SIZE == 16  ? "short unsigned int"                                             \
+         : INT_TYPE_SIZE == 16  ? "unsigned int"                                                   \
+         : CHAR_TYPE_SIZE == 16 ? "unsigned char"                                                  \
+                                : 0)
+#define UINT32_TYPE                                                                                \
+        (STDINT_LONG32           ? "long unsigned int"                                             \
+         : INT_TYPE_SIZE == 32   ? "unsigned int"                                                  \
+         : SHORT_TYPE_SIZE == 32 ? "short unsigned int"                                            \
+         : CHAR_TYPE_SIZE == 32  ? "unsigned char"                                                 \
+                                 : 0)
+#define UINT64_TYPE                                                                                \
+        (LONG_TYPE_SIZE == 64        ? "long unsigned int"                                         \
+         : LONG_LONG_TYPE_SIZE == 64 ? "long long unsigned int"                                    \
+         : INT_TYPE_SIZE == 64       ? "unsigned int"                                              \
+                                     : 0)
 
-#define INT_LEAST8_TYPE (INT8_TYPE ? INT8_TYPE : INT16_TYPE ? INT16_TYPE : INT32_TYPE ? INT32_TYPE : INT64_TYPE ? INT64_TYPE : 0)
-#define INT_LEAST16_TYPE (INT16_TYPE ? INT16_TYPE : INT32_TYPE ? INT32_TYPE : INT64_TYPE ? INT64_TYPE : 0)
+#define INT_LEAST8_TYPE                                                                            \
+        (INT8_TYPE    ? INT8_TYPE                                                                  \
+         : INT16_TYPE ? INT16_TYPE                                                                 \
+         : INT32_TYPE ? INT32_TYPE                                                                 \
+         : INT64_TYPE ? INT64_TYPE                                                                 \
+                      : 0)
+#define INT_LEAST16_TYPE                                                                           \
+        (INT16_TYPE ? INT16_TYPE : INT32_TYPE ? INT32_TYPE : INT64_TYPE ? INT64_TYPE : 0)
 #define INT_LEAST32_TYPE (INT32_TYPE ? INT32_TYPE : INT64_TYPE ? INT64_TYPE : 0)
 #define INT_LEAST64_TYPE INT64_TYPE
-#define UINT_LEAST8_TYPE (UINT8_TYPE ? UINT8_TYPE : UINT16_TYPE ? UINT16_TYPE : UINT32_TYPE ? UINT32_TYPE : UINT64_TYPE ? UINT64_TYPE : 0)
-#define UINT_LEAST16_TYPE (UINT16_TYPE ? UINT16_TYPE : UINT32_TYPE ? UINT32_TYPE : UINT64_TYPE ? UINT64_TYPE : 0)
+#define UINT_LEAST8_TYPE                                                                           \
+        (UINT8_TYPE    ? UINT8_TYPE                                                                \
+         : UINT16_TYPE ? UINT16_TYPE                                                               \
+         : UINT32_TYPE ? UINT32_TYPE                                                               \
+         : UINT64_TYPE ? UINT64_TYPE                                                               \
+                       : 0)
+#define UINT_LEAST16_TYPE                                                                          \
+        (UINT16_TYPE ? UINT16_TYPE : UINT32_TYPE ? UINT32_TYPE : UINT64_TYPE ? UINT64_TYPE : 0)
 #define UINT_LEAST32_TYPE (UINT32_TYPE ? UINT32_TYPE : UINT64_TYPE ? UINT64_TYPE : 0)
 #define UINT_LEAST64_TYPE UINT64_TYPE
 
-#define INT_FAST8_TYPE (INT_TYPE_SIZE >= 8 ? "int" : INT_LEAST8_TYPE)
-#define INT_FAST16_TYPE (INT_TYPE_SIZE >= 16 ? "int" : INT_LEAST16_TYPE)
-#define INT_FAST32_TYPE (INT_TYPE_SIZE >= 32 ? "int" : INT_LEAST32_TYPE)
-#define INT_FAST64_TYPE (INT_TYPE_SIZE >= 64 ? "int" : INT_LEAST64_TYPE)
-#define UINT_FAST8_TYPE (INT_TYPE_SIZE >= 8 ? "unsigned int" : UINT_LEAST8_TYPE)
+#define INT_FAST8_TYPE   (INT_TYPE_SIZE >= 8 ? "int" : INT_LEAST8_TYPE)
+#define INT_FAST16_TYPE  (INT_TYPE_SIZE >= 16 ? "int" : INT_LEAST16_TYPE)
+#define INT_FAST32_TYPE  (INT_TYPE_SIZE >= 32 ? "int" : INT_LEAST32_TYPE)
+#define INT_FAST64_TYPE  (INT_TYPE_SIZE >= 64 ? "int" : INT_LEAST64_TYPE)
+#define UINT_FAST8_TYPE  (INT_TYPE_SIZE >= 8 ? "unsigned int" : UINT_LEAST8_TYPE)
 #define UINT_FAST16_TYPE (INT_TYPE_SIZE >= 16 ? "unsigned int" : UINT_LEAST16_TYPE)
 #define UINT_FAST32_TYPE (INT_TYPE_SIZE >= 32 ? "unsigned int" : UINT_LEAST32_TYPE)
 #define UINT_FAST64_TYPE (INT_TYPE_SIZE >= 64 ? "unsigned int" : UINT_LEAST64_TYPE)

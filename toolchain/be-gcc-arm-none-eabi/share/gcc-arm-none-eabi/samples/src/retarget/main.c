@@ -1,6 +1,7 @@
 #include <stdio.h>
 void main()
 {
-    printf("Hello, world!");
-	for (;;);
+        printf("Hello, world!");
+        for (;;)
+                ;
 }

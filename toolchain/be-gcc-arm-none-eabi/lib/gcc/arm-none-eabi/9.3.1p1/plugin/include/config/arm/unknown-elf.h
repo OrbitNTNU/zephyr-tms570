@@ -25,72 +25,67 @@
 
 /* Default to using software floating point.  */
 #ifndef TARGET_DEFAULT
-#define TARGET_DEFAULT	(0)
+#define TARGET_DEFAULT (0)
 #endif
 
 /* Now we define the strings used to build the spec file.  */
-#define UNKNOWN_ELF_STARTFILE_SPEC	" crti%O%s crtbegin%O%s crt0%O%s"
+#define UNKNOWN_ELF_STARTFILE_SPEC " crti%O%s crtbegin%O%s crt0%O%s"
 
-#undef  STARTFILE_SPEC
-#define STARTFILE_SPEC	\
-  "%{Ofast|ffast-math|funsafe-math-optimizations:crtfastmath.o%s} "	\
-  UNKNOWN_ELF_STARTFILE_SPEC
+#undef STARTFILE_SPEC
+#define STARTFILE_SPEC                                                                             \
+        "%{Ofast|ffast-math|funsafe-math-optimizations:crtfastmath.o%s}"                           \
+        " " UNKNOWN_ELF_STARTFILE_SPEC
 
-#define UNKNOWN_ELF_ENDFILE_SPEC	"crtend%O%s crtn%O%s"
+#define UNKNOWN_ELF_ENDFILE_SPEC "crtend%O%s crtn%O%s"
 
-#undef  ENDFILE_SPEC
-#define ENDFILE_SPEC	UNKNOWN_ELF_ENDFILE_SPEC
+#undef ENDFILE_SPEC
+#define ENDFILE_SPEC UNKNOWN_ELF_ENDFILE_SPEC
 
 /* The __USES_INITFINI__ define is tested in newlib/libc/sys/arm/crt0.S
    to see if it needs to invoked _init() and _fini().  */
-#undef  SUBTARGET_CPP_SPEC
-#define SUBTARGET_CPP_SPEC  "-D__USES_INITFINI__"
+#undef SUBTARGET_CPP_SPEC
+#define SUBTARGET_CPP_SPEC "-D__USES_INITFINI__"
 
-#undef  PREFERRED_DEBUGGING_TYPE
+#undef PREFERRED_DEBUGGING_TYPE
 #define PREFERRED_DEBUGGING_TYPE DWARF2_DEBUG
 
 /* Return a nonzero value if DECL has a section attribute.  */
-#define IN_NAMED_SECTION_P(DECL)					\
-  ((TREE_CODE (DECL) == FUNCTION_DECL || TREE_CODE (DECL) == VAR_DECL)	\
-   && DECL_SECTION_NAME (DECL) != NULL)
+#define IN_NAMED_SECTION_P(DECL)                                                                   \
+        ((TREE_CODE(DECL) == FUNCTION_DECL || TREE_CODE(DECL) == VAR_DECL) &&                      \
+         DECL_SECTION_NAME(DECL) != NULL)
 
-#undef  ASM_OUTPUT_ALIGNED_BSS
-#define ASM_OUTPUT_ALIGNED_BSS(FILE, DECL, NAME, SIZE, ALIGN)   	\
-  do									\
-    {									\
-      if (IN_NAMED_SECTION_P (DECL))					\
-	switch_to_section (get_named_section (DECL, NULL, 0));		\
-      else								\
-	switch_to_section (bss_section);				\
-      									\
-      ASM_OUTPUT_ALIGN (FILE, floor_log2 (ALIGN / BITS_PER_UNIT));	\
-									\
-      last_assemble_variable_decl = DECL;				\
-      ASM_DECLARE_OBJECT_NAME (FILE, NAME, DECL);			\
-      ASM_OUTPUT_SKIP (FILE, SIZE ? (int)(SIZE) : 1);			\
-    } 									\
-  while (0)
+#undef ASM_OUTPUT_ALIGNED_BSS
+#define ASM_OUTPUT_ALIGNED_BSS(FILE, DECL, NAME, SIZE, ALIGN)                                      \
+        do {                                                                                       \
+                if (IN_NAMED_SECTION_P(DECL))                                                      \
+                        switch_to_section(get_named_section(DECL, NULL, 0));                       \
+                else                                                                               \
+                        switch_to_section(bss_section);                                            \
+                                                                                                   \
+                ASM_OUTPUT_ALIGN(FILE, floor_log2(ALIGN / BITS_PER_UNIT));                         \
+                                                                                                   \
+                last_assemble_variable_decl = DECL;                                                \
+                ASM_DECLARE_OBJECT_NAME(FILE, NAME, DECL);                                         \
+                ASM_OUTPUT_SKIP(FILE, SIZE ? (int)(SIZE) : 1);                                     \
+        } while (0)
 
-#undef  ASM_OUTPUT_ALIGNED_DECL_LOCAL
-#define ASM_OUTPUT_ALIGNED_DECL_LOCAL(FILE, DECL, NAME, SIZE, ALIGN)	\
-  do									\
-    {									\
-      if ((DECL) != NULL && IN_NAMED_SECTION_P (DECL))			\
-	switch_to_section (get_named_section (DECL, NULL, 0));		\
-      else								\
-	switch_to_section (bss_section);				\
-									\
-      ASM_OUTPUT_ALIGN (FILE, floor_log2 (ALIGN / BITS_PER_UNIT));	\
-      ASM_OUTPUT_LABEL (FILE, NAME);					\
-      fprintf (FILE, "\t.space\t%d\n", SIZE ? (int) SIZE : 1);		\
-      fprintf (FILE, "\t.size\t%s, %d\n",				\
-	       NAME, SIZE ? (int) SIZE : 1);				\
-    }									\
-  while (0)
+#undef ASM_OUTPUT_ALIGNED_DECL_LOCAL
+#define ASM_OUTPUT_ALIGNED_DECL_LOCAL(FILE, DECL, NAME, SIZE, ALIGN)                               \
+        do {                                                                                       \
+                if ((DECL) != NULL && IN_NAMED_SECTION_P(DECL))                                    \
+                        switch_to_section(get_named_section(DECL, NULL, 0));                       \
+                else                                                                               \
+                        switch_to_section(bss_section);                                            \
+                                                                                                   \
+                ASM_OUTPUT_ALIGN(FILE, floor_log2(ALIGN / BITS_PER_UNIT));                         \
+                ASM_OUTPUT_LABEL(FILE, NAME);                                                      \
+                fprintf(FILE, "\t.space\t%d\n", SIZE ? (int)SIZE : 1);                             \
+                fprintf(FILE, "\t.size\t%s, %d\n", NAME, SIZE ? (int)SIZE : 1);                    \
+        } while (0)
 
 /* The libgcc udivmod functions may throw exceptions.  If newlib is
    configured to support long longs in I/O, then printf will depend on
    udivmoddi4, which will depend on the exception unwind routines,
-   which will depend on abort, which is defined in libc.  */ 
+   which will depend on abort, which is defined in libc.  */
 #undef LINK_GCC_C_SEQUENCE_SPEC
 #define LINK_GCC_C_SEQUENCE_SPEC "--start-group %G %{!nolibc:%L} --end-group"

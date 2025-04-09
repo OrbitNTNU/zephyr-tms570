@@ -41,8 +41,8 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #endif
 
 /* The symbol that points to an RTP's table of GOTs.  */
-#define VXWORKS_GOTT_BASE (gcc_unreachable (), "")
+#define VXWORKS_GOTT_BASE (gcc_unreachable(), "")
 
 /* The symbol that holds the index of the current module's GOT in
    VXWORKS_GOTT_BASE.  */
-#define VXWORKS_GOTT_INDEX (gcc_unreachable (), "")
+#define VXWORKS_GOTT_INDEX (gcc_unreachable(), "")

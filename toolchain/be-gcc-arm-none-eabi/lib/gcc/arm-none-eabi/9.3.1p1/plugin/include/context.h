@@ -20,7 +20,8 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef GCC_CONTEXT_H
 #define GCC_CONTEXT_H
 
-namespace gcc {
+namespace gcc
+{
 
 class pass_manager;
 class dump_manager;
@@ -30,33 +31,41 @@ class dump_manager;
    context of state.  */
 class context
 {
-public:
-  context ();
-  ~context ();
+      public:
+        context();
+        ~context();
 
-  /* The flag shows if there are symbols to be streamed for offloading.  */
-  bool have_offload;
+        /* The flag shows if there are symbols to be streamed for offloading.  */
+        bool have_offload;
 
-  /* Pass-management.  */
+        /* Pass-management.  */
 
-  void set_passes (pass_manager *m)
-  {
-    gcc_assert (!m_passes);
-    m_passes = m;
-  }
+        void set_passes(pass_manager *m)
+        {
+                gcc_assert(!m_passes);
+                m_passes = m;
+        }
 
-  pass_manager *get_passes () { gcc_assert (m_passes); return m_passes; }
+        pass_manager *get_passes()
+        {
+                gcc_assert(m_passes);
+                return m_passes;
+        }
 
-  /* Handling dump files.  */
+        /* Handling dump files.  */
 
-  dump_manager *get_dumps () {gcc_assert (m_dumps); return m_dumps; }
+        dump_manager *get_dumps()
+        {
+                gcc_assert(m_dumps);
+                return m_dumps;
+        }
 
-private:
-  /* Pass-management.  */
-  pass_manager *m_passes;
+      private:
+        /* Pass-management.  */
+        pass_manager *m_passes;
 
-  /* Dump files.  */
-  dump_manager *m_dumps;
+        /* Dump files.  */
+        dump_manager *m_dumps;
 
 }; // class context
 

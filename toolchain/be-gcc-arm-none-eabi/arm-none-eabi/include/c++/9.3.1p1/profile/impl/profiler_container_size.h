@@ -38,149 +38,143 @@
 
 namespace __gnu_profile
 {
-  /** @brief A container size instrumentation line in the object table.  */
-  class __container_size_info
-  : public __object_info_base 
-  {
-  public:
-    __container_size_info(__stack_t __stack)
-    : __object_info_base(__stack), _M_init(0), _M_max(0),
-      _M_min(0), _M_total(0), _M_item_min(0), _M_item_max(0),
-      _M_item_total(0), _M_count(0), _M_resize(0), _M_cost(0)
-    { }
+/** @brief A container size instrumentation line in the object table.  */
+class __container_size_info : public __object_info_base
+{
+      public:
+        __container_size_info(__stack_t __stack)
+                : __object_info_base(__stack), _M_init(0), _M_max(0), _M_min(0), _M_total(0),
+                  _M_item_min(0), _M_item_max(0), _M_item_total(0), _M_count(0), _M_resize(0),
+                  _M_cost(0)
+        {
+        }
 
-    void
-    __write(FILE* __f) const
-    {
-      std::fprintf(__f, "%Zu %Zu %Zu %Zu %Zu %Zu %Zu %Zu %Zu %Zu\n", 
-		   _M_init, _M_count, _M_cost, _M_resize, _M_min, _M_max,
-		   _M_total, _M_item_min, _M_item_max, _M_item_total);
-    }
+        void __write(FILE *__f) const
+        {
+                std::fprintf(__f, "%Zu %Zu %Zu %Zu %Zu %Zu %Zu %Zu %Zu %Zu\n", _M_init, _M_count,
+                             _M_cost, _M_resize, _M_min, _M_max, _M_total, _M_item_min, _M_item_max,
+                             _M_item_total);
+        }
 
-    float
-    __magnitude() const
-    { return static_cast<float>(_M_cost); }
+        float __magnitude() const
+        {
+                return static_cast<float>(_M_cost);
+        }
 
-    std::string
-    __advice() const
-    {
-      std::stringstream __message;
-      if (_M_init < _M_item_max)
-	__message << "change initial container size from " << _M_init
-		  << " to " << _M_item_max;
-      return __message.str();
-    }
+        std::string __advice() const
+        {
+                std::stringstream __message;
+                if (_M_init < _M_item_max) {
+                        __message << "change initial container size from " << _M_init << " to "
+                                  << _M_item_max;
+                }
+                return __message.str();
+        }
 
-    void
-    __init(std::size_t __num)
-    {
-      _M_init = __num;
-      _M_max = __num;
-    }
+        void __init(std::size_t __num)
+        {
+                _M_init = __num;
+                _M_max = __num;
+        }
 
-    void
-    __merge(const __container_size_info& __o)
-    {
-      __object_info_base::__merge(__o);
-      _M_init        = std::max(_M_init, __o._M_init);
-      _M_max         = std::max(_M_max, __o._M_max);
-      _M_item_max    = std::max(_M_item_max, __o._M_item_max);
-      _M_min         = std::min(_M_min, __o._M_min);
-      _M_item_min    = std::min(_M_item_min, __o._M_item_min);
-      _M_total      += __o._M_total;
-      _M_item_total += __o._M_item_total;
-      _M_count      += __o._M_count;
-      _M_cost       += __o._M_cost;
-      _M_resize     += __o._M_resize;
-    }
+        void __merge(const __container_size_info &__o)
+        {
+                __object_info_base::__merge(__o);
+                _M_init = std::max(_M_init, __o._M_init);
+                _M_max = std::max(_M_max, __o._M_max);
+                _M_item_max = std::max(_M_item_max, __o._M_item_max);
+                _M_min = std::min(_M_min, __o._M_min);
+                _M_item_min = std::min(_M_item_min, __o._M_item_min);
+                _M_total += __o._M_total;
+                _M_item_total += __o._M_item_total;
+                _M_count += __o._M_count;
+                _M_cost += __o._M_cost;
+                _M_resize += __o._M_resize;
+        }
 
-    // Call if a container is destructed or cleaned.
-    void
-    __destruct(std::size_t __num, std::size_t __inum)
-    {
-      _M_max = std::max(_M_max, __num);
-      _M_item_max = std::max(_M_item_max, __inum);
-      if (_M_min == 0)
-	{
-	  _M_min = __num; 
-	  _M_item_min = __inum;
-	}
-      else
-	{
-	  _M_min = std::min(_M_min, __num);
-	  _M_item_min = std::min(_M_item_min, __inum);
-	}
+        // Call if a container is destructed or cleaned.
+        void __destruct(std::size_t __num, std::size_t __inum)
+        {
+                _M_max = std::max(_M_max, __num);
+                _M_item_max = std::max(_M_item_max, __inum);
+                if (_M_min == 0) {
+                        _M_min = __num;
+                        _M_item_min = __inum;
+                } else {
+                        _M_min = std::min(_M_min, __num);
+                        _M_item_min = std::min(_M_item_min, __inum);
+                }
 
-      _M_total += __num;
-      _M_item_total += __inum;
-      _M_count += 1;
-    }
+                _M_total += __num;
+                _M_item_total += __inum;
+                _M_count += 1;
+        }
 
-    // Estimate the cost of resize/rehash. 
-    float
-    __resize_cost(std::size_t __from, std::size_t)
-    { return __from; }
+        // Estimate the cost of resize/rehash.
+        float __resize_cost(std::size_t __from, std::size_t)
+        {
+                return __from;
+        }
 
-    // Call if container is resized.
-    void
-    __resize(std::size_t __from, std::size_t __to)
-    {
-      _M_cost += this->__resize_cost(__from, __to);
-      _M_resize += 1;
-      _M_max = std::max(_M_max, __to);
-    }
+        // Call if container is resized.
+        void __resize(std::size_t __from, std::size_t __to)
+        {
+                _M_cost += this->__resize_cost(__from, __to);
+                _M_resize += 1;
+                _M_max = std::max(_M_max, __to);
+        }
 
-  private:
-    std::size_t _M_init;
-    std::size_t _M_max;  // range of # buckets
-    std::size_t _M_min;
-    std::size_t _M_total;
-    std::size_t _M_item_min;  // range of # items
-    std::size_t _M_item_max;
-    std::size_t _M_item_total;
-    std::size_t _M_count;
-    std::size_t _M_resize;
-    std::size_t _M_cost;
-  };
+      private:
+        std::size_t _M_init;
+        std::size_t _M_max; // range of # buckets
+        std::size_t _M_min;
+        std::size_t _M_total;
+        std::size_t _M_item_min; // range of # items
+        std::size_t _M_item_max;
+        std::size_t _M_item_total;
+        std::size_t _M_count;
+        std::size_t _M_resize;
+        std::size_t _M_cost;
+};
 
-  /** @brief A container size instrumentation line in the stack table.  */
-  class __container_size_stack_info
-  : public __container_size_info
-  {
-  public:
-    __container_size_stack_info(const __container_size_info& __o)
-    : __container_size_info(__o) { }
-  };
-  
-  /** @brief Container size instrumentation trace producer.  */
-  class __trace_container_size
-  : public __trace_base<__container_size_info, __container_size_stack_info> 
-  {
-  public:
-    ~__trace_container_size() { }
+/** @brief A container size instrumentation line in the stack table.  */
+class __container_size_stack_info : public __container_size_info
+{
+      public:
+        __container_size_stack_info(const __container_size_info &__o) : __container_size_info(__o)
+        {
+        }
+};
 
-    __trace_container_size()
-    : __trace_base<__container_size_info, __container_size_stack_info>() { };
+/** @brief Container size instrumentation trace producer.  */
+class __trace_container_size
+        : public __trace_base<__container_size_info, __container_size_stack_info>
+{
+      public:
+        ~__trace_container_size()
+        {
+        }
 
-    // Insert a new node at construct with object, callstack and initial size. 
-    __container_size_info*
-    __insert(__stack_t __stack, std::size_t __num)
-    {
-      __container_size_info* __ret =  __add_object(__stack);
-      if (__ret)
-	__ret->__init(__num);
-      return __ret;
-    }
+        __trace_container_size()
+                : __trace_base<__container_size_info, __container_size_stack_info>(){};
 
-    // Call at destruction/clean to set container final size.
-    void
-    __destruct(__container_size_info* __obj_info,
-	       std::size_t __num, std::size_t __inum)
-    {
-      __obj_info->__destruct(__num, __inum);
-      __retire_object(__obj_info);
-    }
-  };
+        // Insert a new node at construct with object, callstack and initial size.
+        __container_size_info *__insert(__stack_t __stack, std::size_t __num)
+        {
+                __container_size_info *__ret = __add_object(__stack);
+                if (__ret) {
+                        __ret->__init(__num);
+                }
+                return __ret;
+        }
+
+        // Call at destruction/clean to set container final size.
+        void __destruct(__container_size_info *__obj_info, std::size_t __num, std::size_t __inum)
+        {
+                __obj_info->__destruct(__num, __inum);
+                __retire_object(__obj_info);
+        }
+};
 
 } // namespace __gnu_profile
 #endif /* _GLIBCXX_PROFILE_PROFILER_CONTAINER_SIZE_H */
