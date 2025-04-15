@@ -68,6 +68,30 @@
         #size-cells = <0>;
     };
 
+    spi3: spi@fff7f800 {
+        compatible = "tms570,spi";
+        pinctrl-0 = <&spi3_simo &spi3_somi &spi3_clk>;
+        pinctrl-names = "default";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0xfff7f800 0x200>;
+		clocks = <&clock TMS570_CLK_VCLK>;
+        interrupts = <37 IRQ_DEFAULT_PRIORITY>, <38 IRQ_HIGH_PRIORITY>;
+		status = "okay";
+    };
+
+    spi4: spi@fff7fa00 {
+        compatible = "tms570,spi";
+        pinctrl-0 = <&spi4_simo &spi4_somi &spi4_clk>;
+        pinctrl-names = "default";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0xfff7fa00 0x200>;
+		clocks = <&clock TMS570_CLK_VCLK>;
+        interrupts = <49 IRQ_DEFAULT_PRIORITY>, <54 IRQ_HIGH_PRIORITY>;
+		status = "okay";
+    };
+
     clock: clock-controller@ffffff00 {
         compatible = "tms570,clock";
         reg = <0xffffff00 256>;
@@ -140,5 +164,25 @@
     };
     i2c_sda_0_25: i2c_sda_0_25 {
         pinmux = <TMS570_PINMUX(0, 25)>;
+    };
+
+    spi3_somi: spi3_somi {
+        pinmux = <TMS570_PINMUX(33, 8)>;
+    };
+    spi3_simo: spi3_simo {
+        pinmux = <TMS570_PINMUX(33, 16)>;
+    };
+    spi3_clk: spi3_clk {
+        pinmux = <TMS570_PINMUX(33, 24)>;
+    };
+
+    spi4_somi: spi4_somi {
+        pinmux = <TMS570_PINMUX(5, 17)>;
+    };
+    spi4_simo: spi4_simo {
+        pinmux = <TMS570_PINMUX(5, 9)>;
+    };
+    spi4_clk: spi4_clk {
+        pinmux = <TMS570_PINMUX(5, 1)>;
     };
 };

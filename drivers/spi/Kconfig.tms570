@@ -1,0 +1,7 @@
+
+config SPI_TMS570
+	bool "TMS570LS1224 SPI driver"
+	default y
+	depends on DT_HAS_TMS570_SPI_ENABLED
+	help
+	  Enable SPI support on TMS570LS1224
