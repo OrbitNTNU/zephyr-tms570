@@ -6,6 +6,7 @@
 #include <zephyr/sys/__assert.h>
 #include <zephyr/sys/util.h>
 
+LOG_MODULE_REGISTER(spi_tms570, CONFIG_SPI_LOG_LEVEL);
 #include "spi_context.h"
 
 #define DT_DRV_COMPAT tms570_spi
@@ -61,7 +62,7 @@ struct tms570_spi_data {
 static int configure(const struct device *dev, const struct spi_config *config)
 {
         const struct tms570_spi_config *cfg = dev->config;
-        return pinctrl_apply_state(cfg->pcfg);
+        return pinctrl_apply_state(cfg->pcfg, PINCTRL_STATE_DEFAULT);
 }
 
 static int spi_tms570_transceive(const struct device *dev, const struct spi_config *config,
@@ -118,7 +119,7 @@ done:
 
 static int spi_tms570_release(const struct device *dev, const struct spi_config *config)
 {
-        struct spi_tms570_data *data = dev->data;
+        struct tms570_spi_data *data = dev->data;
 
         if (!spi_context_configured(&data->ctx, config)) {
                 return -EINVAL;
@@ -205,10 +206,12 @@ static int spi_tms570_init(const struct device *dev)
         cfg->regs->DAT[1] |= (1 << 16) | (1 << 24);
 
         cfg->regs->GCR[1] |= 1 << 24;
+
+        return 0;
 }
 
 /* SPI driver APIs structure */
-static const struct spi_driver_api spi_tms570_api = {
+static const struct spi_driver_api tms570_spi_api = {
         .transceive = spi_tms570_transceive,
         .release = spi_tms570_release,
 };
@@ -218,18 +221,18 @@ static const struct spi_driver_api spi_tms570_api = {
                                                                                                    \
         PINCTRL_DT_INST_DEFINE(inst);                                                              \
                                                                                                    \
-        static struct spi_tms570_data spi_tms570_data_##inst = {                                   \
-                SPI_CONTEXT_INIT_LOCK(spi_tms570_data_##inst, ctx),                                \
-                SPI_CONTEXT_INIT_SYNC(spi_tms570_data_##inst, ctx),                                \
+        static struct tms570_spi_data tms570_spi_data_##inst = {                                   \
+                SPI_CONTEXT_INIT_LOCK(tms570_spi_data_##inst, ctx),                                \
+                SPI_CONTEXT_INIT_SYNC(tms570_spi_data_##inst, ctx),                                \
                 SPI_CONTEXT_CS_GPIOS_INITIALIZE(DT_DRV_INST(inst), ctx)};                          \
                                                                                                    \
-        static struct spi_tms570_cfg spi_tms570_cfg_##inst = {                                     \
-                .regs = (tms570_spi_regs_t *)DT_INST_REG_ADDR(_num),                               \
+        static struct tms570_spi_config tms570_spi_cfg_##inst = {                                  \
+                .regs = (tms570_spi_regs_t *)DT_INST_REG_ADDR(inst),                               \
                 .pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(inst),                                      \
         };                                                                                         \
                                                                                                    \
-        DEVICE_DT_INST_DEFINE(inst, spi_tms570_init, NULL, &spi_tms570_data_##inst,                \
-                              &spi_tms570_cfg_##inst, POST_KERNEL, CONFIG_SPI_INIT_PRIORITY,       \
-                              &spi_tms570_api);
+        DEVICE_DT_INST_DEFINE(inst, spi_tms570_init, NULL, &tms570_spi_data_##inst,                \
+                              &tms570_spi_cfg_##inst, POST_KERNEL, CONFIG_SPI_INIT_PRIORITY,       \
+                              &tms570_spi_api);
 
 DT_INST_FOREACH_STATUS_OKAY(SPI_TMS570_INIT)
