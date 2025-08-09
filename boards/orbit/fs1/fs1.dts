@@ -68,9 +68,10 @@
         #size-cells = <0>;
     };
 
+/*
     spi3: spi@fff7f800 {
         compatible = "tms570,spi";
-        pinctrl-0 = <&spi3_simo &spi3_somi &spi3_clk>;
+        pinctrl-0 = <&spi3_clk &spi3_simo &spi3_somi>;
         pinctrl-names = "default";
 		#address-cells = <1>;
 		#size-cells = <0>;
@@ -79,6 +80,7 @@
         interrupts = <37 IRQ_DEFAULT_PRIORITY>, <38 IRQ_HIGH_PRIORITY>;
 		status = "okay";
     };
+    */
 
     spi4: spi@fff7fa00 {
         compatible = "tms570,spi";
@@ -90,6 +92,12 @@
 		clocks = <&clock TMS570_CLK_VCLK>;
         interrupts = <49 IRQ_DEFAULT_PRIORITY>, <54 IRQ_HIGH_PRIORITY>;
 		status = "okay";
+        mcp3201: mcp3201@0 {
+            compatible = "vnd,spi-device";
+            reg = <0>;
+            spi-max-frequency = <1600000>;
+            label = "mcp3201";
+        };
     };
 
     clock: clock-controller@ffffff00 {
