@@ -87,13 +87,7 @@ static int spi_tms570_transceive(const struct device *dev, const struct spi_conf
         int err;
 
         // LOG_INF("SPI context lock");
-        // spi_context_lock(ctx, false, NULL, NULL, config);
-
-        err = configure(dev, config);
-        if (err) {
-                LOG_ERR("configure failed err = %" PRIiLEAST32, err);
-                goto done;
-        }
+        spi_context_lock(ctx, false, NULL, NULL, config);
 
         LOG_INF("Buffer setup");
         spi_context_buffers_setup(ctx, tx_bufs, rx_bufs, 1);
@@ -101,7 +95,16 @@ static int spi_tms570_transceive(const struct device *dev, const struct spi_conf
         LOG_INF("CS control");
         spi_context_cs_control(ctx, true);
 
+        // gpio_pin_set(cfg->pcfg, ((4 << 10) | 25), 0);
+
         do {
+                cfg->regs->DAT[1] |= 1 << 28 | 1 << 26;
+                LOG_INF("RXOVRNINTFLG = %d, BITERRFLG = %d, DESYNCFLG = %d, PARERRFLG = %d, "
+                        "TIMEOUTFLG = %d, DLENERRFLG = %d, Last Chip select number = %d",
+                        cfg->regs->BUF & (1 << 30), cfg->regs->BUF & (1 << 28),
+                        cfg->regs->BUF & (1 << 27), cfg->regs->BUF & (1 << 26),
+                        cfg->regs->BUF & (1 << 25), cfg->regs->BUF & (1 << 24),
+                        (cfg->regs->BUF & (0xff << 16)) >> 16);
                 LOG_INF("Transceive loop");
                 if (spi_context_tx_buf_on(ctx)) {
                         txd = *ctx->tx_buf;
@@ -113,7 +116,7 @@ static int spi_tms570_transceive(const struct device *dev, const struct spi_conf
                 while (cfg->regs->BUF & (1 << 29)) { // While TXFULL
                         LOG_INF("TXFULL");
                 }
-                cfg->regs->DAT[1] = txd | (cfg->regs->DAT[1] & (0xffff0000));
+                cfg->regs->DAT[1] = (cfg->regs->DAT[1] & 0xffff0000) | (txd & 0xffff);
 
                 spi_context_update_tx(ctx, 1, 1);
 
@@ -128,8 +131,21 @@ static int spi_tms570_transceive(const struct device *dev, const struct spi_conf
                 }
 
                 spi_context_update_rx(ctx, 1, 1);
+
+                LOG_INF("RXOVRNINTFLG = %d, BITERRFLG = %d, DESYNCFLG = %d, PARERRFLG = %d, "
+                        "TIMEOUTFLG = %d, DLENERRFLG = %d",
+                        cfg->regs->FLG & (1 << 6), cfg->regs->FLG & (1 << 4),
+                        cfg->regs->FLG & (1 << 3), cfg->regs->FLG & (1 << 2),
+                        cfg->regs->FLG & (1 << 1), cfg->regs->FLG & (1 << 0));
+                LOG_INF("RXOVRNINTFLG = %d, BITERRFLG = %d, DESYNCFLG = %d, PARERRFLG = %d, "
+                        "TIMEOUTFLG = %d, DLENERRFLG = %d, Last Chip select number = %d",
+                        cfg->regs->BUF & (1 << 30), cfg->regs->BUF & (1 << 28),
+                        cfg->regs->BUF & (1 << 27), cfg->regs->BUF & (1 << 26),
+                        cfg->regs->BUF & (1 << 25), cfg->regs->BUF & (1 << 24),
+                        (cfg->regs->BUF & (0xff << 16)) >> 16);
         } while (spi_context_tx_on(ctx) || spi_context_rx_on(ctx));
 
+        // gpio_pin_set(cfg->pcfg, ((4 << 10) | 25), 0);
         spi_context_cs_control(ctx, false);
 
 done:
@@ -155,11 +171,19 @@ static int spi_tms570_init(const struct device *dev)
 {
         const struct tms570_spi_config *cfg = dev->config;
 
+        int err = 0;
+
+        err = configure(dev, cfg);
+        if (err) {
+                LOG_ERR("configure failed err = %" PRIiLEAST32, err);
+        }
+
         cfg->regs->GCR[0] = 1U; // Enable SPI by setting RESET bit
 
-        cfg->regs->PCFUN = 0xffffffff; // Configure the SIMO, SOMI, SPICLK, and optional SPICS and
-                                       // SPIENA pins for SPI functionality by setting the
-                                       // corresponding bit in SPIPC0 register
+        cfg->regs->PCFUN |= (1 << 28) | (1 << 20) | (1 << 9) | (1 << 8) |
+                            (1 << 0); // Configure the SIMO, SOMI, SPICLK, and optional SPICS and
+                                      // SPIENA pins for SPI functionality by setting the
+                                      // corresponding bit in SPIPC0 register
 
         cfg->regs->GCR[1] |= 0b11; // Configure the module to function as Master or Slave using
                                    // CLKMOD and MASTER bits
@@ -171,28 +195,28 @@ static int spi_tms570_init(const struct device *dev)
                             | (0 << 21) /* wait on enable */
                             | (0 << 20) /* shift direction */
                             | (1 << 17) /* clock polarity */
-                            | (0 << 16) /* clock phase */
+                            | (1 << 16) /* clock phase */
                             | (99 << 8) /* baudrate prescale */
                             | 8;        /* data word length */
 
         // If the module is selected to function as Master, the delay parameters can be configured
         // using SPIDELAY register
-        cfg->regs->DELAY = (0 << 24)   /* C2TDELAY */
-                           | (0 << 16) /* T2CDELAY */
+        cfg->regs->DELAY = (1 << 24)   /* C2TDELAY */
+                           | (1 << 16) /* T2CDELAY */
                            | (0 << 8)  /* T2EDELAY */
                            | 0;        /* C2EDELAY */
 
         // Enable the Interrupts using SPIINT0 register if required
 
-        cfg->regs->DAT[1] |= 0x3f << 16; // Select the chip select to be used by setting CSNR bits
-                                         // in SPIDAT1 register
+        cfg->regs->DAT[1] |= 1 << 16; // Select the chip select to be used by setting CSNR bits
+                                      // in SPIDAT1 register
 
         // Configure CSHOLD and WDEL bits in SPIDAT1 register if required
+        // cfg->regs->DAT[1] |= 1 << 28 | 1 << 26;
 
-        cfg->regs->DAT[1] &=
-                ~(0b11
-                  << 24); // Select the Data word format by setting DFSEL bits. Select the Number of
-                          // the configured SPIFMTx register (0 to 3) to used for the communication
+        // Select the Data word format by setting DFSEL bits. Select the Number of
+        // the configured SPIFMTx register (0 to 3) to used for the communication
+        cfg->regs->DAT[1] &= ~(0b11 << 24);
 
         // Set LOOPBACK bit to connect the transmitter to the receiver internally. (This feature is
         // used to perform a self-test. Do not configure for normal communication to external

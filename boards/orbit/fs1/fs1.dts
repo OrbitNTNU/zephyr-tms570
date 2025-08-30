@@ -84,7 +84,7 @@
 
     spi4: spi@fff7fa00 {
         compatible = "tms570,spi";
-        pinctrl-0 = <&spi4_simo &spi4_somi &spi4_clk>;
+        pinctrl-0 = <&spi4_simo &spi4_somi &spi4_clk &spi4_ena>;
         pinctrl-names = "default";
 		#address-cells = <1>;
 		#size-cells = <0>;
@@ -92,12 +92,6 @@
 		clocks = <&clock TMS570_CLK_VCLK>;
         interrupts = <49 IRQ_DEFAULT_PRIORITY>, <54 IRQ_HIGH_PRIORITY>;
 		status = "okay";
-        mcp3201: mcp3201@0 {
-            compatible = "vnd,spi-device";
-            reg = <0>;
-            spi-max-frequency = <1600000>;
-            label = "mcp3201";
-        };
     };
 
     clock: clock-controller@ffffff00 {
@@ -192,5 +186,11 @@
     };
     spi4_clk: spi4_clk {
         pinmux = <TMS570_PINMUX(5, 1)>;
+    };
+    spi4_ena: spi4_ena {
+        pinmux = <TMS570_PINMUX(4, 17)>;
+    };
+    spi4_cs: spi4_cs {
+	    pinmux = <TMS570_PINMUX(4, 25)>;
     };
 };
