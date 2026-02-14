@@ -18,8 +18,24 @@ LOG_MODULE_REGISTER(tms570_can);
 #define BITRATE_MAX (1000000)
 
 #define CTL_OFFSET      (0x00)
+#define CTL_SWR_OFFSET  (15)
+#define CTL_ABO_OFFSET  (9)
 #define CTL_CCE_OFFSET  (6)
+#define CTL_EIE_OFFSET  (3)
+#define CTL_SIE_OFFSET  (2)
+#define CTL_IE0_OFFSET  (1)
 #define CTL_INIT_OFFSET (0)
+
+#define ES_OFFSET       (0x04)
+#define ES_BOFF_OFFSET  (7)
+#define ES_EWARN_OFFSET (6)
+#define ES_EPASS_OFFSET (5)
+
+#define ERRC_OFFSET     (0x08)
+#define ERRC_REC_WIDTH  (7)
+#define ERRC_REC_OFFSET (8)
+#define ERRC_TEC_WIDTH  (8)
+#define ERRC_TEC_OFFSET (0)
 
 #define BTR_OFFSET       (0x0c)
 #define BTR_BRPE_WIDTH   (4)
@@ -126,6 +142,7 @@ struct tms570_can_data {
 
         struct k_spinlock lock;
         struct can_driver_data can_data;
+        enum can_state can_state;
 
         atomic_t ifregs;
         struct k_sem ifsem;
@@ -159,7 +176,6 @@ static int tms570_can_set_mode(const struct device *dev, can_mode_t mode)
                 goto exit;
         }
 
-        /* TODO: Is this function required to support? */
         data->can_data.mode = mode;
 
 exit:
@@ -228,13 +244,23 @@ static int tms570_can_start(const struct device *dev)
 
         ctrl_reg_base = DEVICE_MMIO_NAMED_GET(dev, control);
 
+        /* SW Reset module */
+        sys_set_bit(ctrl_reg_base + CTL_OFFSET, CTL_SWR_OFFSET);
+        while (sys_test_bit(ctrl_reg_base + CTL_OFFSET, CTL_SWR_OFFSET)) {
+        }
+
+        /* Enable interrupts */
+        sys_set_bits(ctrl_reg_base + CTL_OFFSET, BIT(CTL_IE0_OFFSET) | BIT(CTL_SIE_OFFSET) |
+                                                         BIT(CTL_EIE_OFFSET) | BIT(CTL_ABO_OFFSET));
+
         sys_clear_bit(ctrl_reg_base + CTL_OFFSET, CTL_CCE_OFFSET);
         sys_clear_bit(ctrl_reg_base + CTL_OFFSET, CTL_INIT_OFFSET);
 
-        while (sys_test_bit(ctrl_reg_base, CTL_INIT_OFFSET)) {
+        while (sys_test_bit(ctrl_reg_base + CTL_OFFSET, CTL_INIT_OFFSET)) {
         }
 
         data->can_data.started = true;
+        data->can_state = CAN_STATE_ERROR_ACTIVE;
 
         k_spin_unlock(&data->lock, key);
 
@@ -587,9 +613,57 @@ static void tms570_can_remove_rx_filter(const struct device *dev, int filteridx)
         }
 }
 
+static enum can_state tms570_can_esr_to_state(const struct device *dev)
+{
+        uintptr_t ctrl_reg_base = DEVICE_MMIO_NAMED_GET(dev, control);
+        uint32_t esr = sys_read32(ctrl_reg_base + ES_OFFSET);
+
+        if (esr & BIT(ES_BOFF_OFFSET)) {
+                return CAN_STATE_BUS_OFF;
+        } else if (esr & BIT(ES_EPASS_OFFSET)) {
+                return CAN_STATE_ERROR_PASSIVE;
+        } else if (esr & BIT(ES_EWARN_OFFSET)) {
+                return CAN_STATE_ERROR_WARNING;
+        } else {
+                return CAN_STATE_ERROR_ACTIVE;
+        }
+
+        return CAN_STATE_STOPPED;
+}
+
+static struct can_bus_err_cnt tms570_can_get_err_count(const struct device *dev)
+{
+        uintptr_t ctrl_reg_base;
+        uint32_t errc;
+
+        ctrl_reg_base = DEVICE_MMIO_NAMED_GET(dev, control);
+        errc = sys_read32(ctrl_reg_base + ERRC_OFFSET);
+
+        return (struct can_bus_err_cnt){
+                .rx_err_cnt = (errc >> ERRC_REC_OFFSET) & ERRC_REC_WIDTH,
+                .tx_err_cnt = (errc >> ERRC_TEC_OFFSET) & ERRC_TEC_WIDTH,
+        };
+}
+
 static int tms570_can_get_state(const struct device *dev, enum can_state *state,
                                 struct can_bus_err_cnt *err)
 {
+        struct tms570_can_data *data = dev->data;
+        bool started;
+
+        *err = tms570_can_get_err_count(dev);
+
+        K_SPINLOCK(&data->lock) {
+                started = data->can_data.started;
+        }
+
+        if (!started) {
+                *state = CAN_STATE_STOPPED;
+        } else {
+                *state = tms570_can_esr_to_state(dev);
+        }
+
+        return 0;
 }
 
 static void tms570_can_set_state_change_callback(const struct device *dev,
@@ -622,6 +696,28 @@ static int tms570_can_get_max_filters(const struct device *dev, bool ide)
         return MSG_RX_MAX;
 }
 
+static void tms570_can_status_update_isr(const struct device *dev)
+{
+        struct tms570_can_data *data = dev->data;
+        enum can_state state;
+        struct can_bus_err_cnt err_cnt;
+        uintptr_t ctrl_reg_base;
+
+        ctrl_reg_base = DEVICE_MMIO_NAMED_GET(dev, control);
+        state = tms570_can_esr_to_state(dev);
+
+        if (state != CAN_STATE_STOPPED && state != data->can_state) {
+                data->can_state = state;
+
+                if (data->can_data.state_change_cb != NULL) {
+                        err_cnt = tms570_can_get_err_count(dev);
+
+                        data->can_data.state_change_cb(dev, data->can_state, err_cnt,
+                                                       data->can_data.state_change_cb_user_data);
+                }
+        }
+}
+
 /**
  * @brief Interrupt service routine
  *
@@ -635,14 +731,13 @@ static void tms570_can_isr(const struct device *dev)
         unsigned int sync_mask;
         bool is_tx;
         size_t msg_id;
-        const struct tms570_can_cfg *cfg = dev->config;
 
         ctrl_reg_base = DEVICE_MMIO_NAMED_GET(dev, control);
         intsrc = sys_read32(ctrl_reg_base + INT_OFFSET);
         intsrc = (intsrc >> INT_0ID_OFFSET) & BIT_MASK(INT_0ID_WIDTH);
 
         if (intsrc == INT_ESR_SOURCE) {
-                /* TODO */
+                tms570_can_status_update_isr(dev);
                 return;
         } else if (intsrc == 0 || intsrc > MSG_OBJECT_COUNT) {
                 /* Invalid interrupt source */
