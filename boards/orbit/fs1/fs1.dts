@@ -68,13 +68,13 @@
         #size-cells = <0>;
     };
 
-    can0: can@fff7dc00 {
+    can3: can@fff7e000 {
         compatible = "ti,tms570-can";
         status = "okay";
-        reg = <0xfff7dc00 512>, <0xff1e0000 DT_SIZE_K(128)>;
+        reg = <0xfff7e000 512>, <0xff1e0000 DT_SIZE_K(128)>;
         reg-names = "control", "messages";
         clocks = <&clock TMS570_CLK_VCLK>;
-        interrupts = <16 IRQ_DEFAULT_PRIORITY>;
+        interrupts = <45 IRQ_DEFAULT_PRIORITY>;
     };
 
     clock: clock-controller@ffffff00 {
