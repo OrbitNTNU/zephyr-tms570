@@ -1,0 +1,18 @@
+
+config CAN_TMS570
+    bool "TI TMS570 CAN Controller"
+    default y
+    depends on DT_HAS_TI_TMS570_CAN_ENABLED
+
+if CAN_TMS570
+
+config CAN_TMS570_TX_MAX
+    int "Maximum TX objects"
+    default 32
+    range 1 64
+    help
+        Adjust this to adjust proporition of CAN message objects allotted to
+        TX (and RX). Total RX message objects is computed as
+        64 - CONFIG_CAN_TMS570_TX_MAX.
+
+endif

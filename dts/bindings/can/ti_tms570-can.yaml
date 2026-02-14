@@ -1,0 +1,4 @@
+
+description: TI TMS570 CAN Controller
+compatible: ti,tms570-can
+include: can-controller.yaml
