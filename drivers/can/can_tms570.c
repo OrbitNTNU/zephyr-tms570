@@ -119,8 +119,7 @@ struct tms570_can_msg_object {
 };
 
 struct tms570_can_cfg {
-        DEVICE_MMIO_NAMED_ROM(control);
-        DEVICE_MMIO_NAMED_ROM(messages);
+        DEVICE_MMIO_ROM;
 
         struct can_driver_config can_conf;
 
@@ -137,8 +136,7 @@ struct tms570_can_cfg {
 };
 
 struct tms570_can_data {
-        DEVICE_MMIO_NAMED_RAM(control);
-        DEVICE_MMIO_NAMED_RAM(messages);
+        DEVICE_MMIO_RAM;
 
         struct k_spinlock lock;
         struct can_driver_data can_data;
@@ -204,7 +202,7 @@ static int tms570_can_set_timing(const struct device *dev, const struct can_timi
                 return -EBUSY;
         }
 
-        ctrl_reg_base = DEVICE_MMIO_NAMED_GET(dev, control);
+        ctrl_reg_base = DEVICE_MMIO_GET(dev);
 
         tseg1 = (timing->prop_seg + timing->phase_seg1) - 1;
         tseg2 = timing->phase_seg2 - 1;
@@ -242,7 +240,7 @@ static int tms570_can_start(const struct device *dev)
                 return -EALREADY;
         }
 
-        ctrl_reg_base = DEVICE_MMIO_NAMED_GET(dev, control);
+        ctrl_reg_base = DEVICE_MMIO_GET(dev);
 
         /* SW Reset module */
         sys_set_bit(ctrl_reg_base + CTL_OFFSET, CTL_SWR_OFFSET);
@@ -280,7 +278,7 @@ static int tms570_can_stop(const struct device *dev)
                 return -EALREADY;
         }
 
-        ctrl_reg_base = DEVICE_MMIO_NAMED_GET(dev, control);
+        ctrl_reg_base = DEVICE_MMIO_GET(dev);
 
         /* Set device in initialization mode, allow for configuration change */
         sys_set_bit(ctrl_reg_base + CTL_OFFSET, CTL_INIT_OFFSET);
@@ -343,7 +341,7 @@ static uintptr_t ifreg_addr(const struct device *dev, int ifreg)
 {
         uintptr_t base;
 
-        base = DEVICE_MMIO_NAMED_GET(dev, control);
+        base = DEVICE_MMIO_GET(dev);
         return base + (ifreg == IF1_IDX ? IF1_OFFSET : IF2_OFFSET);
 }
 
@@ -615,7 +613,7 @@ static void tms570_can_remove_rx_filter(const struct device *dev, int filteridx)
 
 static enum can_state tms570_can_esr_to_state(const struct device *dev)
 {
-        uintptr_t ctrl_reg_base = DEVICE_MMIO_NAMED_GET(dev, control);
+        uintptr_t ctrl_reg_base = DEVICE_MMIO_GET(dev);
         uint32_t esr = sys_read32(ctrl_reg_base + ES_OFFSET);
 
         if (esr & BIT(ES_BOFF_OFFSET)) {
@@ -636,7 +634,7 @@ static struct can_bus_err_cnt tms570_can_get_err_count(const struct device *dev)
         uintptr_t ctrl_reg_base;
         uint32_t errc;
 
-        ctrl_reg_base = DEVICE_MMIO_NAMED_GET(dev, control);
+        ctrl_reg_base = DEVICE_MMIO_GET(dev);
         errc = sys_read32(ctrl_reg_base + ERRC_OFFSET);
 
         return (struct can_bus_err_cnt){
@@ -703,7 +701,7 @@ static void tms570_can_status_update_isr(const struct device *dev)
         struct can_bus_err_cnt err_cnt;
         uintptr_t ctrl_reg_base;
 
-        ctrl_reg_base = DEVICE_MMIO_NAMED_GET(dev, control);
+        ctrl_reg_base = DEVICE_MMIO_GET(dev);
         state = tms570_can_esr_to_state(dev);
 
         if (state != CAN_STATE_STOPPED && state != data->can_state) {
@@ -732,7 +730,7 @@ static void tms570_can_isr(const struct device *dev)
         bool is_tx;
         size_t msg_id;
 
-        ctrl_reg_base = DEVICE_MMIO_NAMED_GET(dev, control);
+        ctrl_reg_base = DEVICE_MMIO_GET(dev);
         intsrc = sys_read32(ctrl_reg_base + INT_OFFSET);
         intsrc = (intsrc >> INT_0ID_OFFSET) & BIT_MASK(INT_0ID_WIDTH);
 
@@ -810,15 +808,14 @@ static int tms570_can_init(const struct device *dev)
         int status;
         uintptr_t ctrl_reg_base;
 
-        DEVICE_MMIO_NAMED_MAP(dev, control, K_MEM_CACHE_NONE);
-        DEVICE_MMIO_NAMED_MAP(dev, messages, K_MEM_CACHE_NONE);
+        DEVICE_MMIO_MAP(dev, K_MEM_CACHE_NONE);
 
         (void)k_sem_init(&data->ifsem, IF_REG_MAX, IF_REG_MAX);
         (void)k_sem_init(&data->txsem, MSG_TX_MAX, MSG_TX_MAX);
 
         cfg->irq_connect();
 
-        ctrl_reg_base = DEVICE_MMIO_NAMED_GET(dev, control);
+        ctrl_reg_base = DEVICE_MMIO_GET(dev);
 
         /* Set device in initialization mode, allow for configuration change */
         sys_set_bit(ctrl_reg_base + CTL_OFFSET, CTL_INIT_OFFSET);
@@ -853,8 +850,7 @@ static int tms570_can_init(const struct device *dev)
         SYS_BITARRAY_DEFINE_STATIC(tms570_can_##inst##_rx_bitarray, MSG_RX_MAX);                   \
         static struct tms570_can_msg_object tms570_can_##inst##_rx_objects[MSG_RX_MAX];            \
         const struct tms570_can_cfg tms570_can_##inst##_cfg = {                                    \
-                DEVICE_MMIO_NAMED_ROM_INIT_BY_NAME(control, DT_DRV_INST(inst)),                    \
-                DEVICE_MMIO_NAMED_ROM_INIT_BY_NAME(messages, DT_DRV_INST(inst)),                   \
+                DEVICE_MMIO_ROM_INIT(DT_DRV_INST(inst)),                                           \
                 .can_conf = CAN_DT_DRIVER_CONFIG_INST_GET(inst, BITRATE_MIN, BITRATE_MAX),         \
                 .clk_ctrl = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(inst)),                              \
                 .clk_domain = DT_INST_CLOCKS_CELL(inst, clk_id),                                   \
