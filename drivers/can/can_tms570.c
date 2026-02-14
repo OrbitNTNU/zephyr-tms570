@@ -6,7 +6,7 @@
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/drivers/clock_control.h>
 
-LOG_MODULE_REGISTER(tms570_can);
+LOG_MODULE_REGISTER(can_tms570);
 
 #define DT_DRV_COMPAT ti_tms570_can
 
