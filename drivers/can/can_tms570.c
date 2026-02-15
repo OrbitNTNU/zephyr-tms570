@@ -56,6 +56,9 @@ LOG_MODULE_REGISTER(can_tms570);
 #define INT_0ID_OFFSET (0)
 #define INT_ESR_SOURCE (0x8000)
 
+#define TEST_OFFSET       (0x14)
+#define TEST_LBACK_OFFSET (4)
+
 #define IF1_OFFSET (0x100)
 #define IF1_IDX    (0)
 #define IF2_OFFSET (0x120)
@@ -147,7 +150,7 @@ struct tms570_can_data {
 
 static int tms570_can_get_capabilities(const struct device *dev, can_mode_t *cap)
 {
-        *cap = CAN_MODE_NORMAL;
+        *cap = CAN_MODE_NORMAL | CAN_MODE_LOOPBACK;
         return 0;
 }
 
@@ -166,7 +169,7 @@ static int tms570_can_set_mode(const struct device *dev, can_mode_t mode)
                 goto exit;
         }
 
-        if (mode != CAN_MODE_NORMAL) {
+        if (mode != CAN_MODE_NORMAL && (mode & ~CAN_MODE_LOOPBACK) != 0) {
                 status = -EINVAL;
                 goto exit;
         }
@@ -242,6 +245,12 @@ static int tms570_can_start(const struct device *dev)
         /* SW Reset module */
         sys_set_bit(ctrl_reg_base + CTL_OFFSET, CTL_SWR_OFFSET);
         while (sys_test_bit(ctrl_reg_base + CTL_OFFSET, CTL_SWR_OFFSET)) {
+        }
+
+        if (data->can_data.mode & CAN_MODE_LOOPBACK) {
+                sys_set_bit(ctrl_reg_base + TEST_OFFSET, TEST_LBACK_OFFSET);
+        } else {
+                sys_clear_bit(ctrl_reg_base + TEST_OFFSET, TEST_LBACK_OFFSET);
         }
 
         /* Enable interrupts */
