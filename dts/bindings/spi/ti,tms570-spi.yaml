@@ -1,0 +1,4 @@
+
+compatible: ti,tms570-spi
+description: TI TMS570 SPI Controller
+include: [spi-controller.yaml, pinctrl-device.yaml]

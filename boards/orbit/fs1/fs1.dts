@@ -76,6 +76,28 @@
         interrupts = <45 IRQ_DEFAULT_PRIORITY>;
     };
 
+    spi1: spi@fff7f400 {
+        compatible = "ti,tms570-spi";
+        status = "okay";
+        #address-cells = <1>;
+        #size-cells = <0>;
+        reg = <0xfff7f400 512>;
+        clocks = <&clock TMS570_CLK_VCLK>;
+        pinctrl-0 = <&spi1_ncs_0 &spi1_ncs_1 &spi1_ncs_2 &spi1_ncs_3>;
+        pinctrl-names = "default";
+    };
+
+    spi2: spi@fff7f600 {
+        compatible = "ti,tms570-spi";
+        status = "okay";
+        #address-cells = <1>;
+        #size-cells = <0>;
+        reg = <0xfff7f600 512>;
+        clocks = <&clock TMS570_CLK_VCLK>;
+        pinctrl-0 = <&spi2_ncs_1>;
+        pinctrl-names = "default";
+    };
+
     clock: clock-controller@ffffff00 {
         compatible = "tms570,clock";
         reg = <0xffffff00 256>;
@@ -148,5 +170,25 @@
     };
     i2c_sda_0_25: i2c_sda_0_25 {
         pinmux = <TMS570_PINMUX(0, 25)>;
+    };
+
+    spi1_ncs_0: spi1_ncs_13_24 {
+        pinmux = <TMS570_PINMUX(13, 24)>;
+    };
+
+    spi1_ncs_1: spi1_ncs_20_16 {
+        pinmux = <TMS570_PINMUX(20, 16)>;
+    };
+
+    spi1_ncs_2: spi1_ncs_8_8 {
+        pinmux = <TMS570_PINMUX(8,8)>;
+    };
+
+    spi1_ncs_3: spi1_ncs_9_24 {
+        pinmux = <TMS570_PINMUX(9, 24)>;
+    };
+
+    spi2_ncs_1: spi2_ncs_29_1 {
+        pinmux = <TMS570_PINMUX(29, 1)>;
     };
 };
