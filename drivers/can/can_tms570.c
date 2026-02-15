@@ -411,7 +411,7 @@ static int tms570_can_send(const struct device *dev, const struct can_frame *fra
         size_t msg_id;
         k_timepoint_t expiry;
 
-        if (frame->flags & (CAN_FRAME_FDF | CAN_FRAME_ESI | CAN_FRAME_BRS)) {
+        if (frame->flags & (CAN_FRAME_FDF | CAN_FRAME_ESI | CAN_FRAME_BRS | CAN_FRAME_RTR)) {
                 return -ENOTSUP;
         }
 
@@ -450,8 +450,6 @@ static int tms570_can_send(const struct device *dev, const struct can_frame *fra
 
         cfg->tx_objects[msg_id].user_data = user_data;
         cfg->tx_objects[msg_id].tx_callback = callback;
-
-        /* TODO: RTR */
 
         /* Valid message, TX direction */
         val = BIT(IF_ARB_MSGVAL_OFFSET) | BIT(IF_ARB_DIR_OFFSET);
@@ -505,8 +503,6 @@ static void rx_deliver(const struct device *dev, int ifreg, size_t msg_id)
         } else {
                 frame.id = (val >> IF_ARB_ID_OFFSET) & BIT_MASK(IF_ARB_ID_WIDTH);
         }
-
-        /* TODO: RTR */
 
         val = sys_read32(if_addr_base + IF_MCTL_OFFSET);
 
