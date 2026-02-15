@@ -10,4 +10,8 @@ config SPI_TMS570_DMA
     bool "Use DMA for TMS570 SPI"
     default y
 
+config SPI_TMS570_DMA_TIMEOUT_USEC
+    int
+    default 1000000
+
 endif

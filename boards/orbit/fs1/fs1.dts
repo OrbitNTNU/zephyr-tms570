@@ -85,6 +85,10 @@
         clocks = <&clock TMS570_CLK_VCLK>;
         pinctrl-0 = <&spi1_ncs_0 &spi1_ncs_1 &spi1_ncs_2 &spi1_ncs_3>;
         pinctrl-names = "default";
+        dma-request-rx = <0>;
+        dma-request-tx = <1>;
+        dma-channel-rx = <3>;
+        dma-channel-tx = <4>;
     };
 
     spi2: spi@fff7f600 {
@@ -96,6 +100,10 @@
         clocks = <&clock TMS570_CLK_VCLK>;
         pinctrl-0 = <&spi2_ncs_1>;
         pinctrl-names = "default";
+        dma-request-rx = <2>;
+        dma-request-tx = <3>;
+        dma-channel-rx = <5>;
+        dma-channel-tx = <6>;
     };
 
     clock: clock-controller@ffffff00 {
