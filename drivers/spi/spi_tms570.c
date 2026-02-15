@@ -23,10 +23,11 @@ LOG_MODULE_REGISTER(spi_tms570);
 #define CGR0_OFFSET      (0x00)
 #define CGR0_NRST_OFFSET (0)
 
-#define CGR1_OFFSET        (0x04)
-#define CGR1_EN_OFFSET     (24)
-#define CGR1_CLKMOD_OFFSET (1)
-#define CGR1_MASTER_OFFSET (0)
+#define CGR1_OFFSET          (0x04)
+#define CGR1_EN_OFFSET       (24)
+#define CGR1_LOOPBACK_OFFSET (16)
+#define CGR1_CLKMOD_OFFSET   (1)
+#define CGR1_MASTER_OFFSET   (0)
 
 #define INT0_OFFSET          (0x08)
 #define INT0_DMAREQEN_OFFSET (16)
@@ -115,7 +116,7 @@ static int tms570_spi_configure(const struct device *dev, const struct spi_confi
 
         /* Some of this are supported by the hardware, but not yet implemented in this driver. */
         if (spi_cfg->operation &
-            (SPI_OP_MODE_SLAVE | SPI_MODE_LOOP | SPI_HALF_DUPLEX | SPI_LOCK_ON | SPI_HOLD_ON_CS)) {
+            (SPI_OP_MODE_SLAVE | SPI_HALF_DUPLEX | SPI_LOCK_ON | SPI_HOLD_ON_CS)) {
                 return -ENOTSUP;
         }
 
@@ -155,6 +156,12 @@ static int tms570_spi_configure(const struct device *dev, const struct spi_confi
         dat1 = spi_cfg->slave << DAT1_CSNR_OFFSET;
         dat1 |= FMT_IDX << DAT1_DFSEL_OFFSET;
         sys_write32(dat1, ctrl_reg_base + DAT1_OFFSET);
+
+        if (spi_cfg->operation & SPI_MODE_LOOP) {
+                sys_set_bit(ctrl_reg_base + CGR1_OFFSET, CGR1_LOOPBACK_OFFSET);
+        } else {
+                sys_clear_bit(ctrl_reg_base + CGR1_OFFSET, CGR1_LOOPBACK_OFFSET);
+        }
 
         /* Set master bit, clock mode */
         sys_set_bits(ctrl_reg_base + CGR1_OFFSET,
