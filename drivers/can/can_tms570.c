@@ -107,9 +107,6 @@ LOG_MODULE_REGISTER(can_tms570);
 #define IF_DATA_A_OFFSET (0x10)
 #define IF_DATA_B_OFFSET (0x14)
 
-#define DEV_CFG(dev_)  ((const struct tms570_can_cfg *)(dev_)->config)
-#define DEV_DATA(dev_) ((struct tms570_can_data *)(dev_)->data)
-
 struct tms570_can_msg_object {
         union {
                 can_tx_callback_t tx_callback;
