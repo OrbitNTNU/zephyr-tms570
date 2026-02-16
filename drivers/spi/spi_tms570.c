@@ -305,6 +305,17 @@ static int tms570_spi_wait_dma(const struct device *dev)
         return tms570_spi_wait_dma_xfer(dev, &data->dma_rx, sys_timepoint_timeout(expiry));
 }
 
+static void tms570_spi_dma_toggle(const struct device *dev, bool on)
+{
+        uintptr_t ctrl_reg_base = DEVICE_MMIO_GET(dev);
+
+        if (on) {
+                sys_set_bit(ctrl_reg_base + INT0_OFFSET, INT0_DMAREQEN_OFFSET);
+        } else {
+                sys_clear_bit(ctrl_reg_base + INT0_OFFSET, INT0_DMAREQEN_OFFSET);
+        }
+}
+
 static int tms570_spi_transceive_dma(const struct device *dev, const struct spi_config *spi_cfg,
                                      const struct spi_buf_set *tx_bufs,
                                      const struct spi_buf_set *rx_bufs)
@@ -334,7 +345,6 @@ static int tms570_spi_transceive_dma(const struct device *dev, const struct spi_
         k_sem_reset(&data->dma_tx.sem);
 
         while (spi_context_tx_on(&data->ctx) || spi_context_rx_on(&data->ctx)) {
-
                 len = spi_context_max_continuous_chunk(&data->ctx);
 
                 if (spi_context_tx_on(&data->ctx)) {
@@ -377,8 +387,13 @@ static int tms570_spi_transceive_dma(const struct device *dev, const struct spi_
                         break;
                 }
 
+                /* Initiate request */
+                tms570_spi_dma_toggle(dev, true);
+
                 /* Wait for chunk transfer to be done */
                 status = tms570_spi_wait_dma(dev);
+                tms570_spi_dma_toggle(dev, false);
+
                 if (status != 0) {
                         (void)dma_stop(cfg->dma_dev, cfg->dma_channel_rx);
                         (void)dma_stop(cfg->dma_dev, cfg->dma_channel_tx);
@@ -470,8 +485,6 @@ static void tms570_spi_dma_init(const struct device *dev)
 
         (void)k_sem_init(&data->dma_tx.sem, 0, 1);
         (void)k_sem_init(&data->dma_rx.sem, 0, 1);
-
-        sys_set_bit(ctrl_reg_base + INT0_OFFSET, INT0_DMAREQEN_OFFSET);
 }
 #endif
 
