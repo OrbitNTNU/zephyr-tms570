@@ -11,6 +11,10 @@ set(TOOLCHAIN_ROOT <path/to/this/module>)
 set(ZEPHYR_TOOLCHAIN_VARIANT be-arm-none-eabi)
 ```
 
+Alternatively, using Zephyr SDK>=17.4.0 and Zephyr 4.3.0, compilation can be
+done by simply passing `-DTOOLCHAIN_C_FLAGS="-mbe32" -DTOOLCHAIN_LD_FLAGS="-mbe32"`
+to `west build`
+
 The module must also be included in the Zephyr build system, which can be done
 with:
 ```cmake
