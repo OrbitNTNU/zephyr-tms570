@@ -515,6 +515,7 @@ static int tms570_spi_init(const struct device *dev)
                 .clk_domain = DT_INST_CLOCKS_CELL(inst, clk_id),                                   \
                 .pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(inst), TMS570_SPI_DMA_CFG(inst)};           \
         static struct tms570_spi_data tms570_spi_##inst##_data = {                                 \
+                SPI_CONTEXT_INIT_LOCK(tms570_spi_##inst##_data, ctx),                              \
                 SPI_CONTEXT_INIT_SYNC(tms570_spi_##inst##_data, ctx),                              \
         };                                                                                         \
         SPI_DEVICE_DT_INST_DEFINE(inst, tms570_spi_init, NULL, &tms570_spi_##inst##_data,          \
