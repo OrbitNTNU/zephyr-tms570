@@ -45,15 +45,13 @@ LOG_MODULE_REGISTER(spi_tms570);
 #define PC0_SCSFUN_OFFSET  (0)
 
 #define DAT1_OFFSET             (0x3c)
-#define DAT1_DFSEL_OFFSET       (24)
-#define DAT1_CSNR_OFFSET        (16)
-#define DAT1_TXDATA_OFFSET      (0)
+#define DAT1_DFSEL_OFFSET       (24 - 16) /* Offset minus 16 data bits */
+#define DAT1_CSNR_OFFSET        (16 - 16) /* Offset minus 16 data bits */
 #define DAT1_TXDATA_BYTE_OFFSET (DAT1_OFFSET + 3)
 
 #define BUF_OFFSET             (0x40)
-#define BUF_RXEMPTY_OFFSET     (31)
-#define BUF_TXFULL_OFFSET      (29)
-#define BUF_RXDATA_OFFSET      (0)
+#define BUF_RXEMPTY_OFFSET     (31 - 16) /* Offset minus 16 data bits */
+#define BUF_TXFULL_OFFSET      (29 - 16) /* Offset minus 16 data bits */
 #define BUF_RXDATA_BYTE_OFFSET (BUF_OFFSET + 3)
 
 #define CSDEF_OFFSET (0x4c)
@@ -130,10 +128,20 @@ static int tms570_spi_configure(const struct device *dev, const struct spi_confi
                 return -EINVAL;
         }
 
-        status = clock_control_get_rate(dev, (clock_control_subsys_t)&cfg->clk_domain, &clk_rate);
+        status = clock_control_get_rate(cfg->clk_ctrl, (clock_control_subsys_t)&cfg->clk_domain,
+                                        &clk_rate);
         if (status != 0) {
                 return status;
         }
+
+        /* Configure pins */
+        sys_set_bits(ctrl_reg_base + PC0_OFFSET,
+                     BIT(PC0_SIMOFUN_OFFSET) | BIT(PC0_SOMIFUN_OFFSET) | BIT(PC0_CLKFUN_OFFSET) |
+                             (1 << (PC0_SCSFUN_OFFSET + spi_cfg->slave)));
+
+        /* Set master bit, clock mode */
+        sys_set_bits(ctrl_reg_base + CGR1_OFFSET,
+                     BIT(CGR1_MASTER_OFFSET) | BIT(CGR1_CLKMOD_OFFSET));
 
         psc = clk_rate / spi_cfg->frequency - 1;
 
@@ -152,20 +160,17 @@ static int tms570_spi_configure(const struct device *dev, const struct spi_confi
                 sys_set_bit(ctrl_reg_base + CSDEF_OFFSET, spi_cfg->slave);
         }
 
-        /* Slave number, format index */
+        /* Slave number, format index. Only write 16 bits so we don't attempt
+         * to inititate transfer. */
         dat1 = spi_cfg->slave << DAT1_CSNR_OFFSET;
         dat1 |= FMT_IDX << DAT1_DFSEL_OFFSET;
-        sys_write32(dat1, ctrl_reg_base + DAT1_OFFSET);
+        sys_write16(dat1, ctrl_reg_base + DAT1_OFFSET);
 
         if (spi_cfg->operation & SPI_MODE_LOOP) {
                 sys_set_bit(ctrl_reg_base + CGR1_OFFSET, CGR1_LOOPBACK_OFFSET);
         } else {
                 sys_clear_bit(ctrl_reg_base + CGR1_OFFSET, CGR1_LOOPBACK_OFFSET);
         }
-
-        /* Set master bit, clock mode */
-        sys_set_bits(ctrl_reg_base + CGR1_OFFSET,
-                     BIT(CGR1_MASTER_OFFSET) | BIT(CGR1_CLKMOD_OFFSET));
 
         return 0;
 }
@@ -198,15 +203,15 @@ static void tms570_spi_transfer(const struct device *dev)
 
         spi_context_update_tx(&data->ctx, 1, 1);
 
-        /* Write byte */
-        while (sys_test_bit(ctrl_reg_base + BUF_OFFSET, BUF_TXFULL_OFFSET)) {
+        /* Write byte. Only pull upper 16 bits to not clear/set any flags accidentally */
+        while ((sys_read16(ctrl_reg_base + BUF_OFFSET) & BIT(BUF_TXFULL_OFFSET)) != 0) {
         }
         sys_write8(tx_byte, ctrl_reg_base + DAT1_TXDATA_BYTE_OFFSET);
 
-        /* Read received byte */
-        while (sys_test_bit(ctrl_reg_base + BUF_OFFSET, BUF_RXEMPTY_OFFSET)) {
+        /* Read received byte. Only pull upper 16 bits to not clear/set any flags accidentally */
+        while ((sys_read16(ctrl_reg_base + BUF_OFFSET) & BIT(BUF_RXEMPTY_OFFSET)) != 0) {
         }
-        rx_byte = sys_read8(ctrl_reg_base + BUF_RXDATA_BYTE_OFFSET);
+        rx_byte = sys_read8(ctrl_reg_base + BUF_RXDATA_BYTE_OFFSET) & BIT_MASK(8);
 
         if (spi_context_rx_on(&data->ctx)) {
                 *data->ctx.rx_buf = rx_byte;
