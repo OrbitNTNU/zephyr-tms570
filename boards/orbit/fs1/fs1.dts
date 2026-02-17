@@ -32,7 +32,7 @@
 
     uart0: serial@fff7e400 {
         clocks = <&clock TMS570_CLK_VCLK>;
-        compatible = "tms570,uart";
+        compatible = "ti,tms570-uart";
         current-speed = <115200>;
         reg = <0xfff7e400 256>;
         status = "okay";
@@ -45,7 +45,7 @@
         pinctrl-0 = <&scirx_7_17 &scitx_8_1>;
         pinctrl-names = "default";
         clocks = <&clock TMS570_CLK_VCLK>;
-        compatible = "tms570,uart";
+        compatible = "ti,tms570-uart";
         current-speed = <38400>;
         reg = <0xfff7e500 256>;
         status = "okay";
@@ -56,7 +56,7 @@
         pinctrl-0 = <&i2c_scl_0_17 &i2c_sda_0_25>;
         pinctrl-names = "default";
         clocks = <&clock TMS570_CLK_VCLK>;
-        compatible = "tms570,i2c";
+        compatible = "ti,tms570-i2c";
         reg = <0xfff7d400 256>;
         module-clock-frequency = <8000000>;
         interrupts = <66 IRQ_DEFAULT_PRIORITY>;
@@ -101,7 +101,7 @@
     };
 
     clock: clock-controller@ffffff00 {
-        compatible = "tms570,clock";
+        compatible = "ti,tms570-clock";
         reg = <0xffffff00 256>;
         clock-frequency = <32000000>;
         #clock-cells = <1>;
@@ -111,13 +111,13 @@
         interrupt-controller;
         #interrupt-cells = <2>;
         reg = <0xfffffe00 256>;
-        compatible = "tms570,intc";
+        compatible = "ti,tms570-intc";
         status = "okay";
     };
 
     dmac: dma-controller@fffff000 {
         #dma-cells = <2>;
-        compatible = "tms570,dma";
+        compatible = "ti,tms570-dma";
         status = "okay";
         reg = <0xfffff000 DT_SIZE_K(1)>, <0xfff80000 DT_SIZE_K(4)>;
         reg-names = "control", "packets";
@@ -127,14 +127,14 @@
     };
 
     timer: timer@fffffc00 {
-        compatible = "tms570,timer";
+        compatible = "ti,tms570-timer";
         interrupts = <2 IRQ_DEFAULT_PRIORITY>;
         reg = <0xfffffc00 256>;
         clocks = <&clock TMS570_CLK_RTI>;
     };
 
     pll: pll {
-        compatible = "tms570,pll";
+        compatible = "ti,tms570-pll";
 
         nr = <1>;
         nf = <2>;
@@ -153,7 +153,7 @@
     };
 
     pinctrl: pin-controller@ffffea00 {
-        compatible = "tms570,pinctrl";
+        compatible = "ti,tms570-pinctrl";
         reg = <0xffffea00 0x200>;
         status = "okay";
     };

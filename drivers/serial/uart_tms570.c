@@ -15,7 +15,7 @@ LOG_MODULE_REGISTER(tms570_uart);
 #include <zephyr/drivers/dma.h>
 #endif
 
-#define DT_DRV_COMPAT tms570_uart
+#define DT_DRV_COMPAT ti_tms570_uart
 
 #define CGR0_OFFSET     (0x00)
 #define CGR1_OFFSET     (0x04)

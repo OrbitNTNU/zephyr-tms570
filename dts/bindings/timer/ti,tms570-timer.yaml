@@ -1,6 +1,6 @@
 
 description: "Timer for TMS570"
-compatible: "tms570,timer"
+compatible: "ti,tms570-timer"
 
 include: base.yaml
 

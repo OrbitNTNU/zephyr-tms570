@@ -14,7 +14,7 @@ LOG_MODULE_REGISTER(i2c_tms570);
 #include "i2c-priv.h"
 #include "i2c_bitbang.h"
 
-#define DT_DRV_COMPAT tms570_i2c
+#define DT_DRV_COMPAT ti_tms570_i2c
 
 #define OAR_OFFSET   (0x00)
 #define IMR_OFFSET   (0x04)

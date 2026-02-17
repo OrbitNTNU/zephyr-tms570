@@ -2,4 +2,4 @@
 config TMS570_INTC
     bool
     default y
-    depends on DT_HAS_TMS570_INTC_ENABLED
+    depends on DT_HAS_TI_TMS570_INTC_ENABLED

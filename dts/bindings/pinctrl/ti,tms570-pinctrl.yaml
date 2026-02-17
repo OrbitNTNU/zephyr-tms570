@@ -1,6 +1,6 @@
 
 description: "Pinctrl for TMS570"
-compatible: "tms570,pinctrl"
+compatible: "ti,tms570-pinctrl"
 
 include: base.yaml
 

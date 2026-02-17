@@ -6,7 +6,7 @@
 #include <zephyr/irq.h>
 #include <zephyr/drivers/clock_control.h>
 
-#define DT_DRV_COMPAT  tms570_timer
+#define DT_DRV_COMPAT  ti_tms570_timer
 #define DRV_REG        DT_INST_REG_ADDR(0)
 #define DRV_INTERRUPT  DT_INST_IRQN(0)
 #define DRV_CLOCK_FREQ DT_INST_PROP(0, clock_frequency)

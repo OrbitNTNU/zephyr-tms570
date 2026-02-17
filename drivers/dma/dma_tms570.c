@@ -5,7 +5,7 @@
 
 LOG_MODULE_REGISTER(dma_tms570);
 
-#define DEV_DMA        DT_INST(0, tms570_dma)
+#define DEV_DMA        DT_INST(0, ti_tms570_dma)
 #define DEV_CFG(_dev)  ((const struct dma_tms570_cfg *)(_dev)->config)
 #define DEV_DATA(_dev) ((struct dma_tms570_data *)(_dev)->data)
 

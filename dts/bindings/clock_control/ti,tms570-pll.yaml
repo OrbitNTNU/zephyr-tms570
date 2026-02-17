@@ -1,6 +1,6 @@
 
 description: "PLL support for TMS570" 
-compatible: "tms570,pll"
+compatible: "ti,tms570-pll"
 
 include: base.yaml
 
