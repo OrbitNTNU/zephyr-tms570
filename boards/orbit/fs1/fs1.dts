@@ -1,11 +1,7 @@
 /dts-v1/;
 
-#include <arm/armv7-r.dtsi>
-#include <mem.h>
-#include <zephyr/dt-bindings/i2c/i2c.h>
-#include <orbit/dt-bindings/interrupt_controller/tms570-intc.h>
-#include <orbit/dt-bindings/pinctrl/tms570-pinctrl.h>
-#include <orbit/dt-bindings/clock_control/clock_control_tms570.h>
+#include <arm/ti/tms570ls1224.dtsi>
+#include <ti/tms570/tms570ls1224-pinctrl.dtsi>
 
 / {
     model = "Orbit FramSat-1 Board";
@@ -13,132 +9,45 @@
     interrupt-parent = <&intc>;
 
     chosen {
-        zephyr,sram = &sram0;
-        zephyr,flash = &flash0;
         zephyr,console = &uart1;
         zephyr,shell-uart = &uart1;
-    };
-
-    cpus {
-        #address-cells = <1>;
-        #size-cells = <0>;
-
-        cpu0: cpu@0 {
-            compatible = "arm,cortex-r4f";
-            reg = <0>;
-            clock-frequency = <32000000>;
-        };
-    };
-
-    uart0: serial@fff7e400 {
-        clocks = <&clock TMS570_CLK_VCLK>;
-        compatible = "tms570,uart";
-        current-speed = <115200>;
-        reg = <0xfff7e400 256>;
-        status = "okay";
-        interrupts = <13 IRQ_DEFAULT_PRIORITY>;
-        dma-request-rx = <28>;
-        dma-request-tx = <29>;
-        dma-channel-rx = <1>;
-        dma-channel-tx = <2>;
-    };
-
-    uart1: serial@fff7e500 {
-        pinctrl-0 = <&scirx_7_17 &scitx_8_1>;
-        pinctrl-names = "default";
-        clocks = <&clock TMS570_CLK_VCLK>;
-        compatible = "tms570,uart";
-        current-speed = <38400>;
-        reg = <0xfff7e500 256>;
-        status = "okay";
-        interrupts = <64 IRQ_DEFAULT_PRIORITY>;
-    };
-
-    i2c0: i2c@fff7d400 {
-        pinctrl-0 = <&i2c_scl_0_17 &i2c_sda_0_25>;
-        pinctrl-names = "default";
-        clocks = <&clock TMS570_CLK_VCLK>;
-        compatible = "tms570,i2c";
-        reg = <0xfff7d400 256>;
-        module-clock-frequency = <8000000>;
-        interrupts = <66 IRQ_DEFAULT_PRIORITY>;
-        clock-frequency = <I2C_BITRATE_FAST>;
-        status = "okay";
-        #address-cells = <1>;
-        #size-cells = <0>;
-    };
-
-    clock: clock-controller@ffffff00 {
-        compatible = "tms570,clock";
-        reg = <0xffffff00 256>;
-        clock-frequency = <32000000>;
-        #clock-cells = <1>;
-    };
-
-    intc: interrupt-controller@ffffffe00 {
-        interrupt-controller;
-        #interrupt-cells = <2>;
-        reg = <0xfffffe00 256>;
-        compatible = "tms570,intc";
-        status = "okay";
-    };
-
-    dmac: dma-controller@fffff000 {
-        #dma-cells = <2>;
-        compatible = "tms570,dma";
-        status = "okay";
-        reg = <0xfffff000 DT_SIZE_K(1)>, <0xfff80000 DT_SIZE_K(4)>;
-        reg-names = "control", "packets";
-        interrupts = <40 IRQ_DEFAULT_PRIORITY>, <33 IRQ_DEFAULT_PRIORITY>;
-        dma-channels = <16>;
-        dma-requests = <32>;
-    };
-
-    timer: timer@fffffc00 {
-        compatible = "tms570,timer";
-        interrupts = <2 IRQ_DEFAULT_PRIORITY>;
-        reg = <0xfffffc00 256>;
-        clocks = <&clock TMS570_CLK_RTI>;
-    };
-
-    pll: pll {
-        compatible = "tms570,pll";
-
-        nr = <1>;
-        nf = <2>;
-        od = <1>;
-        r = <1>;
-    };
-
-    sram0: memory@8000000 {
-        compatible = "mmio-sram";
-        reg = <0x8000000 DT_SIZE_K(192)>;
-    };
-
-    flash0: serial-flash@0 {
-        compatible = "serial-flash";
-        reg = <0x0 0x13ffff>;
-    };
-
-    pinctrl: pin-controller@ffffea00 {
-        compatible = "tms570,pinctrl";
-        reg = <0xffffea00 0x200>;
-        status = "okay";
+        zephyr,canbus = &can3;
     };
 };
 
-&pinctrl {
-    scirx_7_17: scirx_7_17 {
-        pinmux = <TMS570_PINMUX(7, 17)>;
-    };
-    scitx_8_1: scitx_8_1 {
-        pinmux = <TMS570_PINMUX(8, 1)>;
-    };
+&uart0 {
+    status = "okay";
 
-    i2c_scl_0_17: i2c_scl_0_17 {
-        pinmux = <TMS570_PINMUX(0, 17)>;
-    };
-    i2c_sda_0_25: i2c_sda_0_25 {
-        pinmux = <TMS570_PINMUX(0, 25)>;
-    };
+};
+
+&uart1 {
+    status = "okay";
+    pinctrl-0 = <&scirx_7_17 &scitx_8_1>;
+    pinctrl-names = "default";
+};
+
+&i2c0 {
+    pinctrl-0 = <&i2c_scl_0_17 &i2c_sda_0_25>;
+    pinctrl-names = "default";
+    status = "okay";
+};
+
+&can3 {
+    status = "okay";
+};
+
+&spi1 {
+    pinctrl-0 = <&spi1_ncs_0 &spi1_ncs_1 &spi1_ncs_2 &spi1_ncs_3>;
+    pinctrl-names = "default";
+    status = "okay";
+};
+
+&spi2 {
+    pinctrl-0 = <&spi2_ncs_1>;
+    pinctrl-names = "default";
+    status = "okay";
+};
+
+&dmac {
+    status = "okay";
 };

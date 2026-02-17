@@ -2,7 +2,7 @@
 #include <zephyr/arch/cpu.h>
 #include <zephyr/drivers/pinctrl.h>
 
-#define DT_DRV_COMPAT tms570_pinctrl
+#define DT_DRV_COMPAT ti_tms570_pinctrl
 #define DRV_REG_ADDR  DT_INST_REG_ADDR(0)
 
 #define KICK0_OFFSET (0x38)

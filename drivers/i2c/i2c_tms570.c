@@ -14,7 +14,7 @@ LOG_MODULE_REGISTER(i2c_tms570);
 #include "i2c-priv.h"
 #include "i2c_bitbang.h"
 
-#define DT_DRV_COMPAT tms570_i2c
+#define DT_DRV_COMPAT ti_tms570_i2c
 
 #define OAR_OFFSET   (0x00)
 #define IMR_OFFSET   (0x04)
@@ -613,11 +613,14 @@ static int i2c_tms570_init(const struct device *dev)
 
         sys_set_bits(reg_base + MDR_OFFSET, RM_BIT);
 
+#if CONFIG_I2C_TARGET
         cfg->irq_connect(dev);
+#endif
 
         return i2c_tms570_configure(dev, i2c_map_dt_bitrate(cfg->bitrate));
 }
 
+#if CONFIG_I2C_TARGET
 static void i2c_tms570_isr(const struct device *dev)
 {
         int status;
@@ -737,6 +740,7 @@ static int i2c_tms570_target_unregister(const struct device *dev, struct i2c_tar
 
         return status;
 }
+#endif
 
 static const struct i2c_driver_api i2c_tms570_driver_api = {
         .transfer = i2c_tms570_transfer,
@@ -750,23 +754,32 @@ static const struct i2c_driver_api i2c_tms570_driver_api = {
 #endif
 };
 
-#define I2C_TMS570_INIT(nodeid)                                                                    \
-        PINCTRL_DT_INST_DEFINE(nodeid);                                                            \
+#ifdef CONFIG_I2C_TARGET
+#define I2C_TMS570_IRQ_DEFINE(nodeid)                                                              \
         static void i2c_tms570_##nodeid##_irq_connect(const struct device *dev)                    \
         {                                                                                          \
                 IRQ_CONNECT(DT_INST_IRQN(nodeid), 0, i2c_tms570_isr, DEVICE_DT_INST_GET(nodeid),   \
                             0);                                                                    \
                 irq_enable(DT_INST_IRQN(nodeid));                                                  \
-        }                                                                                          \
+        }
+
+#define I2C_TMS570_IRQ_INIT(nodeid) .irq_connect = i2c_tms570_##nodeid##_irq_connect,
+#else
+#define I2C_TMS570_IRQ_DEFINE(nodeid)
+#define I2C_TMS570_IRQ_INIT(nodeid)
+#endif
+
+#define I2C_TMS570_INIT(nodeid)                                                                    \
+        PINCTRL_DT_INST_DEFINE(nodeid);                                                            \
+        I2C_TMS570_IRQ_DEFINE(nodeid);                                                             \
         static const struct i2c_tms570_cfg i2c_tms570_##nodeid##_cfg = {                           \
                 DEVICE_MMIO_ROM_INIT(DT_DRV_INST(nodeid)),                                         \
                 .pincfg = PINCTRL_DT_INST_DEV_CONFIG_GET(nodeid),                                  \
                 .clk_ctrl = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(nodeid)),                            \
                 .clk_domain = DT_CLOCKS_CELL(DT_DRV_INST(nodeid), clk_id),                         \
-                .irq_connect = i2c_tms570_##nodeid##_irq_connect,                                  \
                 .bitrate = DT_INST_PROP_OR(nodeid, clock_frequency, I2C_BITRATE_FAST),             \
                 .mod_clk_freq = DT_INST_PROP(nodeid, module_clock_frequency),                      \
-        };                                                                                         \
+                I2C_TMS570_IRQ_INIT(nodeid)};                                                      \
         static struct i2c_tms570_data i2c_tms570_##nodeid##_data;                                  \
         I2C_DEVICE_DT_INST_DEFINE(nodeid, i2c_tms570_init, NULL, &i2c_tms570_##nodeid##_data,      \
                                   &i2c_tms570_##nodeid##_cfg, POST_KERNEL,                         \

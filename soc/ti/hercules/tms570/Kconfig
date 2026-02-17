@@ -9,7 +9,7 @@ config SOC_SERIES_TMS570
     select ARM_CUSTOM_INTERRUPT_CONTROLLER
     select SYS_CLOCK_EXISTS
     select BIG_ENDIAN
-    select PLATFORM_SPECIFIC_INIT
+    select SOC_RESET_HOOK
     select VFP_DP_D16
     select XIP
 

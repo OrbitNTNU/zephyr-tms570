@@ -1,8 +1,8 @@
 
 description: "Interrupt controller for TMS570"
-compatible: "tms570,intc"
+compatible: "ti,tms570-intc"
 
-include: base.yaml
+include: [base.yaml, interrupt-controller.yaml]
 
 properties:
   reg:

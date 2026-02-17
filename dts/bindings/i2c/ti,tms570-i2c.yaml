@@ -1,6 +1,6 @@
 description: TI TMS570 I2C
 
-compatible: "tms570,i2c"
+compatible: "ti,tms570-i2c"
 
 include: [i2c-controller.yaml, pinctrl-device.yaml, base.yaml]
 

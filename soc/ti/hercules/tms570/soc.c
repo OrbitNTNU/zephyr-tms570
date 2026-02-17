@@ -28,7 +28,7 @@ void sys_arch_reboot(int type)
         sys_set_bits(SYS_REG + ECR_OFFSET, RESET_BIT);
 }
 
-void z_arm_platform_init(void)
+void soc_reset_hook(void)
 {
         _errata_CORTEXR4_66_();
         _errata_CORTEXR4_57_();

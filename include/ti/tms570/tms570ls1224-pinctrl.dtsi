@@ -1,0 +1,35 @@
+&pinctrl {
+    /omit-if-no-ref/ scirx_7_17: scirx_7_17 {
+        pinmux = <TMS570_PINMUX(7, 17)>;
+    };
+    /omit-if-no-ref/ scitx_8_1: scitx_8_1 {
+        pinmux = <TMS570_PINMUX(8, 1)>;
+    };
+
+    /omit-if-no-ref/ i2c_scl_0_17: i2c_scl_0_17 {
+        pinmux = <TMS570_PINMUX(0, 17)>;
+    };
+    /omit-if-no-ref/ i2c_sda_0_25: i2c_sda_0_25 {
+        pinmux = <TMS570_PINMUX(0, 25)>;
+    };
+
+    /omit-if-no-ref/ spi1_ncs_0: spi1_ncs_13_24 {
+        pinmux = <TMS570_PINMUX(13, 24)>;
+    };
+
+    /omit-if-no-ref/ spi1_ncs_1: spi1_ncs_20_16 {
+        pinmux = <TMS570_PINMUX(20, 16)>;
+    };
+
+    /omit-if-no-ref/ spi1_ncs_2: spi1_ncs_8_8 {
+        pinmux = <TMS570_PINMUX(8,8)>;
+    };
+
+    /omit-if-no-ref/ spi1_ncs_3: spi1_ncs_9_24 {
+        pinmux = <TMS570_PINMUX(9, 24)>;
+    };
+
+    /omit-if-no-ref/ spi2_ncs_1: spi2_ncs_29_1 {
+        pinmux = <TMS570_PINMUX(29, 1)>;
+    };
+};

@@ -12,8 +12,8 @@ struct tms570_clock_cfg {
         uint32_t clock_frequency;
 };
 
-#define DRV_PLL   DT_INST(0, tms570_pll)
-#define DRV_CLOCK DT_INST(0, tms570_clock)
+#define DRV_PLL   DT_INST(0, ti_tms570_pll)
+#define DRV_CLOCK DT_INST(0, ti_tms570_clock)
 #define DRV_FREQ  DT_PROP(DRV_CLOCK, clock_frequency)
 #define DRV_REG   DT_REG_ADDR(DRV_CLOCK)
 

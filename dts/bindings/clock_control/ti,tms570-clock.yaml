@@ -1,7 +1,7 @@
 
 description: TMS570 clock controller
 
-compatible: "tms570,clock"
+compatible: "ti,tms570-clock"
 
 include: [clock-controller.yaml, base.yaml]
 

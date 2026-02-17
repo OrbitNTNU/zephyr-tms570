@@ -1,0 +1,12 @@
+description: TMS570 UART Driver
+
+compatible: "ti,tms570-uart"
+
+include: [uart-controller.yaml, pinctrl-device.yaml]
+
+properties:
+  reg:
+    required: true
+
+  clocks:
+    required: true

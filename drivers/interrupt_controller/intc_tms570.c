@@ -4,7 +4,7 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/interrupt_controller/intc_vim.h>
 
-#define DT_DRV_COMPAT tms570_intc
+#define DT_DRV_COMPAT ti_tms570_intc
 #define DRV_REG       DT_INST_REG_ADDR(0)
 
 #define IRQINDEX_OFFSET  (0x0)  /* Index of currently active IRQ */

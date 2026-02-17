@@ -1,0 +1,17 @@
+
+config SPI_TMS570
+    bool "TI TMS570 SPI Controller"
+    default y
+    depends on DT_HAS_TI_TMS570_SPI_ENABLED && SPI
+
+if SPI_TMS570
+
+config SPI_TMS570_DMA
+    bool "Use DMA for TMS570 SPI"
+    default y
+
+config SPI_TMS570_DMA_TIMEOUT_USEC
+    int
+    default 1000000
+
+endif

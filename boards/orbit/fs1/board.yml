@@ -1,5 +1,6 @@
 board:
   name: fs1
+  full_name: Orbit FS1
   vendor: orbit
   socs:
   - name: tms570ls1224
