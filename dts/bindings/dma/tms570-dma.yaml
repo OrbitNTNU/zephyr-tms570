@@ -15,5 +15,5 @@ properties:
     const: 2
 
 dma-cells:
-  - dma-channels
-  - dma-requests
+  - channel
+  - request
