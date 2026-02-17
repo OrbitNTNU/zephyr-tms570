@@ -2,7 +2,7 @@
 config SPI_TMS570
     bool "TI TMS570 SPI Controller"
     default y
-    depends on DT_HAS_TI_TMS570_SPI_ENABLED
+    depends on DT_HAS_TI_TMS570_SPI_ENABLED && SPI
 
 if SPI_TMS570
 

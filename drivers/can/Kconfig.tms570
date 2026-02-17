@@ -2,7 +2,7 @@
 config CAN_TMS570
     bool "TI TMS570 CAN Controller"
     default y
-    depends on DT_HAS_TI_TMS570_CAN_ENABLED
+    depends on DT_HAS_TI_TMS570_CAN_ENABLED && CAN
 
 if CAN_TMS570
 

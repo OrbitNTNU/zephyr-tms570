@@ -2,6 +2,6 @@
 config PINCTRL_TMS570
 	bool "TMS570 pinctrl driver"
 	default y
-	depends on DT_HAS_TI_TMS570_PINCTRL_ENABLED
+	depends on DT_HAS_TI_TMS570_PINCTRL_ENABLED && PINCTRL
 	help
 	  Enable the TMS570 pinctrl driver
