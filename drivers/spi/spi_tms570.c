@@ -64,6 +64,17 @@ LOG_MODULE_REGISTER(spi_tms570);
 #define FMT_PRESCALE_OFFSET (8)
 #define FMT_CHARLEN_OFFSET  (0)
 
+#ifdef CONFIG_SPI_TMS570_DMA
+struct spi_tms570_dma {
+        struct dma_block_config blk_config;
+        struct dma_config config;
+        struct k_sem sem;
+        int status;
+        unsigned int channel;
+        const struct device *dev;
+};
+#endif
+
 struct spi_tms570_cfg {
         DEVICE_MMIO_ROM;
 
@@ -71,22 +82,7 @@ struct spi_tms570_cfg {
         unsigned int clk_domain;
 
         const struct pinctrl_dev_config *pcfg;
-
-        int dma_request_rx;
-        int dma_channel_rx;
-        int dma_request_tx;
-        int dma_channel_tx;
-        const struct device *dma_dev;
 };
-
-#ifdef CONFIG_SPI_TMS570_DMA
-struct spi_tms570_dma {
-        struct dma_block_config blk_config;
-        struct dma_config config;
-        struct k_sem sem;
-        int status;
-};
-#endif
 
 struct spi_tms570_data {
         DEVICE_MMIO_RAM;
@@ -186,7 +182,6 @@ static void spi_tms570_module_toggle(const struct device *dev, bool on)
         }
 }
 
-#ifndef CONFIG_SPI_TMS570_DMA
 static void spi_tms570_transfer(const struct device *dev)
 {
         struct spi_tms570_data *data = dev->data;
@@ -256,7 +251,7 @@ exit:
         return status;
 }
 
-#else
+#ifdef CONFIG_SPI_TMS570_DMA
 static void spi_tms570_dma_callback(const struct device *dma_dev, void *user_data, uint32_t channel,
                                     int status)
 {
@@ -320,7 +315,6 @@ static int spi_tms570_transceive_dma(const struct device *dev, const struct spi_
                                      const struct spi_buf_set *tx_bufs,
                                      const struct spi_buf_set *rx_bufs)
 {
-        const struct spi_tms570_cfg *cfg = dev->config;
         struct spi_tms570_data *data = dev->data;
         int status;
         size_t len;
@@ -366,24 +360,24 @@ static int spi_tms570_transceive_dma(const struct device *dev, const struct spi_
                 data->dma_rx.blk_config.block_size = len;
                 data->dma_tx.blk_config.block_size = len;
 
-                status = dma_config(cfg->dma_dev, cfg->dma_channel_rx, &data->dma_rx.config);
+                status = dma_config(data->dma_rx.dev, data->dma_rx.channel, &data->dma_rx.config);
                 if (status != 0) {
                         break;
                 }
 
-                status = dma_config(cfg->dma_dev, cfg->dma_channel_tx, &data->dma_tx.config);
+                status = dma_config(data->dma_tx.dev, data->dma_tx.channel, &data->dma_tx.config);
                 if (status != 0) {
                         break;
                 }
 
-                status = dma_start(cfg->dma_dev, cfg->dma_channel_rx);
+                status = dma_start(data->dma_rx.dev, data->dma_rx.channel);
                 if (status != 0) {
                         break;
                 }
 
-                status = dma_start(cfg->dma_dev, cfg->dma_channel_tx);
+                status = dma_start(data->dma_tx.dev, data->dma_tx.channel);
                 if (status != 0) {
-                        (void)dma_stop(cfg->dma_dev, cfg->dma_channel_rx);
+                        (void)dma_stop(data->dma_rx.dev, data->dma_rx.channel);
                         break;
                 }
 
@@ -395,8 +389,8 @@ static int spi_tms570_transceive_dma(const struct device *dev, const struct spi_
                 spi_tms570_dma_toggle(dev, false);
 
                 if (status != 0) {
-                        (void)dma_stop(cfg->dma_dev, cfg->dma_channel_rx);
-                        (void)dma_stop(cfg->dma_dev, cfg->dma_channel_tx);
+                        (void)dma_stop(data->dma_rx.dev, data->dma_rx.channel);
+                        (void)dma_stop(data->dma_tx.dev, data->dma_tx.channel);
                         break;
                 }
 
@@ -417,10 +411,14 @@ static int spi_tms570_transceive_sync(const struct device *dev, const struct spi
                                       const struct spi_buf_set *rx_bufs)
 {
 #ifdef CONFIG_SPI_TMS570_DMA
-        return spi_tms570_transceive_dma(dev, spi_cfg, tx_bufs, rx_bufs);
-#else
-        return spi_tms570_transceive(dev, spi_cfg, tx_bufs, rx_bufs, false, NULL, NULL);
+        struct spi_tms570_data *data = dev->data;
+
+        if (data->dma_rx.dev != NULL && data->dma_tx.dev != NULL) {
+                return spi_tms570_transceive_dma(dev, spi_cfg, tx_bufs, rx_bufs);
+        }
 #endif
+
+        return spi_tms570_transceive(dev, spi_cfg, tx_bufs, rx_bufs, false, NULL, NULL);
 }
 
 static int spi_tms570_release(const struct device *dev, const struct spi_config *config)
@@ -444,7 +442,6 @@ static DEVICE_API(spi, spi_tms570_api) = {
 #ifdef CONFIG_SPI_TMS570_DMA
 static void spi_tms570_dma_init(const struct device *dev)
 {
-        const struct spi_tms570_cfg *cfg = dev->config;
         struct spi_tms570_data *data = dev->data;
         uintptr_t ctrl_reg_base;
 
@@ -454,33 +451,9 @@ static void spi_tms570_dma_init(const struct device *dev)
                 .dest_address = ctrl_reg_base + DAT1_TXDATA_BYTE_OFFSET,
                 .dest_addr_adj = DMA_ADDR_ADJ_NO_CHANGE,
         };
-        data->dma_tx.config = (struct dma_config){
-                .source_data_size = 1,
-                .dest_data_size = 1,
-                .channel_direction = MEMORY_TO_PERIPHERAL,
-                .user_data = (void *)&data->dma_tx,
-                .dma_callback = spi_tms570_dma_callback,
-                .dma_slot = cfg->dma_request_tx,
-                .head_block = &data->dma_tx.blk_config,
-                .block_count = 1,
-                .channel_priority = 1,
-                .cyclic = 1,
-        };
         data->dma_rx.blk_config = (struct dma_block_config){
                 .source_address = ctrl_reg_base + BUF_RXDATA_BYTE_OFFSET,
                 .source_addr_adj = DMA_ADDR_ADJ_NO_CHANGE,
-        };
-        data->dma_rx.config = (struct dma_config){
-                .source_data_size = 1,
-                .dest_data_size = 1,
-                .channel_direction = PERIPHERAL_TO_MEMORY,
-                .user_data = (void *)&data->dma_rx,
-                .dma_callback = spi_tms570_dma_callback,
-                .dma_slot = cfg->dma_request_rx,
-                .head_block = &data->dma_rx.blk_config,
-                .block_count = 1,
-                .channel_priority = 1,
-                .cyclic = 1,
         };
 
         (void)k_sem_init(&data->dma_tx.sem, 0, 1);
@@ -515,26 +488,43 @@ static int spi_tms570_init(const struct device *dev)
 }
 
 #ifdef CONFIG_SPI_TMS570_DMA
-#define SPI_TMS570_DMA_CFG(inst)                                                                   \
-        .dma_dev = DEVICE_DT_GET(DT_INST(0, tms570_dma)),                                          \
-        .dma_request_rx = DT_INST_PROP_OR(inst, dma_request_rx, -1),                               \
-        .dma_request_tx = DT_INST_PROP_OR(inst, dma_request_tx, -1),                               \
-        .dma_channel_rx = DT_INST_PROP_OR(inst, dma_channel_rx, -1),                               \
-        .dma_channel_tx = DT_INST_PROP_OR(inst, dma_channel_tx, -1),
+#define SPI_TMS570_DMA_DIR_INIT(inst, dir, ch_dir)                                                 \
+        .dev = DEVICE_DT_GET(DT_INST_DMAS_CTLR_BY_NAME(inst, dir)),                                \
+        .channel = DT_INST_DMAS_CELL_BY_NAME(inst, dir, channel),                                  \
+        .config = {                                                                                \
+                .source_data_size = 1,                                                             \
+                .dest_data_size = 1,                                                               \
+                .channel_direction = ch_dir,                                                       \
+                .user_data = &spi_tms570_##inst##_data.dma_##dir,                                  \
+                .dma_callback = spi_tms570_dma_callback,                                           \
+                .dma_slot = DT_INST_DMAS_CELL_BY_NAME(inst, dir, request),                         \
+                .head_block = &spi_tms570_##inst##_data.dma_##dir.blk_config,                      \
+                .block_count = 1,                                                                  \
+                .channel_priority = 1,                                                             \
+                .cyclic = 1,                                                                       \
+        },
+
+#define SPI_TMS570_DMA_DIR_DATA(inst, dir, ch_dir)                                                 \
+        .dma_##dir = {COND_CODE_1(DT_INST_DMAS_HAS_NAME(inst, dir),                                \
+                                  (SPI_TMS570_DMA_DIR_INIT(inst, dir, ch_dir)), (.dev = NULL))},
+
+#define SPI_TMS570_DMA_DATA(inst)                                                                  \
+        SPI_TMS570_DMA_DIR_DATA(inst, rx, PERIPHERAL_TO_MEMORY)                                    \
+        SPI_TMS570_DMA_DIR_DATA(inst, tx, MEMORY_TO_PERIPHERAL)
 #else
-#define SPI_TMS570_DMA_CFG(inst)
+#define SPI_TMS570_DMA_DATA(inst)
 #endif
 
 #define SPI_TMS570_INIT(inst)                                                                      \
         PINCTRL_DT_INST_DEFINE(inst);                                                              \
+        static struct spi_tms570_data spi_tms570_##inst##_data = {                                 \
+                SPI_CONTEXT_INIT_LOCK(spi_tms570_##inst##_data, ctx),                              \
+                SPI_CONTEXT_INIT_SYNC(spi_tms570_##inst##_data, ctx), SPI_TMS570_DMA_DATA(inst)};  \
         static const struct spi_tms570_cfg spi_tms570_##inst##_cfg = {                             \
                 DEVICE_MMIO_ROM_INIT(DT_DRV_INST(inst)),                                           \
                 .clk_ctrl = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(inst)),                              \
                 .clk_domain = DT_INST_CLOCKS_CELL(inst, clk_id),                                   \
-                .pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(inst), SPI_TMS570_DMA_CFG(inst)};           \
-        static struct spi_tms570_data spi_tms570_##inst##_data = {                                 \
-                SPI_CONTEXT_INIT_LOCK(spi_tms570_##inst##_data, ctx),                              \
-                SPI_CONTEXT_INIT_SYNC(spi_tms570_##inst##_data, ctx),                              \
+                .pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(inst),                                      \
         };                                                                                         \
         SPI_DEVICE_DT_INST_DEFINE(inst, spi_tms570_init, NULL, &spi_tms570_##inst##_data,          \
                                   &spi_tms570_##inst##_cfg, POST_KERNEL, CONFIG_SPI_INIT_PRIORITY, \
