@@ -111,7 +111,7 @@ LOG_MODULE_REGISTER(can_tms570);
 #define IF_DATA_A_OFFSET (0x10)
 #define IF_DATA_B_OFFSET (0x14)
 
-struct tms570_can_msg_object {
+struct can_tms570_msg_object {
         union {
                 can_tx_callback_t tx_callback;
                 can_rx_callback_t rx_callback;
@@ -119,23 +119,23 @@ struct tms570_can_msg_object {
         void *user_data;
 };
 
-struct tms570_can_cfg {
+struct can_tms570_cfg {
         struct can_driver_config can_conf;
         uintptr_t reg_base;
 
         const struct device *clk_ctrl;
         unsigned int clk_domain;
 
-        struct tms570_can_msg_object *tx_objects;
+        struct can_tms570_msg_object *tx_objects;
         sys_bitarray_t *tx_bitarray;
 
-        struct tms570_can_msg_object *rx_objects;
+        struct can_tms570_msg_object *rx_objects;
         sys_bitarray_t *rx_bitarray;
 
         void (*irq_connect)(void);
 };
 
-struct tms570_can_data {
+struct can_tms570_data {
         struct k_spinlock lock;
         struct can_driver_data can_data;
         enum can_state can_state;
@@ -146,21 +146,21 @@ struct tms570_can_data {
         struct k_sem txsem;
 };
 
-static uintptr_t tms570_can_reg_base(const struct device *dev)
+static uintptr_t can_tms570_reg_base(const struct device *dev)
 {
-        const struct tms570_can_cfg *cfg = dev->config;
+        const struct can_tms570_cfg *cfg = dev->config;
         return cfg->reg_base;
 }
 
-static int tms570_can_get_capabilities(const struct device *dev, can_mode_t *cap)
+static int can_tms570_get_capabilities(const struct device *dev, can_mode_t *cap)
 {
         *cap = CAN_MODE_NORMAL | CAN_MODE_LOOPBACK;
         return 0;
 }
 
-static int tms570_can_set_mode(const struct device *dev, can_mode_t mode)
+static int can_tms570_set_mode(const struct device *dev, can_mode_t mode)
 {
-        struct tms570_can_data *data = dev->data;
+        struct can_tms570_data *data = dev->data;
         int status;
         k_spinlock_key_t key;
 
@@ -186,9 +186,9 @@ exit:
         return status;
 }
 
-static int tms570_can_set_timing(const struct device *dev, const struct can_timing *timing)
+static int can_tms570_set_timing(const struct device *dev, const struct can_timing *timing)
 {
-        struct tms570_can_data *data = dev->data;
+        struct can_tms570_data *data = dev->data;
         uintptr_t ctrl_reg_base;
         uint32_t tseg1;
         uint32_t tseg2;
@@ -206,7 +206,7 @@ static int tms570_can_set_timing(const struct device *dev, const struct can_timi
                 return -EBUSY;
         }
 
-        ctrl_reg_base = tms570_can_reg_base(dev);
+        ctrl_reg_base = can_tms570_reg_base(dev);
 
         tseg1 = (timing->prop_seg + timing->phase_seg1) - 1;
         tseg2 = timing->phase_seg2 - 1;
@@ -233,9 +233,9 @@ static int tms570_can_set_timing(const struct device *dev, const struct can_timi
         return 0;
 }
 
-static int tms570_can_start(const struct device *dev)
+static int can_tms570_start(const struct device *dev)
 {
-        struct tms570_can_data *data = dev->data;
+        struct can_tms570_data *data = dev->data;
         uintptr_t ctrl_reg_base;
         k_spinlock_key_t key;
 
@@ -246,7 +246,7 @@ static int tms570_can_start(const struct device *dev)
                 return -EALREADY;
         }
 
-        ctrl_reg_base = tms570_can_reg_base(dev);
+        ctrl_reg_base = can_tms570_reg_base(dev);
 
         if (data->can_data.mode & CAN_MODE_LOOPBACK) {
                 sys_set_bit(ctrl_reg_base + CTL_OFFSET, CTL_TEST_OFFSET);
@@ -273,9 +273,9 @@ static int tms570_can_start(const struct device *dev)
         return 0;
 }
 
-static int tms570_can_stop(const struct device *dev)
+static int can_tms570_stop(const struct device *dev)
 {
-        struct tms570_can_data *data = dev->data;
+        struct can_tms570_data *data = dev->data;
         uintptr_t ctrl_reg_base;
         k_spinlock_key_t key;
 
@@ -286,7 +286,7 @@ static int tms570_can_stop(const struct device *dev)
                 return -EALREADY;
         }
 
-        ctrl_reg_base = tms570_can_reg_base(dev);
+        ctrl_reg_base = can_tms570_reg_base(dev);
 
         /* Set device in initialization mode, allow for configuration change */
         sys_set_bit(ctrl_reg_base + CTL_OFFSET, CTL_INIT_OFFSET);
@@ -313,7 +313,7 @@ static int tms570_can_stop(const struct device *dev)
  */
 static int ifreg_take(const struct device *dev, k_timeout_t timeout)
 {
-        struct tms570_can_data *data = dev->data;
+        struct can_tms570_data *data = dev->data;
         int status;
 
         status = k_sem_take(&data->ifsem, timeout);
@@ -338,7 +338,7 @@ static int ifreg_take(const struct device *dev, k_timeout_t timeout)
 /** @brief Release interface register set */
 static void ifreg_give(const struct device *dev, int ifreg)
 {
-        struct tms570_can_data *data = dev->data;
+        struct can_tms570_data *data = dev->data;
 
         atomic_clear_bit(&data->ifregs, ifreg);
         (void)k_sem_give(&data->ifsem);
@@ -348,7 +348,7 @@ static uintptr_t ifreg_addr(const struct device *dev, int ifreg)
 {
         uintptr_t base;
 
-        base = tms570_can_reg_base(dev);
+        base = can_tms570_reg_base(dev);
         return base + (ifreg == IF1_IDX ? IF1_OFFSET : IF2_OFFSET);
 }
 
@@ -388,8 +388,8 @@ static void ifreg_msgobj_sync(const struct device *dev, int ifreg, uint8_t msg, 
 
 static void tx_done(const struct device *dev, size_t msg_id, int ifreg, int status)
 {
-        const struct tms570_can_cfg *cfg = dev->config;
-        struct tms570_can_data *data = dev->data;
+        const struct can_tms570_cfg *cfg = dev->config;
+        struct can_tms570_data *data = dev->data;
 
         if (cfg->tx_objects[msg_id].tx_callback != NULL) {
                 cfg->tx_objects[msg_id].tx_callback(dev, status, cfg->tx_objects[msg_id].user_data);
@@ -406,11 +406,11 @@ static void tx_done(const struct device *dev, size_t msg_id, int ifreg, int stat
         (void)k_sem_give(&data->txsem);
 }
 
-static int tms570_can_send(const struct device *dev, const struct can_frame *frame,
+static int can_tms570_send(const struct device *dev, const struct can_frame *frame,
                            k_timeout_t timeout, can_tx_callback_t callback, void *user_data)
 {
-        const struct tms570_can_cfg *cfg = dev->config;
-        struct tms570_can_data *data = dev->data;
+        const struct can_tms570_cfg *cfg = dev->config;
+        struct can_tms570_data *data = dev->data;
         int if_reg;
         int status;
         uint32_t val;
@@ -489,7 +489,7 @@ static int tms570_can_send(const struct device *dev, const struct can_frame *fra
 
 static void rx_deliver(const struct device *dev, int ifreg, size_t msg_id)
 {
-        const struct tms570_can_cfg *cfg = dev->config;
+        const struct can_tms570_cfg *cfg = dev->config;
         struct can_frame frame;
         uintptr_t if_addr_base;
         uint32_t val;
@@ -520,11 +520,11 @@ static void rx_deliver(const struct device *dev, int ifreg, size_t msg_id)
         cfg->rx_objects[msg_id].rx_callback(dev, &frame, cfg->rx_objects[msg_id].user_data);
 }
 
-static int tms570_can_add_rx_filter(const struct device *dev, can_rx_callback_t callback,
+static int can_tms570_add_rx_filter(const struct device *dev, can_rx_callback_t callback,
                                     void *user_data, const struct can_filter *filter)
 {
-        const struct tms570_can_cfg *cfg = dev->config;
-        struct tms570_can_data *data = dev->data;
+        const struct can_tms570_cfg *cfg = dev->config;
+        struct can_tms570_data *data = dev->data;
         size_t msg_id;
         int status;
         uint32_t mask_reg;
@@ -587,10 +587,10 @@ static int tms570_can_add_rx_filter(const struct device *dev, can_rx_callback_t 
         return msg_id;
 }
 
-static void tms570_can_remove_rx_filter(const struct device *dev, int filteridx)
+static void can_tms570_remove_rx_filter(const struct device *dev, int filteridx)
 {
-        const struct tms570_can_cfg *cfg = dev->config;
-        struct tms570_can_data *data = dev->data;
+        const struct can_tms570_cfg *cfg = dev->config;
+        struct can_tms570_data *data = dev->data;
         int ifreg;
 
         /* Invalid */
@@ -614,9 +614,9 @@ static void tms570_can_remove_rx_filter(const struct device *dev, int filteridx)
         }
 }
 
-static enum can_state tms570_can_esr_to_state(const struct device *dev)
+static enum can_state can_tms570_esr_to_state(const struct device *dev)
 {
-        uintptr_t ctrl_reg_base = tms570_can_reg_base(dev);
+        uintptr_t ctrl_reg_base = can_tms570_reg_base(dev);
         uint32_t esr = sys_read32(ctrl_reg_base + ES_OFFSET);
 
         if (esr & BIT(ES_BOFF_OFFSET)) {
@@ -632,12 +632,12 @@ static enum can_state tms570_can_esr_to_state(const struct device *dev)
         return CAN_STATE_STOPPED;
 }
 
-static struct can_bus_err_cnt tms570_can_get_err_count(const struct device *dev)
+static struct can_bus_err_cnt can_tms570_get_err_count(const struct device *dev)
 {
         uintptr_t ctrl_reg_base;
         uint32_t errc;
 
-        ctrl_reg_base = tms570_can_reg_base(dev);
+        ctrl_reg_base = can_tms570_reg_base(dev);
         errc = sys_read32(ctrl_reg_base + ERRC_OFFSET);
 
         return (struct can_bus_err_cnt){
@@ -646,13 +646,13 @@ static struct can_bus_err_cnt tms570_can_get_err_count(const struct device *dev)
         };
 }
 
-static int tms570_can_get_state(const struct device *dev, enum can_state *state,
+static int can_tms570_get_state(const struct device *dev, enum can_state *state,
                                 struct can_bus_err_cnt *err)
 {
-        struct tms570_can_data *data = dev->data;
+        struct can_tms570_data *data = dev->data;
         bool started;
 
-        *err = tms570_can_get_err_count(dev);
+        *err = can_tms570_get_err_count(dev);
 
         K_SPINLOCK(&data->lock) {
                 started = data->can_data.started;
@@ -661,17 +661,17 @@ static int tms570_can_get_state(const struct device *dev, enum can_state *state,
         if (!started) {
                 *state = CAN_STATE_STOPPED;
         } else {
-                *state = tms570_can_esr_to_state(dev);
+                *state = can_tms570_esr_to_state(dev);
         }
 
         return 0;
 }
 
-static void tms570_can_set_state_change_callback(const struct device *dev,
+static void can_tms570_set_state_change_callback(const struct device *dev,
                                                  can_state_change_callback_t callback,
                                                  void *user_data)
 {
-        struct tms570_can_data *data = dev->data;
+        struct can_tms570_data *data = dev->data;
 
         K_SPINLOCK(&data->lock) {
                 if (!data->can_data.started) {
@@ -681,15 +681,15 @@ static void tms570_can_set_state_change_callback(const struct device *dev,
         }
 }
 
-static int tms570_can_get_core_clock(const struct device *dev, uint32_t *rate)
+static int can_tms570_get_core_clock(const struct device *dev, uint32_t *rate)
 {
-        const struct tms570_can_cfg *cfg = dev->config;
+        const struct can_tms570_cfg *cfg = dev->config;
 
         return clock_control_get_rate(cfg->clk_ctrl, (clock_control_subsys_t)&cfg->clk_domain,
                                       rate);
 }
 
-static int tms570_can_get_max_filters(const struct device *dev, bool ide)
+static int can_tms570_get_max_filters(const struct device *dev, bool ide)
 {
         ARG_UNUSED(dev);
         ARG_UNUSED(ide);
@@ -697,21 +697,21 @@ static int tms570_can_get_max_filters(const struct device *dev, bool ide)
         return MSG_RX_MAX;
 }
 
-static void tms570_can_status_update_isr(const struct device *dev)
+static void can_tms570_status_update_isr(const struct device *dev)
 {
-        struct tms570_can_data *data = dev->data;
+        struct can_tms570_data *data = dev->data;
         enum can_state state;
         struct can_bus_err_cnt err_cnt;
         uintptr_t ctrl_reg_base;
 
-        ctrl_reg_base = tms570_can_reg_base(dev);
-        state = tms570_can_esr_to_state(dev);
+        ctrl_reg_base = can_tms570_reg_base(dev);
+        state = can_tms570_esr_to_state(dev);
 
         if (state != CAN_STATE_STOPPED && state != data->can_state) {
                 data->can_state = state;
 
                 if (data->can_data.state_change_cb != NULL) {
-                        err_cnt = tms570_can_get_err_count(dev);
+                        err_cnt = can_tms570_get_err_count(dev);
 
                         data->can_data.state_change_cb(dev, data->can_state, err_cnt,
                                                        data->can_data.state_change_cb_user_data);
@@ -724,7 +724,7 @@ static void tms570_can_status_update_isr(const struct device *dev)
  *
  * Note that only interrupt line 0 is used.
  */
-static void tms570_can_isr(const struct device *dev)
+static void can_tms570_isr(const struct device *dev)
 {
         uintptr_t ctrl_reg_base;
         uint32_t intsrc;
@@ -733,12 +733,12 @@ static void tms570_can_isr(const struct device *dev)
         bool is_tx;
         size_t msg_id;
 
-        ctrl_reg_base = tms570_can_reg_base(dev);
+        ctrl_reg_base = can_tms570_reg_base(dev);
         intsrc = sys_read32(ctrl_reg_base + INT_OFFSET);
         intsrc = (intsrc >> INT_0ID_OFFSET) & INT_0ID_MASK;
 
         if (intsrc == INT_ESR_SOURCE) {
-                tms570_can_status_update_isr(dev);
+                can_tms570_status_update_isr(dev);
                 return;
         } else if (intsrc == 0 || intsrc > MSG_OBJECT_COUNT) {
                 /* Invalid interrupt source */
@@ -772,19 +772,19 @@ static void tms570_can_isr(const struct device *dev)
         ifreg_give(dev, ifreg);
 }
 
-static DEVICE_API(can, tms570_can_api) = {
-        .get_capabilities = tms570_can_get_capabilities,
-        .set_mode = tms570_can_set_mode,
-        .set_timing = tms570_can_set_timing,
-        .start = tms570_can_start,
-        .stop = tms570_can_stop,
-        .send = tms570_can_send,
-        .add_rx_filter = tms570_can_add_rx_filter,
-        .remove_rx_filter = tms570_can_remove_rx_filter,
-        .get_state = tms570_can_get_state,
-        .set_state_change_callback = tms570_can_set_state_change_callback,
-        .get_core_clock = tms570_can_get_core_clock,
-        .get_max_filters = tms570_can_get_max_filters,
+static DEVICE_API(can, can_tms570_api) = {
+        .get_capabilities = can_tms570_get_capabilities,
+        .set_mode = can_tms570_set_mode,
+        .set_timing = can_tms570_set_timing,
+        .start = can_tms570_start,
+        .stop = can_tms570_stop,
+        .send = can_tms570_send,
+        .add_rx_filter = can_tms570_add_rx_filter,
+        .remove_rx_filter = can_tms570_remove_rx_filter,
+        .get_state = can_tms570_get_state,
+        .set_state_change_callback = can_tms570_set_state_change_callback,
+        .get_core_clock = can_tms570_get_core_clock,
+        .get_max_filters = can_tms570_get_max_filters,
         .timing_min =
                 {
                         .prop_seg = 1,
@@ -803,10 +803,10 @@ static DEVICE_API(can, tms570_can_api) = {
                 },
 };
 
-static int tms570_can_init(const struct device *dev)
+static int can_tms570_init(const struct device *dev)
 {
-        const struct tms570_can_cfg *cfg = dev->config;
-        struct tms570_can_data *data = dev->data;
+        const struct can_tms570_cfg *cfg = dev->config;
+        struct can_tms570_data *data = dev->data;
         struct can_timing timing;
         int status;
         uintptr_t ctrl_reg_base;
@@ -816,7 +816,7 @@ static int tms570_can_init(const struct device *dev)
 
         cfg->irq_connect();
 
-        ctrl_reg_base = tms570_can_reg_base(dev);
+        ctrl_reg_base = can_tms570_reg_base(dev);
 
         /* Set device in initialization mode */
         sys_set_bit(ctrl_reg_base + CTL_OFFSET, CTL_INIT_OFFSET);
@@ -838,30 +838,30 @@ static int tms570_can_init(const struct device *dev)
         return 0;
 }
 
-#define TMS570_CAN_INIT(inst)                                                                      \
-        static void tms570_can_##inst##_irq_connect(void)                                          \
+#define CAN_TMS570_INIT(inst)                                                                      \
+        static void can_tms570_##inst##_irq_connect(void)                                          \
         {                                                                                          \
-                IRQ_CONNECT(DT_INST_IRQN(inst), 0, tms570_can_isr, DEVICE_DT_INST_GET(inst), 0);   \
+                IRQ_CONNECT(DT_INST_IRQN(inst), 0, can_tms570_isr, DEVICE_DT_INST_GET(inst), 0);   \
                 irq_enable(DT_INST_IRQN(inst));                                                    \
         }                                                                                          \
-        SYS_BITARRAY_DEFINE_STATIC(tms570_can_##inst##_tx_bitarray, MSG_TX_MAX);                   \
-        static struct tms570_can_msg_object tms570_can_##inst##_tx_objects[MSG_TX_MAX];            \
-        SYS_BITARRAY_DEFINE_STATIC(tms570_can_##inst##_rx_bitarray, MSG_RX_MAX);                   \
-        static struct tms570_can_msg_object tms570_can_##inst##_rx_objects[MSG_RX_MAX];            \
-        const struct tms570_can_cfg tms570_can_##inst##_cfg = {                                    \
+        SYS_BITARRAY_DEFINE_STATIC(can_tms570_##inst##_tx_bitarray, MSG_TX_MAX);                   \
+        static struct can_tms570_msg_object can_tms570_##inst##_tx_objects[MSG_TX_MAX];            \
+        SYS_BITARRAY_DEFINE_STATIC(can_tms570_##inst##_rx_bitarray, MSG_RX_MAX);                   \
+        static struct can_tms570_msg_object can_tms570_##inst##_rx_objects[MSG_RX_MAX];            \
+        const struct can_tms570_cfg can_tms570_##inst##_cfg = {                                    \
                 .can_conf = CAN_DT_DRIVER_CONFIG_INST_GET(inst, BITRATE_MIN, BITRATE_MAX),         \
                 .reg_base = DT_REG_ADDR(DT_DRV_INST(inst)),                                        \
                 .clk_ctrl = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(inst)),                              \
                 .clk_domain = DT_INST_CLOCKS_CELL(inst, clk_id),                                   \
-                .tx_objects = tms570_can_##inst##_tx_objects,                                      \
-                .tx_bitarray = &tms570_can_##inst##_tx_bitarray,                                   \
-                .rx_objects = tms570_can_##inst##_rx_objects,                                      \
-                .rx_bitarray = &tms570_can_##inst##_rx_bitarray,                                   \
-                .irq_connect = tms570_can_##inst##_irq_connect,                                    \
+                .tx_objects = can_tms570_##inst##_tx_objects,                                      \
+                .tx_bitarray = &can_tms570_##inst##_tx_bitarray,                                   \
+                .rx_objects = can_tms570_##inst##_rx_objects,                                      \
+                .rx_bitarray = &can_tms570_##inst##_rx_bitarray,                                   \
+                .irq_connect = can_tms570_##inst##_irq_connect,                                    \
         };                                                                                         \
-        struct tms570_can_data tms570_can_##inst##_data;                                           \
-        CAN_DEVICE_DT_INST_DEFINE(inst, tms570_can_init, NULL, &tms570_can_##inst##_data,          \
-                                  &tms570_can_##inst##_cfg, POST_KERNEL, CONFIG_CAN_INIT_PRIORITY, \
-                                  &tms570_can_api);
+        struct can_tms570_data can_tms570_##inst##_data;                                           \
+        CAN_DEVICE_DT_INST_DEFINE(inst, can_tms570_init, NULL, &can_tms570_##inst##_data,          \
+                                  &can_tms570_##inst##_cfg, POST_KERNEL, CONFIG_CAN_INIT_PRIORITY, \
+                                  &can_tms570_api);
 
-DT_INST_FOREACH_STATUS_OKAY(TMS570_CAN_INIT);
+DT_INST_FOREACH_STATUS_OKAY(CAN_TMS570_INIT);
