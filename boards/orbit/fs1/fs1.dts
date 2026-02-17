@@ -11,7 +11,7 @@
     chosen {
         zephyr,console = &uart1;
         zephyr,shell-uart = &uart1;
-        zephyr,canubs = &can3;
+        zephyr,canbus = &can3;
     };
 };
 
