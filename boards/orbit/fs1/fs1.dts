@@ -37,10 +37,8 @@
         reg = <0xfff7e400 256>;
         status = "okay";
         interrupts = <13 IRQ_DEFAULT_PRIORITY>;
-        dma-request-rx = <28>;
-        dma-request-tx = <29>;
-        dma-channel-rx = <1>;
-        dma-channel-tx = <2>;
+        dmas = <&dmac 1 28>, <&dmac 2 29>;
+        dma-names = "rx", "tx";
     };
 
     uart1: serial@fff7e500 {
