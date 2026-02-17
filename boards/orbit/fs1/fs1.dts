@@ -51,3 +51,15 @@
 &dmac {
     status = "okay";
 };
+
+&gpio {
+    status = "okay";
+};
+
+&gpioa {
+    status = "okay";
+};
+
+&gpiob {
+    status = "okay";
+};

@@ -152,5 +152,31 @@
             reg = <0xffffea00 0x200>;
             status = "okay";
         };
+
+        gpio: gpio-controller@fff7bc00 {
+            compatible = "ti,tms570-gpio";
+            status = "disabled";
+            reg = <0xfff7bc00 512>;
+            #address-cells = <1>;
+            #size-cells = <1>;
+
+            gpioa: gpioa@fff7bc34 {
+                compatible = "ti,tms570-gpio-port";
+                reg = <0xfff7bc34 0x20>;
+                gpio-controller;
+                #gpio-cells = <2>;
+                ngpios = <8>;
+                status = "disabled";
+            };
+
+            gpiob: gpiob@fff7bc54 {
+                compatible = "ti,tms570-gpio-port";
+                reg = <0xfff7bc54 0x20>;
+                gpio-controller;
+                #gpio-cells = <2>;
+                ngpios = <8>;
+                status = "disabled";
+            };
+        };
     };
 };
