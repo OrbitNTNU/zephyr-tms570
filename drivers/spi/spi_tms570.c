@@ -158,7 +158,7 @@ static int spi_tms570_configure(const struct device *dev, const struct spi_confi
 
         /* Slave number, format index. Only write 16 bits so we don't attempt
          * to inititate transfer. */
-        dat1 = spi_cfg->slave << DAT1_CSNR_OFFSET;
+        dat1 = 1 << (DAT1_CSNR_OFFSET + spi_cfg->slave);
         dat1 |= FMT_IDX << DAT1_DFSEL_OFFSET;
         sys_write16(dat1, ctrl_reg_base + DAT1_OFFSET);
 
