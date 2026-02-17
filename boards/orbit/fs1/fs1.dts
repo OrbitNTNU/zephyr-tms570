@@ -30,132 +30,141 @@
         };
     };
 
-    uart0: serial@fff7e400 {
-        clocks = <&clock TMS570_CLK_VCLK>;
-        compatible = "ti,tms570-uart";
-        current-speed = <115200>;
-        reg = <0xfff7e400 256>;
-        status = "okay";
-        interrupts = <13 IRQ_DEFAULT_PRIORITY>;
-        dmas = <&dmac 1 28>, <&dmac 2 29>;
-        dma-names = "rx", "tx";
-    };
-
-    uart1: serial@fff7e500 {
-        pinctrl-0 = <&scirx_7_17 &scitx_8_1>;
-        pinctrl-names = "default";
-        clocks = <&clock TMS570_CLK_VCLK>;
-        compatible = "ti,tms570-uart";
-        current-speed = <38400>;
-        reg = <0xfff7e500 256>;
-        status = "okay";
-        interrupts = <64 IRQ_DEFAULT_PRIORITY>;
-    };
-
-    i2c0: i2c@fff7d400 {
-        pinctrl-0 = <&i2c_scl_0_17 &i2c_sda_0_25>;
-        pinctrl-names = "default";
-        clocks = <&clock TMS570_CLK_VCLK>;
-        compatible = "ti,tms570-i2c";
-        reg = <0xfff7d400 256>;
-        module-clock-frequency = <8000000>;
-        interrupts = <66 IRQ_DEFAULT_PRIORITY>;
-        clock-frequency = <I2C_BITRATE_FAST>;
-        status = "okay";
+    clocks {
         #address-cells = <1>;
         #size-cells = <0>;
+        
+        clock: clock-controller@ffffff00 {
+            compatible = "ti,tms570-clock";
+            reg = <0xffffff00>;
+            clock-frequency = <32000000>;
+            #clock-cells = <1>;
+        };
+
+        pll: pll@0 {
+            compatible = "ti,tms570-pll";
+            reg = <0>;
+            #clock-cells = <0>;
+
+            nr = <1>;
+            nf = <2>;
+            od = <1>;
+            r = <1>;
+        };
     };
 
-    can3: can@fff7e000 {
-        compatible = "ti,tms570-can";
-        status = "okay";
-        reg = <0xfff7e000 512>;
-        clocks = <&clock TMS570_CLK_VCLK>;
-        interrupts = <45 IRQ_DEFAULT_PRIORITY>;
-    };
+    soc {
+        sram0: memory@8000000 {
+            compatible = "mmio-sram";
+            reg = <0x8000000 DT_SIZE_K(192)>;
+        };
 
-    spi1: spi@fff7f400 {
-        compatible = "ti,tms570-spi";
-        status = "okay";
-        #address-cells = <1>;
-        #size-cells = <0>;
-        reg = <0xfff7f400 512>;
-        clocks = <&clock TMS570_CLK_VCLK>;
-        pinctrl-0 = <&spi1_ncs_0 &spi1_ncs_1 &spi1_ncs_2 &spi1_ncs_3>;
-        pinctrl-names = "default";
-        dmas = <&dmac 3 0>, <&dmac 4 1>;
-        dma-names = "rx", "tx";
-    };
+        flash0: serial-flash@0 {
+            compatible = "serial-flash";
+            reg = <0x0 0x13ffff>;
+        };
 
-    spi2: spi@fff7f600 {
-        compatible = "ti,tms570-spi";
-        status = "okay";
-        #address-cells = <1>;
-        #size-cells = <0>;
-        reg = <0xfff7f600 512>;
-        clocks = <&clock TMS570_CLK_VCLK>;
-        pinctrl-0 = <&spi2_ncs_1>;
-        pinctrl-names = "default";
-        dmas = <&dmac 5 2>, <&dmac 6 3>;
-        dma-names = "rx", "tx";
-    };
+        uart0: serial@fff7e400 {
+            clocks = <&clock TMS570_CLK_VCLK>;
+            compatible = "ti,tms570-uart";
+            current-speed = <115200>;
+            reg = <0xfff7e400 256>;
+            status = "okay";
+            interrupts = <13 IRQ_DEFAULT_PRIORITY>;
+            dmas = <&dmac 1 28>, <&dmac 2 29>;
+            dma-names = "rx", "tx";
+        };
 
-    clock: clock-controller@ffffff00 {
-        compatible = "ti,tms570-clock";
-        reg = <0xffffff00 256>;
-        clock-frequency = <32000000>;
-        #clock-cells = <1>;
-    };
+        uart1: serial@fff7e500 {
+            pinctrl-0 = <&scirx_7_17 &scitx_8_1>;
+            pinctrl-names = "default";
+            clocks = <&clock TMS570_CLK_VCLK>;
+            compatible = "ti,tms570-uart";
+            current-speed = <38400>;
+            reg = <0xfff7e500 256>;
+            status = "okay";
+            interrupts = <64 IRQ_DEFAULT_PRIORITY>;
+        };
 
-    intc: interrupt-controller@ffffffe00 {
-        interrupt-controller;
-        #interrupt-cells = <2>;
-        reg = <0xfffffe00 256>;
-        compatible = "ti,tms570-intc";
-        status = "okay";
-    };
+        i2c0: i2c@fff7d400 {
+            pinctrl-0 = <&i2c_scl_0_17 &i2c_sda_0_25>;
+            pinctrl-names = "default";
+            clocks = <&clock TMS570_CLK_VCLK>;
+            compatible = "ti,tms570-i2c";
+            reg = <0xfff7d400 256>;
+            module-clock-frequency = <8000000>;
+            interrupts = <66 IRQ_DEFAULT_PRIORITY>;
+            clock-frequency = <I2C_BITRATE_FAST>;
+            status = "okay";
+            #address-cells = <1>;
+            #size-cells = <0>;
+        };
 
-    dmac: dma-controller@fffff000 {
-        #dma-cells = <2>;
-        compatible = "ti,tms570-dma";
-        status = "okay";
-        reg = <0xfffff000 DT_SIZE_K(1)>, <0xfff80000 DT_SIZE_K(4)>;
-        reg-names = "control", "packets";
-        interrupts = <40 IRQ_DEFAULT_PRIORITY>, <33 IRQ_DEFAULT_PRIORITY>;
-        dma-channels = <16>;
-        dma-requests = <32>;
-    };
+        can3: can@fff7e000 {
+            compatible = "ti,tms570-can";
+            status = "okay";
+            reg = <0xfff7e000 512>;
+            clocks = <&clock TMS570_CLK_VCLK>;
+            interrupts = <45 IRQ_DEFAULT_PRIORITY>;
+        };
 
-    timer: timer@fffffc00 {
-        compatible = "ti,tms570-timer";
-        interrupts = <2 IRQ_DEFAULT_PRIORITY>;
-        reg = <0xfffffc00 256>;
-        clocks = <&clock TMS570_CLK_RTI>;
-    };
+        spi1: spi@fff7f400 {
+            compatible = "ti,tms570-spi";
+            status = "okay";
+            #address-cells = <1>;
+            #size-cells = <0>;
+            reg = <0xfff7f400 512>;
+            clocks = <&clock TMS570_CLK_VCLK>;
+            pinctrl-0 = <&spi1_ncs_0 &spi1_ncs_1 &spi1_ncs_2 &spi1_ncs_3>;
+            pinctrl-names = "default";
+            dmas = <&dmac 3 0>, <&dmac 4 1>;
+            dma-names = "rx", "tx";
+        };
 
-    pll: pll {
-        compatible = "ti,tms570-pll";
+        spi2: spi@fff7f600 {
+            compatible = "ti,tms570-spi";
+            status = "okay";
+            #address-cells = <1>;
+            #size-cells = <0>;
+            reg = <0xfff7f600 512>;
+            clocks = <&clock TMS570_CLK_VCLK>;
+            pinctrl-0 = <&spi2_ncs_1>;
+            pinctrl-names = "default";
+            dmas = <&dmac 5 2>, <&dmac 6 3>;
+            dma-names = "rx", "tx";
+        };
 
-        nr = <1>;
-        nf = <2>;
-        od = <1>;
-        r = <1>;
-    };
+        intc: interrupt-controller@fffffe00 {
+            interrupt-controller;
+            #interrupt-cells = <2>;
+            reg = <0xfffffe00 256>;
+            compatible = "ti,tms570-intc";
+            status = "okay";
+        };
 
-    sram0: memory@8000000 {
-        compatible = "mmio-sram";
-        reg = <0x8000000 DT_SIZE_K(192)>;
-    };
+        dmac: dma-controller@fffff000 {
+            #dma-cells = <2>;
+            compatible = "ti,tms570-dma";
+            status = "okay";
+            reg = <0xfffff000 DT_SIZE_K(1)>, <0xfff80000 DT_SIZE_K(4)>;
+            reg-names = "control", "packets";
+            interrupts = <40 IRQ_DEFAULT_PRIORITY>, <33 IRQ_DEFAULT_PRIORITY>;
+            dma-channels = <16>;
+            dma-requests = <32>;
+        };
 
-    flash0: serial-flash@0 {
-        compatible = "serial-flash";
-        reg = <0x0 0x13ffff>;
-    };
+        timer: timer@fffffc00 {
+            compatible = "ti,tms570-timer";
+            interrupts = <2 IRQ_DEFAULT_PRIORITY>;
+            reg = <0xfffffc00 256>;
+            clocks = <&clock TMS570_CLK_RTI>;
+        };
 
-    pinctrl: pin-controller@ffffea00 {
-        compatible = "ti,tms570-pinctrl";
-        reg = <0xffffea00 0x200>;
-        status = "okay";
+        pinctrl: pin-controller@ffffea00 {
+            compatible = "ti,tms570-pinctrl";
+            reg = <0xffffea00 0x200>;
+            status = "okay";
+        };
     };
 };
 
