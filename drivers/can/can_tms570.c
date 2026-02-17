@@ -18,8 +18,8 @@ LOG_MODULE_REGISTER(can_tms570);
 #define BITRATE_MAX (1000000)
 
 #define CTL_OFFSET      (0x00)
-#define CTL_SWR_OFFSET  (15)
 #define CTL_ABO_OFFSET  (9)
+#define CTL_TEST_OFFSET (7)
 #define CTL_CCE_OFFSET  (6)
 #define CTL_EIE_OFFSET  (3)
 #define CTL_SIE_OFFSET  (2)
@@ -32,27 +32,28 @@ LOG_MODULE_REGISTER(can_tms570);
 #define ES_EPASS_OFFSET (5)
 
 #define ERRC_OFFSET     (0x08)
-#define ERRC_REC_WIDTH  (7)
+#define ERRC_REC_MASK   BIT_MASK(7)
 #define ERRC_REC_OFFSET (8)
-#define ERRC_TEC_WIDTH  (8)
+#define ERRC_TEC_MASK   BIT_MASK(8)
 #define ERRC_TEC_OFFSET (0)
 
 #define BTR_OFFSET       (0x0c)
-#define BTR_BRPE_WIDTH   (4)
+#define BTR_BRPE_MASK    BIT_MASK(4)
 #define BTR_BRPE_OFFSET  (16)
-#define BTR_TSEG2_WIDTH  (3)
+#define BTR_TSEG2_MASK   BIT_MASK(3)
 #define BTR_TSEG2_OFFSET (12)
-#define BTR_TSEG1_WIDTH  (4)
+#define BTR_TSEG1_MASK   BIT_MASK(4)
 #define BTR_TSEG1_OFFSET (8)
-#define BTR_SJW_WIDTH    (2)
+#define BTR_SJW_MASK     BIT_MASK(2)
 #define BTR_SJW_OFFSET   (6)
 #define BTR_BRP_WIDTH    (6)
+#define BTR_BRP_MASK     BIT_MASK(BTR_BRP_WIDTH)
 #define BTR_BRP_OFFSET   (0)
 
 #define INT_OFFSET     (0x10)
-#define INT_1D_WIDTH   (8)
+#define INT_1D_MASK    BIT_MASK(8)
 #define INT_1ID_OFFSET (16)
-#define INT_0ID_WIDTH  (16)
+#define INT_0ID_MASK   BIT_MASK(16)
 #define INT_0ID_OFFSET (0)
 #define INT_ESR_SOURCE (0x8000)
 
@@ -82,18 +83,18 @@ LOG_MODULE_REGISTER(can_tms570);
 
 #define IF_MASK_OFFSET      (0x04)
 #define IF_MASK_MXTD_OFFSET (31)
-#define IF_MASK_STD_WIDTH   (11)
+#define IF_MASK_STD_MASK    BIT_MASK(11)
 #define IF_MASK_STD_OFFSET  (18)
-#define IF_MASK_EXT_WIDTH   (29)
+#define IF_MASK_EXT_MASK    BIT_MASK(29)
 #define IF_MASK_EXT_OFFSET  (0)
 
 #define IF_ARB_OFFSET        (0x08)
 #define IF_ARB_MSGVAL_OFFSET (31)
 #define IF_ARB_XTD_OFFSET    (30)
 #define IF_ARB_DIR_OFFSET    (29)
-#define IF_ARB_ID_WIDTH      (11)
+#define IF_ARB_ID_MASK       BIT_MASK(11)
 #define IF_ARB_ID_OFFSET     (18)
-#define IF_ARB_IDE_WIDTH     (29)
+#define IF_ARB_IDE_MASK      BIT_MASK(29)
 #define IF_ARB_IDE_OFFSET    (0)
 
 #define IF_MCTL_OFFSET        (0x0c)
@@ -104,7 +105,7 @@ LOG_MODULE_REGISTER(can_tms570);
 #define IF_MCTL_RMTEN_OFFSET  (9)
 #define IF_MCTL_TXRQST_OFFSET (8)
 #define IF_MCTL_EOB_OFFSET    (7)
-#define IF_MCTL_DLC_WIDTH     (4)
+#define IF_MCTL_DLC_MASK      BIT_MASK(4)
 #define IF_MCTL_DLC_OFFSET    (0)
 
 #define IF_DATA_A_OFFSET (0x10)
@@ -119,9 +120,8 @@ struct tms570_can_msg_object {
 };
 
 struct tms570_can_cfg {
-        DEVICE_MMIO_ROM;
-
         struct can_driver_config can_conf;
+        uintptr_t reg_base;
 
         const struct device *clk_ctrl;
         unsigned int clk_domain;
@@ -136,8 +136,6 @@ struct tms570_can_cfg {
 };
 
 struct tms570_can_data {
-        DEVICE_MMIO_RAM;
-
         struct k_spinlock lock;
         struct can_driver_data can_data;
         enum can_state can_state;
@@ -147,6 +145,12 @@ struct tms570_can_data {
 
         struct k_sem txsem;
 };
+
+static uintptr_t tms570_can_reg_base(const struct device *dev)
+{
+        const struct tms570_can_cfg *cfg = dev->config;
+        return cfg->reg_base;
+}
 
 static int tms570_can_get_capabilities(const struct device *dev, can_mode_t *cap)
 {
@@ -202,7 +206,7 @@ static int tms570_can_set_timing(const struct device *dev, const struct can_timi
                 return -EBUSY;
         }
 
-        ctrl_reg_base = DEVICE_MMIO_GET(dev);
+        ctrl_reg_base = tms570_can_reg_base(dev);
 
         tseg1 = (timing->prop_seg + timing->phase_seg1) - 1;
         tseg2 = timing->phase_seg2 - 1;
@@ -214,13 +218,15 @@ static int tms570_can_set_timing(const struct device *dev, const struct can_timi
                 tseg1, timing->prop_seg, timing->phase_seg1, tseg2, timing->phase_seg2, brp,
                 timing->prescaler, sjw, timing->sjw);
 
-        reg = (brp & BIT_MASK(BTR_BRP_WIDTH)) << BTR_BRP_OFFSET;
-        reg |= ((brp >> BTR_BRP_WIDTH) & BIT_MASK(BTR_BRPE_WIDTH)) << BTR_BRPE_OFFSET;
+        reg = (brp & BTR_BRP_MASK) << BTR_BRP_OFFSET;
+        reg |= ((brp >> BTR_BRP_WIDTH) & BTR_BRPE_MASK) << BTR_BRPE_OFFSET;
         reg |= sjw << BTR_SJW_OFFSET;
         reg |= tseg1 << BTR_TSEG1_OFFSET;
         reg |= tseg2 << BTR_TSEG2_OFFSET;
 
+        sys_set_bit(ctrl_reg_base + CTL_OFFSET, CTL_CCE_OFFSET);
         sys_write32(reg, ctrl_reg_base + BTR_OFFSET);
+        sys_clear_bit(ctrl_reg_base + CTL_OFFSET, CTL_CCE_OFFSET);
 
         LOG_DBG("Timing updated successfully");
 
@@ -240,24 +246,20 @@ static int tms570_can_start(const struct device *dev)
                 return -EALREADY;
         }
 
-        ctrl_reg_base = DEVICE_MMIO_GET(dev);
-
-        /* SW Reset module */
-        sys_set_bit(ctrl_reg_base + CTL_OFFSET, CTL_SWR_OFFSET);
-        while (sys_test_bit(ctrl_reg_base + CTL_OFFSET, CTL_SWR_OFFSET)) {
-        }
+        ctrl_reg_base = tms570_can_reg_base(dev);
 
         if (data->can_data.mode & CAN_MODE_LOOPBACK) {
+                sys_set_bit(ctrl_reg_base + CTL_OFFSET, CTL_TEST_OFFSET);
                 sys_set_bit(ctrl_reg_base + TEST_OFFSET, TEST_LBACK_OFFSET);
         } else {
                 sys_clear_bit(ctrl_reg_base + TEST_OFFSET, TEST_LBACK_OFFSET);
+                sys_clear_bit(ctrl_reg_base + CTL_OFFSET, CTL_TEST_OFFSET);
         }
 
         /* Enable interrupts */
         sys_set_bits(ctrl_reg_base + CTL_OFFSET, BIT(CTL_IE0_OFFSET) | BIT(CTL_SIE_OFFSET) |
                                                          BIT(CTL_EIE_OFFSET) | BIT(CTL_ABO_OFFSET));
 
-        sys_clear_bit(ctrl_reg_base + CTL_OFFSET, CTL_CCE_OFFSET);
         sys_clear_bit(ctrl_reg_base + CTL_OFFSET, CTL_INIT_OFFSET);
 
         while (sys_test_bit(ctrl_reg_base + CTL_OFFSET, CTL_INIT_OFFSET)) {
@@ -284,11 +286,10 @@ static int tms570_can_stop(const struct device *dev)
                 return -EALREADY;
         }
 
-        ctrl_reg_base = DEVICE_MMIO_GET(dev);
+        ctrl_reg_base = tms570_can_reg_base(dev);
 
         /* Set device in initialization mode, allow for configuration change */
         sys_set_bit(ctrl_reg_base + CTL_OFFSET, CTL_INIT_OFFSET);
-        sys_set_bit(ctrl_reg_base + CTL_OFFSET, CTL_CCE_OFFSET);
 
         while (!sys_test_bit(ctrl_reg_base + CTL_OFFSET, CTL_INIT_OFFSET)) {
         }
@@ -320,11 +321,11 @@ static int ifreg_take(const struct device *dev, k_timeout_t timeout)
                 return status;
         }
 
-        if (atomic_test_and_set_bit(&data->ifregs, IF1_IDX)) {
+        if (!atomic_test_and_set_bit(&data->ifregs, IF1_IDX)) {
                 return IF1_IDX;
         }
 
-        if (atomic_test_and_set_bit(&data->ifregs, IF2_IDX)) {
+        if (!atomic_test_and_set_bit(&data->ifregs, IF2_IDX)) {
                 return IF2_IDX;
         }
 
@@ -347,7 +348,7 @@ static uintptr_t ifreg_addr(const struct device *dev, int ifreg)
 {
         uintptr_t base;
 
-        base = DEVICE_MMIO_GET(dev);
+        base = tms570_can_reg_base(dev);
         return base + (ifreg == IF1_IDX ? IF1_OFFSET : IF2_OFFSET);
 }
 
@@ -504,15 +505,15 @@ static void rx_deliver(const struct device *dev, int ifreg, size_t msg_id)
         frame.flags = 0;
 
         if (val & BIT(IF_ARB_XTD_OFFSET)) {
-                frame.id = (val >> IF_ARB_IDE_OFFSET) & BIT_MASK(IF_ARB_IDE_WIDTH);
+                frame.id = (val >> IF_ARB_IDE_OFFSET) & IF_ARB_IDE_MASK;
                 frame.flags |= CAN_FRAME_IDE;
         } else {
-                frame.id = (val >> IF_ARB_ID_OFFSET) & BIT_MASK(IF_ARB_ID_WIDTH);
+                frame.id = (val >> IF_ARB_ID_OFFSET) & IF_ARB_ID_MASK;
         }
 
         val = sys_read32(if_addr_base + IF_MCTL_OFFSET);
 
-        frame.dlc = MIN(8, (val >> IF_MCTL_DLC_OFFSET) & BIT_MASK(IF_MCTL_DLC_WIDTH));
+        frame.dlc = MIN(8, (val >> IF_MCTL_DLC_OFFSET) & IF_MCTL_DLC_MASK);
         frame.data_32[0] = sys_cpu_to_le32(sys_read32(if_addr_base + IF_DATA_A_OFFSET));
         frame.data_32[1] = sys_cpu_to_le32(sys_read32(if_addr_base + IF_DATA_B_OFFSET));
 
@@ -561,15 +562,15 @@ static int tms570_can_add_rx_filter(const struct device *dev, can_rx_callback_t 
         arb_reg = 0;
         mctl_reg = 0;
 
-        if (filter->flags & CAN_FRAME_IDE) {
+        if (filter->flags & CAN_FILTER_IDE) {
                 mask_reg |= BIT(IF_MASK_MXTD_OFFSET);
-                mask_reg |= (filter->mask & IF_MASK_EXT_WIDTH) << IF_MASK_EXT_OFFSET;
+                mask_reg |= (filter->mask & IF_MASK_EXT_MASK) << IF_MASK_EXT_OFFSET;
 
                 arb_reg |= BIT(IF_ARB_XTD_OFFSET);
-                arb_reg |= (filter->id & IF_ARB_IDE_WIDTH) << IF_ARB_IDE_OFFSET;
+                arb_reg |= (filter->id & IF_ARB_IDE_MASK) << IF_ARB_IDE_OFFSET;
         } else {
-                mask_reg |= (filter->mask & IF_MASK_STD_WIDTH) << IF_MASK_STD_OFFSET;
-                arb_reg |= (filter->id & IF_ARB_ID_WIDTH) << IF_ARB_ID_OFFSET;
+                mask_reg |= (filter->mask & IF_MASK_STD_MASK) << IF_MASK_STD_OFFSET;
+                arb_reg |= (filter->id & IF_ARB_ID_MASK) << IF_ARB_ID_OFFSET;
         }
 
         arb_reg |= BIT(IF_ARB_MSGVAL_OFFSET);
@@ -615,7 +616,7 @@ static void tms570_can_remove_rx_filter(const struct device *dev, int filteridx)
 
 static enum can_state tms570_can_esr_to_state(const struct device *dev)
 {
-        uintptr_t ctrl_reg_base = DEVICE_MMIO_GET(dev);
+        uintptr_t ctrl_reg_base = tms570_can_reg_base(dev);
         uint32_t esr = sys_read32(ctrl_reg_base + ES_OFFSET);
 
         if (esr & BIT(ES_BOFF_OFFSET)) {
@@ -636,12 +637,12 @@ static struct can_bus_err_cnt tms570_can_get_err_count(const struct device *dev)
         uintptr_t ctrl_reg_base;
         uint32_t errc;
 
-        ctrl_reg_base = DEVICE_MMIO_GET(dev);
+        ctrl_reg_base = tms570_can_reg_base(dev);
         errc = sys_read32(ctrl_reg_base + ERRC_OFFSET);
 
         return (struct can_bus_err_cnt){
-                .rx_err_cnt = (errc >> ERRC_REC_OFFSET) & ERRC_REC_WIDTH,
-                .tx_err_cnt = (errc >> ERRC_TEC_OFFSET) & ERRC_TEC_WIDTH,
+                .rx_err_cnt = (errc >> ERRC_REC_OFFSET) & ERRC_REC_MASK,
+                .tx_err_cnt = (errc >> ERRC_TEC_OFFSET) & ERRC_TEC_MASK,
         };
 }
 
@@ -703,7 +704,7 @@ static void tms570_can_status_update_isr(const struct device *dev)
         struct can_bus_err_cnt err_cnt;
         uintptr_t ctrl_reg_base;
 
-        ctrl_reg_base = DEVICE_MMIO_GET(dev);
+        ctrl_reg_base = tms570_can_reg_base(dev);
         state = tms570_can_esr_to_state(dev);
 
         if (state != CAN_STATE_STOPPED && state != data->can_state) {
@@ -732,9 +733,9 @@ static void tms570_can_isr(const struct device *dev)
         bool is_tx;
         size_t msg_id;
 
-        ctrl_reg_base = DEVICE_MMIO_GET(dev);
+        ctrl_reg_base = tms570_can_reg_base(dev);
         intsrc = sys_read32(ctrl_reg_base + INT_OFFSET);
-        intsrc = (intsrc >> INT_0ID_OFFSET) & BIT_MASK(INT_0ID_WIDTH);
+        intsrc = (intsrc >> INT_0ID_OFFSET) & INT_0ID_MASK;
 
         if (intsrc == INT_ESR_SOURCE) {
                 tms570_can_status_update_isr(dev);
@@ -810,19 +811,15 @@ static int tms570_can_init(const struct device *dev)
         int status;
         uintptr_t ctrl_reg_base;
 
-        DEVICE_MMIO_MAP(dev, K_MEM_CACHE_NONE);
-
         (void)k_sem_init(&data->ifsem, IF_REG_MAX, IF_REG_MAX);
         (void)k_sem_init(&data->txsem, MSG_TX_MAX, MSG_TX_MAX);
 
         cfg->irq_connect();
 
-        ctrl_reg_base = DEVICE_MMIO_GET(dev);
+        ctrl_reg_base = tms570_can_reg_base(dev);
 
-        /* Set device in initialization mode, allow for configuration change */
+        /* Set device in initialization mode */
         sys_set_bit(ctrl_reg_base + CTL_OFFSET, CTL_INIT_OFFSET);
-        sys_set_bit(ctrl_reg_base + CTL_OFFSET, CTL_CCE_OFFSET);
-
         while (!sys_test_bit(ctrl_reg_base + CTL_OFFSET, CTL_INIT_OFFSET)) {
         }
 
@@ -852,8 +849,8 @@ static int tms570_can_init(const struct device *dev)
         SYS_BITARRAY_DEFINE_STATIC(tms570_can_##inst##_rx_bitarray, MSG_RX_MAX);                   \
         static struct tms570_can_msg_object tms570_can_##inst##_rx_objects[MSG_RX_MAX];            \
         const struct tms570_can_cfg tms570_can_##inst##_cfg = {                                    \
-                DEVICE_MMIO_ROM_INIT(DT_DRV_INST(inst)),                                           \
                 .can_conf = CAN_DT_DRIVER_CONFIG_INST_GET(inst, BITRATE_MIN, BITRATE_MAX),         \
+                .reg_base = DT_REG_ADDR(DT_DRV_INST(inst)),                                        \
                 .clk_ctrl = DEVICE_DT_GET(DT_INST_CLOCKS_CTLR(inst)),                              \
                 .clk_domain = DT_INST_CLOCKS_CELL(inst, clk_id),                                   \
                 .tx_objects = tms570_can_##inst##_tx_objects,                                      \
