@@ -122,6 +122,7 @@ static uint32_t calc_cs_delay_reg(const struct spi_config *spi_cfg, uint32_t vcl
 static int spi_tms570_configure(const struct device *dev, const struct spi_config *spi_cfg)
 {
         const struct spi_tms570_cfg *cfg = dev->config;
+        struct spi_tms570_data *data = dev->data;
         uint32_t fmt;
         uint32_t clk_rate;
         uint32_t psc;
@@ -131,6 +132,10 @@ static int spi_tms570_configure(const struct device *dev, const struct spi_confi
         size_t word_size;
 
         ctrl_reg_base = DEVICE_MMIO_GET(dev);
+
+        if (spi_context_configured(&data->ctx, spi_cfg)) {
+                return 0;
+        }
 
         /* Some of this are supported by the hardware, but not yet implemented in this driver. */
         if (spi_cfg->operation &
@@ -196,6 +201,8 @@ static int spi_tms570_configure(const struct device *dev, const struct spi_confi
         } else {
                 sys_clear_bit(ctrl_reg_base + CGR1_OFFSET, CGR1_LOOPBACK_OFFSET);
         }
+
+        data->ctx.config = spi_cfg;
 
         return 0;
 }
@@ -501,8 +508,13 @@ static int spi_tms570_init(const struct device *dev)
 
         spi_context_unlock_unconditionally(&data->ctx);
 
-        status = pinctrl_apply_state(cfg->pcfg, PINCTRL_STATE_DEFAULT);
+        status = spi_context_cs_configure_all(&data->ctx);
         if (status != 0) {
+                return status;
+        }
+
+        status = pinctrl_apply_state(cfg->pcfg, PINCTRL_STATE_DEFAULT);
+        if (status != 0 && status != -ENOENT) {
                 return status;
         }
 
