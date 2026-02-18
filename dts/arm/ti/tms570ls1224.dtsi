@@ -160,6 +160,9 @@
             #address-cells = <1>;
             #size-cells = <1>;
 
+            /* Currently only uses low-priority (B) interrupts */
+            interrupts = <23 IRQ_DEFAULT_PRIORITY>;
+
             gpioa: gpioa@fff7bc34 {
                 compatible = "ti,tms570-gpio-port";
                 reg = <0xfff7bc34 0x20>;
