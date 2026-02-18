@@ -214,9 +214,9 @@
                 status = "disabled";
             };
 
-            gpio_n2het1: gpio_n2het1@ff46004c {
+            gpio_n2het1: gpio_n2het1@fff7b84c {
                 compatible = "ti,tms570-gpio-port";
-                reg = <0xff46004c 0x20>;
+                reg = <0xfff7b84c 0x20>;
                 gpio-controller;
                 #gpio-cells = <2>;
                 ngpios = <32>;
