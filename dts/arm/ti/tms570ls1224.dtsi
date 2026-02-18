@@ -199,6 +199,7 @@
                 reg = <0xfff7bc34 0x20>;
                 gpio-controller;
                 #gpio-cells = <2>;
+                interrupt-capable;
                 ngpios = <8>;
                 status = "disabled";
             };
@@ -208,7 +209,47 @@
                 reg = <0xfff7bc54 0x20>;
                 gpio-controller;
                 #gpio-cells = <2>;
+                interrupt-capable;
                 ngpios = <8>;
+                status = "disabled";
+            };
+
+            gpio_n2het1: gpio_n2het1@ff46004c {
+                compatible = "ti,tms570-gpio-port";
+                reg = <0xff46004c 0x20>;
+                gpio-controller;
+                #gpio-cells = <2>;
+                ngpios = <32>;
+                status = "disabled";
+            };
+
+            gpio_spi1: gpio_spi1@fff7f418 {
+                compatible = "ti,tms570-gpio-port";
+                reg = <0xfff7f418 0x20>;
+                gpio-controller;
+                #gpio-cells = <2>;
+                ngpios = <32>;
+                gpio-reserved-ranges = <12 4>;
+                status = "disabled";
+            };
+
+            gpio_spi3: gpio_spi3@fff7f818 {
+                compatible = "ti,tms570-gpio-port";
+                reg = <0xfff7f818 0x20>;
+                gpio-controller;
+                #gpio-cells = <2>;
+                ngpios = <32>;
+                gpio-reserved-ranges = <12 4>;
+                status = "disabled";
+            };
+
+            gpio_spi5: gpio_spi5@fff7fc18 {
+                compatible = "ti,tms570-gpio-port";
+                reg = <0xfff7fc18 0x20>;
+                gpio-controller;
+                #gpio-cells = <2>;
+                ngpios = <32>;
+                gpio-reserved-ranges = <12 4>;
                 status = "disabled";
             };
         };
