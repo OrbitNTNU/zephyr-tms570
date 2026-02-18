@@ -116,7 +116,38 @@
             #size-cells = <0>;
             reg = <0xfff7f600 512>;
             clocks = <&clock TMS570_CLK_VCLK>;
-            dmas = <&dmac 5 2>, <&dmac 6 3>;
+        };
+
+        spi3: spi@fff7f800 {
+            compatible = "ti,tms570-spi";
+            status = "disabled";
+            #address-cells = <1>;
+            #size-cells = <0>;
+            reg = <0xfff7f800 512>;
+            clocks = <&clock TMS570_CLK_VCLK>;
+            dmas = <&dmac 5 14>, <&dmac 6 15>;
+            dma-names = "rx", "tx";
+        };
+
+        spi4: spi@fff7fa00 {
+            compatible = "ti,tms570-spi";
+            status = "disabled";
+            #address-cells = <1>;
+            #size-cells = <0>;
+            reg = <0xfff7fa00 512>;
+            clocks = <&clock TMS570_CLK_VCLK>;
+            dmas = <&dmac 7 24>, <&dmac 8 25>;
+            dma-names = "rx", "tx";
+        };
+
+        spi5: spi@fff7fc00 {
+            compatible = "ti,tms570-spi";
+            status = "disabled";
+            #address-cells = <1>;
+            #size-cells = <0>;
+            reg = <0xfff7fc00 512>;
+            clocks = <&clock TMS570_CLK_VCLK>;
+            dmas = <&dmac 9 30>, <&dmac 10 31>;
             dma-names = "rx", "tx";
         };
 
