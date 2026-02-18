@@ -54,6 +54,12 @@ LOG_MODULE_REGISTER(spi_tms570);
 #define BUF_TXFULL_OFFSET      (29 - 16) /* Offset minus 16 data bits */
 #define BUF_RXDATA_BYTE_OFFSET (BUF_OFFSET + 3)
 
+#define DELAY_OFFSET     (0x48)
+#define DELAY_C2T_MASK   BIT_MASK(8)
+#define DELAY_C2T_OFFSET (24)
+#define DELAY_T2C_MASK   BIT_MASK(8)
+#define DELAY_T2C_OFFSET (16)
+
 #define CSDEF_OFFSET (0x4c)
 
 #define FMT_IDX             (0)
@@ -95,6 +101,24 @@ struct spi_tms570_data {
 #endif
 };
 
+static uint32_t calc_cs_delay_reg(const struct spi_config *spi_cfg, uint32_t vclk_rate_hz)
+{
+        uint32_t val;
+        uint64_t tmp;
+        uint64_t vclk_per_ps;
+
+        __ASSERT_NO_MSG(!spi_cfg->cs.cs_is_gpio);
+
+        vclk_per_ps = (uint64_t)1e12 / vclk_rate_hz;
+        tmp = MAX(((uint64_t)1e3 * spi_cfg->cs.setup_ns) / vclk_per_ps, 2) - 2;
+        val = (tmp & DELAY_C2T_MASK) << DELAY_C2T_OFFSET;
+
+        tmp = MAX(((uint64_t)1e3 * spi_cfg->cs.hold_ns) / vclk_per_ps, 1) - 1;
+        val |= (tmp & DELAY_T2C_MASK) << DELAY_T2C_OFFSET;
+
+        return val;
+}
+
 static int spi_tms570_configure(const struct device *dev, const struct spi_config *spi_cfg)
 {
         const struct spi_tms570_cfg *cfg = dev->config;
@@ -132,8 +156,13 @@ static int spi_tms570_configure(const struct device *dev, const struct spi_confi
 
         /* Configure pins */
         sys_set_bits(ctrl_reg_base + PC0_OFFSET,
-                     BIT(PC0_SIMOFUN_OFFSET) | BIT(PC0_SOMIFUN_OFFSET) | BIT(PC0_CLKFUN_OFFSET) |
-                             (1 << (PC0_SCSFUN_OFFSET + spi_cfg->slave)));
+                     BIT(PC0_SIMOFUN_OFFSET) | BIT(PC0_SOMIFUN_OFFSET) | BIT(PC0_CLKFUN_OFFSET));
+        if (!spi_cfg->cs.cs_is_gpio) {
+                sys_write32(calc_cs_delay_reg(spi_cfg, clk_rate), ctrl_reg_base + DELAY_OFFSET);
+                sys_set_bit(ctrl_reg_base + PC0_OFFSET, PC0_SCSFUN_OFFSET + spi_cfg->slave);
+        } else {
+                sys_clear_bit(ctrl_reg_base + PC0_OFFSET, PC0_SCSFUN_OFFSET + spi_cfg->slave);
+        }
 
         /* Set master bit, clock mode */
         sys_set_bits(ctrl_reg_base + CGR1_OFFSET,
@@ -518,7 +547,8 @@ static int spi_tms570_init(const struct device *dev)
 #define SPI_TMS570_INIT(inst)                                                                      \
         PINCTRL_DT_INST_DEFINE(inst);                                                              \
         static struct spi_tms570_data spi_tms570_##inst##_data = {                                 \
-                SPI_CONTEXT_INIT_LOCK(spi_tms570_##inst##_data, ctx),                              \
+                SPI_CONTEXT_CS_GPIOS_INITIALIZE(DT_DRV_INST(inst), ctx)                            \
+                        SPI_CONTEXT_INIT_LOCK(spi_tms570_##inst##_data, ctx),                      \
                 SPI_CONTEXT_INIT_SYNC(spi_tms570_##inst##_data, ctx), SPI_TMS570_DMA_DATA(inst)};  \
         static const struct spi_tms570_cfg spi_tms570_##inst##_cfg = {                             \
                 DEVICE_MMIO_ROM_INIT(DT_DRV_INST(inst)),                                           \
