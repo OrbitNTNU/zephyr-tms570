@@ -7,6 +7,9 @@ properties:
   reg:
     required: true
 
+  interrupt-capable:
+    type: boolean
+
   "#gpio-cells":
     const: 2
 
