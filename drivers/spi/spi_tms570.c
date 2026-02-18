@@ -506,6 +506,9 @@ static int spi_tms570_init(const struct device *dev)
 
         DEVICE_MMIO_MAP(dev, K_MEM_CACHE_NONE);
 
+        ctrl_reg_base = DEVICE_MMIO_GET(dev);
+        sys_set_bit(ctrl_reg_base + CGR0_OFFSET, CGR0_NRST_OFFSET);
+
         spi_context_unlock_unconditionally(&data->ctx);
 
         status = spi_context_cs_configure_all(&data->ctx);
@@ -521,9 +524,6 @@ static int spi_tms570_init(const struct device *dev)
 #ifdef CONFIG_SPI_TMS570_DMA
         spi_tms570_dma_init(dev);
 #endif
-
-        ctrl_reg_base = DEVICE_MMIO_GET(dev);
-        sys_set_bit(ctrl_reg_base + CGR0_OFFSET, CGR0_NRST_OFFSET);
 
         return 0;
 }
