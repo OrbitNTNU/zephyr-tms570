@@ -81,9 +81,7 @@ static int gpio_tms570_pin_configure(const struct device *dev, gpio_pin_t pin, g
                 } else {
                         sys_clear_bit(cfg->reg_base + PORT_PDR_OFFSET, pin);
                 }
-        }
 
-        if (flags & GPIO_OUTPUT_INIT_LOGICAL) {
                 if (flags & GPIO_OUTPUT_INIT_LOW) {
                         sys_set_bit(cfg->reg_base + PORT_DCLR_OFFSET, pin);
                 } else {
