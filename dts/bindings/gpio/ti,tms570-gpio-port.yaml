@@ -1,0 +1,18 @@
+
+compatible: ti,tms570-gpio-port
+description: Texas Instruments TMS570 GPIO Port
+include: [gpio-controller.yaml, base.yaml]
+
+properties:
+  reg:
+    required: true
+
+  interrupt-capable:
+    type: boolean
+
+  "#gpio-cells":
+    const: 2
+
+gpio-cells:
+  - pin
+  - flags

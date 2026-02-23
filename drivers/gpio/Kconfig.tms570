@@ -1,0 +1,14 @@
+
+config GPIO_TMS570
+    bool "TI TMS570 GPIO Controller"
+    default y
+    depends on DT_HAS_TI_TMS570_GPIO_ENABLED && GPIO
+
+if GPIO_TMS570
+
+config GPIO_TMS570_CTRL_INIT_PRIORITY
+    int
+    default 39
+
+endif
+

@@ -116,7 +116,38 @@
             #size-cells = <0>;
             reg = <0xfff7f600 512>;
             clocks = <&clock TMS570_CLK_VCLK>;
-            dmas = <&dmac 5 2>, <&dmac 6 3>;
+        };
+
+        spi3: spi@fff7f800 {
+            compatible = "ti,tms570-spi";
+            status = "disabled";
+            #address-cells = <1>;
+            #size-cells = <0>;
+            reg = <0xfff7f800 512>;
+            clocks = <&clock TMS570_CLK_VCLK>;
+            dmas = <&dmac 5 14>, <&dmac 6 15>;
+            dma-names = "rx", "tx";
+        };
+
+        spi4: spi@fff7fa00 {
+            compatible = "ti,tms570-spi";
+            status = "disabled";
+            #address-cells = <1>;
+            #size-cells = <0>;
+            reg = <0xfff7fa00 512>;
+            clocks = <&clock TMS570_CLK_VCLK>;
+            dmas = <&dmac 7 24>, <&dmac 8 25>;
+            dma-names = "rx", "tx";
+        };
+
+        spi5: spi@fff7fc00 {
+            compatible = "ti,tms570-spi";
+            status = "disabled";
+            #address-cells = <1>;
+            #size-cells = <0>;
+            reg = <0xfff7fc00 512>;
+            clocks = <&clock TMS570_CLK_VCLK>;
+            dmas = <&dmac 9 30>, <&dmac 10 31>;
             dma-names = "rx", "tx";
         };
 
@@ -151,6 +182,76 @@
             compatible = "ti,tms570-pinctrl";
             reg = <0xffffea00 0x200>;
             status = "okay";
+        };
+
+        gpio: gpio-controller@fff7bc00 {
+            compatible = "ti,tms570-gpio";
+            status = "disabled";
+            reg = <0xfff7bc00 512>;
+            #address-cells = <1>;
+            #size-cells = <1>;
+
+            /* Currently only uses low-priority (B) interrupts */
+            interrupts = <23 IRQ_DEFAULT_PRIORITY>;
+
+            gpioa: gpioa@fff7bc34 {
+                compatible = "ti,tms570-gpio-port";
+                reg = <0xfff7bc34 0x20>;
+                gpio-controller;
+                #gpio-cells = <2>;
+                interrupt-capable;
+                ngpios = <8>;
+                status = "disabled";
+            };
+
+            gpiob: gpiob@fff7bc54 {
+                compatible = "ti,tms570-gpio-port";
+                reg = <0xfff7bc54 0x20>;
+                gpio-controller;
+                #gpio-cells = <2>;
+                interrupt-capable;
+                ngpios = <8>;
+                status = "disabled";
+            };
+
+            gpio_n2het1: gpio_n2het1@fff7b84c {
+                compatible = "ti,tms570-gpio-port";
+                reg = <0xfff7b84c 0x20>;
+                gpio-controller;
+                #gpio-cells = <2>;
+                ngpios = <32>;
+                status = "disabled";
+            };
+
+            gpio_spi1: gpio_spi1@fff7f418 {
+                compatible = "ti,tms570-gpio-port";
+                reg = <0xfff7f418 0x20>;
+                gpio-controller;
+                #gpio-cells = <2>;
+                ngpios = <32>;
+                gpio-reserved-ranges = <12 4>;
+                status = "disabled";
+            };
+
+            gpio_spi3: gpio_spi3@fff7f818 {
+                compatible = "ti,tms570-gpio-port";
+                reg = <0xfff7f818 0x20>;
+                gpio-controller;
+                #gpio-cells = <2>;
+                ngpios = <32>;
+                gpio-reserved-ranges = <12 4>;
+                status = "disabled";
+            };
+
+            gpio_spi5: gpio_spi5@fff7fc18 {
+                compatible = "ti,tms570-gpio-port";
+                reg = <0xfff7fc18 0x20>;
+                gpio-controller;
+                #gpio-cells = <2>;
+                ngpios = <32>;
+                gpio-reserved-ranges = <12 4>;
+                status = "disabled";
+            };
         };
     };
 };

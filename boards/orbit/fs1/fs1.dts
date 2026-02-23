@@ -1,5 +1,7 @@
 /dts-v1/;
 
+#include <zephyr/dt-bindings/gpio/gpio.h>
+
 #include <arm/ti/tms570ls1224.dtsi>
 #include <ti/tms570/tms570ls1224-pinctrl.dtsi>
 
@@ -36,18 +38,67 @@
     status = "okay";
 };
 
-&spi1 {
-    pinctrl-0 = <&spi1_ncs_0 &spi1_ncs_1 &spi1_ncs_2 &spi1_ncs_3>;
-    pinctrl-names = "default";
+
+/* FramSat-1 SPI1 */
+&spi5 {
     status = "okay";
+    cs-gpios = <&gpio_spi1 1 GPIO_ACTIVE_LOW>,
+               <&gpio_n2het1 20 GPIO_ACTIVE_LOW>,
+               <&gpio_n2het1 18 GPIO_ACTIVE_LOW>,
+               <&gpio_n2het1 16 GPIO_ACTIVE_LOW>;
 };
 
-&spi2 {
-    pinctrl-0 = <&spi2_ncs_1>;
-    pinctrl-names = "default";
+/* FramSat-1 SPI2 */
+&spi4 {
     status = "okay";
+    cs-gpios = <&gpio_n2het1 30 GPIO_ACTIVE_LOW>,
+               <&gpio_n2het1 3 GPIO_ACTIVE_LOW>,
+               <&gpio_n2het1 14 GPIO_ACTIVE_LOW>,
+               <&gpiob 0 GPIO_ACTIVE_LOW>;
+};
+
+/* FramSat-1 SPI3 */
+&spi3 {
+    status = "okay";
+    cs-gpios = <&gpio_spi3 0 GPIO_ACTIVE_LOW>, <&gpio_spi3 8 GPIO_ACTIVE_LOW>;
+};
+
+/* FramSat-1 SPI4 */
+&spi1 {
+    status = "okay";
+    cs-gpios = <&gpio_n2het1 26 GPIO_ACTIVE_LOW>,
+               <&gpio_spi1 0 GPIO_ACTIVE_LOW>,
+               <&gpio_spi1 8 GPIO_ACTIVE_LOW>;
 };
 
 &dmac {
+    status = "okay";
+};
+
+&gpio {
+    status = "okay";
+};
+
+&gpioa {
+    status = "okay";
+};
+
+&gpiob {
+    status = "okay";
+};
+
+&gpio_n2het1 {
+    status = "okay";
+};
+
+&gpio_spi1 {
+    status = "okay";
+};
+
+&gpio_spi3 {
+    status = "okay";
+};
+
+&gpio_spi5 {
     status = "okay";
 };

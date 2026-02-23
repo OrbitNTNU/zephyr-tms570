@@ -1,0 +1,8 @@
+
+compatible: ti,tms570-gpio
+description: TI TMS570 GPIO Controller
+include: base.yaml
+
+properties:
+  reg:
+    required: true
