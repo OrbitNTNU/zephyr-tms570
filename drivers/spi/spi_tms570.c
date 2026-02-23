@@ -178,7 +178,7 @@ static int spi_tms570_configure(const struct device *dev, const struct spi_confi
         fmt = word_size << FMT_CHARLEN_OFFSET;
         fmt |= psc << FMT_PRESCALE_OFFSET;
         fmt |= (!!(spi_cfg->operation & SPI_MODE_CPOL)) << FMT_POLARITY_OFFSET;
-        fmt |= (!!(spi_cfg->operation & SPI_MODE_CPHA)) << FMT_PHASE_OFFSET;
+        fmt |= (!(spi_cfg->operation & SPI_MODE_CPHA)) << FMT_PHASE_OFFSET;
         fmt |= (!!(spi_cfg->operation & SPI_TRANSFER_LSB)) << FMT_SHIFTDIR_OFFSET;
 
         sys_write32(fmt, ctrl_reg_base + FMT_OFFSET_BASE + sizeof(uint32_t) * FMT_IDX);
