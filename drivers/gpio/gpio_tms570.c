@@ -186,15 +186,17 @@ static int gpio_tms570_pin_interrupt_configure(const struct device *dev, gpio_pi
                 return 0;
         }
 
-        if (trig & GPIO_INT_TRIG_BOTH) {
+        if (trig == GPIO_INT_TRIG_BOTH) {
                 sys_set_bit(reg_base + INTDET_OFFSET, bit);
         } else {
                 sys_clear_bit(reg_base + INTDET_OFFSET, bit);
 
-                if (trig & GPIO_INT_TRIG_LOW) {
+                if (trig & GPIO_INT_LOW_0) {
                         sys_clear_bit(reg_base + INTPOL_OFFSET, bit);
-                } else {
+                } else if (trig & GPIO_INT_HIGH_1) {
                         sys_set_bit(reg_base + INTPOL_OFFSET, bit);
+                } else {
+                        return -ENOTSUP;
                 }
         }
 
