@@ -73,7 +73,7 @@ static int gpio_tms570_pin_configure(const struct device *dev, gpio_pin_t pin, g
                 sys_set_bit(cfg->reg_base + PORT_DIR_OFFSET, pin);
 
                 if (flags & GPIO_SINGLE_ENDED) {
-                        if (flags & GPIO_OPEN_SOURCE) {
+                        if (flags & GPIO_LINE_OPEN_SOURCE) {
                                 return -ENOTSUP;
                         }
 
